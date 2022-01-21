@@ -29,22 +29,21 @@ if __name__ == '__main__':
     Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
     
-
-    New_floe = Floe(nodes=Nodes, springs=Springs)
+    k = 1000
+    New_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k)
     
 
     # print("connexe matrix = \n", New_floe.connexe_mat(), "\n")
     # print("length matrix = \n",New_floe.length_mat(), "\n")
 
-    print(New_floe.get_nodes())
-    print(New_floe.get_velocity())
+    print(" Initial position ", New_floe.get_nodes())
+    print(" Initial velocity ",New_floe.get_velocity())
 
     New_floe.plot_init()
     Route = New_floe.Route()
     
     Sol = New_floe.Move(t_end)
-    New_floe.animation_move(t_end)
-    
+    # New_floe.animation_move(t_end)
     
     ### re-implemented in Func.py!!! ###
     fig = plt.figure()
@@ -69,7 +68,7 @@ if __name__ == '__main__':
             thisx = np.append(thisx,thisx[i])
             thisy = np.append(thisy,thisy[i])
         line.set_data(thisx[New_floe.n:], thisy[New_floe.n:])
-        time_text.set_text(time_template % (i*dt))
-        return line, time_text
+        # time_text.set_text(time_template % (i*dt))
+        return line, 
     ani = animation.FuncAnimation(fig, animate_spring, np.arange(1, len(Sol.y[0])),
                                 interval=2.5, blit=False)

@@ -95,8 +95,8 @@ for i in range(nb_nodes):
 
 #initial velocity
 # V0 = np.zeros((nb_nodes, 2))+0.5
-V0 = np.zeros((nb_nodes, 2)) +1
-#V0[3]=np.array([.2, .2]) #seed(3), lambda = 5
+V0 = np.zeros((nb_nodes, 2))
+V0[3]=np.array([.2, .2]) #seed(3), lambda = 5
 # V0[5]=np.array([1., 1.]) #seed(3), lambda = 5
 
 # V0[1]=np.array([.5, .5]) #seed(4), lambda = 9
@@ -129,7 +129,7 @@ for i in range(nb_nodes):
     Y0_ = np.append(Y0_, tri.points[i])
     Y0_ = np.append(Y0_, V0[i])
 print("initial condition :",Y0_)
-# Sol = solve_ivp(System, [0, T_f], Y0_, t_eval=t)
+Sol = solve_ivp(System, [0, T_f], Y0_, t_eval=t)
 
 #animation ice floe:
 fig = plt.figure()
