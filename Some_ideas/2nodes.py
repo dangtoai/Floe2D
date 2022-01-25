@@ -136,6 +136,7 @@ if __name__=="__main__":
         thisy = thisy.tolist()
         line.set_data(thisx[:], thisy[:])
         time_text.set_text(time_template % (i*dt))
+        # print(i)
         return line, time_text
     
     def animate_center(i):

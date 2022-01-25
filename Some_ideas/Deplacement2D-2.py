@@ -28,15 +28,15 @@ mu = 10.
 k  = 100.3
 
 #Simulation window parameters
-np.random.seed(3)
-xMin=0;xMax=1
+np.random.seed(6)
+xMin=3;xMax=4
 yMin=0;yMax=1
 xDelta=xMax-xMin
 yDelta=yMax-yMin; #rectangle dimensions
 areaTotal=xDelta*yDelta;
 
 #Point process parameters
-lambda0 = 9                                                      #intensity 
+lambda0 = 7                                                      #intensity 
 
 #Simulate Poisson point process
 numbPoints = scipy.stats.poisson( lambda0*areaTotal ).rvs()       #Poisson number of points
@@ -133,7 +133,7 @@ Sol = solve_ivp(System, [0, T_f], Y0_, t_eval=t)
 
 #animation ice floe:
 fig = plt.figure()
-ax = fig.add_subplot(111, autoscale_on=False, xlim=(-.5, 1.5), ylim=(-.5, 1.5))
+ax = fig.add_subplot(111, autoscale_on=False, xlim=(2.5, 4.5), ylim=(-.5, 1.5))
 ax.set_aspect('equal')
 ax.grid()
 line, = ax.plot([], [], 'o-', lw=2)

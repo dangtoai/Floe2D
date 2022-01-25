@@ -119,7 +119,7 @@ class Floe:
         return Mat
 
     def Move(self, time_end: float() ):
-        N = 500
+        N = 800
         t = np.linspace(0, time_end, N)
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
@@ -152,37 +152,28 @@ class Floe:
             plt.plot(time, solution[i])
         plt.xlabel("time(s)")
         plt.legend()
+    
+    
+class Percussion:
+    def __init__(self, floe1:Floe, floe2:Floe, restitution_coef=0.4, time_simulation = 4., eta = 0.0001):
+        self.t = np.linspace(0, time_simulation, 1000)
+        self.floe1 = floe1
+        self.floe2 = floe2
+        self.eps = restitution_coef
+    
+    def check_collision(self):
+        collide = False
+        for i in range(len(self.t)):
+            0
+        return collide
         
+    
+    
         
-    def animation_move(self, time_end):  ### still not working and idk why? ###
-        fig = plt.figure()
-        ax = fig.add_subplot(111, autoscale_on=False, xlim=(-.5, 1.5), ylim=(-.5, 1.5))
-        ax.set_aspect('equal')
-        ax.grid()
-        line, = ax.plot([], [], 'o-', lw=2)
-        center,= ax.plot([], [], 'o', color='r')
-        time_template = 'time = %.9fs'
-        time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-  
-        def animate_spring(i):
-            Ix = [i for i in range(0, self.n*4, 4)]
-            Iy = [i for i in range(1, self.n*4, 4)]
-            thisx = []
-            thisy = []
-            for j in Ix:
-                thisx = np.append(thisx, self.Move(time_end).y[j][i])
-            for j in Iy:
-                thisy = np.append(thisy, self.Move(time_end).y[j][i])
-            for i in self.Route():
-                thisx = np.append(thisx,thisx[i])
-                thisy = np.append(thisy,thisy[i])
-            line.set_data(thisx[self.n:], thisy[self.n:])
-            time_text.set_text(time_template % (i*dt))
-            return line, 
-        ani = animation.FuncAnimation(fig, animate_spring, np.arange(1, len(self.Move(time_end).y[0])),
-                                    interval=2.5, blit=False)
-        plt.show()
-        
+def node_to_floe(node: Node , floe: Floe):
+    
+    return 0
+
 def Unit_vect(vect1, vect2):
     if (vect1[0] == vect2[0] and vect1[1] == vect2[1]):
         return 0.
@@ -210,7 +201,7 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k):
     -------
     (evolution of node_i, velo_i
      for i in range nb_nodes as a dynamical system).
-
+    
     """
     u = np.zeros((nb_nodes, nb_nodes, 2))
     Q = np.reshape(Y, (nb_nodes*2, 2))
