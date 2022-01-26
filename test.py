@@ -21,7 +21,7 @@ if __name__ == '__main__':
     Nodes = []
     
     t_end = 4.
-    # dt = 0.01
+    dt = 0.005
     V0 = np.array([0.5, 0.])
     # V1 = np.array([0.75, 0.])
 
@@ -32,9 +32,8 @@ if __name__ == '__main__':
     
     Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    
     k = 1000
-    New_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k)
+    First_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, id_number = 1 )
     
     #second floe
     Points = np.array([[3.52981736, 0.73588211],
@@ -47,32 +46,32 @@ if __name__ == '__main__':
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0_, i))
     Springs = {(0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (2, 4), (3, 4)}
-    Second_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k/2.)
+    Second_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k/2., id_number = 2)
     
-    # print("connexe matrix = \n", New_floe.connexe_mat(), "\n")
-    # print("length matrix = \n",New_floe.length_mat(), "\n")
+    # print("connexe matrix = \n", First_floe.connexe_mat(), "\n")
+    # print("length matrix = \n",First_floe.length_mat(), "\n")
 
-    # print(" Initial position ", New_floe.get_nodes())
-    # print(" Initial velocity ",New_floe.get_velocity())
+    # print(" Initial position ", First_floe.get_nodes())
+    # print(" Initial velocity ",First_floe.get_velocity())
 
-    New_floe.plot_init()
+    First_floe.plot_init()
     Second_floe.plot_init()
-    # New_floe.plot_displacements(t_end)
-    # Route = New_floe.Route()
-    Sol = New_floe.Move(t_end)
+    # First_floe.plot_displacements(t_end)
+    # Route = First_floe.Route()
+    Sol = First_floe.Move(t_end)
     Sol2= Second_floe.Move(t_end)
     
     ### re-implemented in Func.py!!! ###
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-.5, 4.), ylim=(-.5, 1.5))
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-.1, 4.), ylim=(-.0, 1.1))
     ax.set_aspect('equal')
     ax.grid()
     line1, = ax.plot([], [], 'o-', lw=1.)
     line2, = ax.plot([], [], 'o-', lw=1.)
-    time_template = 'time = %.9fs'
+    time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route_ = Second_floe.Route()
-    Route = New_floe.Route()
+    Route = First_floe.Route()
     
     def init():
         line1.set_data([], [])
@@ -80,8 +79,8 @@ if __name__ == '__main__':
         return line1, 
     
     def animate_spring(i):
-        Ix = [j for j in range(0, New_floe.n*4, 4)]
-        Iy = [j for j in range(1, New_floe.n*4, 4)]
+        Ix = [j for j in range(0, First_floe.n*4, 4)]
+        Iy = [j for j in range(1, First_floe.n*4, 4)]
         thisx = []
         thisy = []
         for j in Ix:
@@ -104,11 +103,19 @@ if __name__ == '__main__':
             thisx_ = np.append(thisx_,thisx_[k])
             thisy_ = np.append(thisy_,thisy_[k])
         line2.set_data(thisx_[Second_floe.n:], thisy_[Second_floe.n:])
-        line1.set_data(thisx[New_floe.n:], thisy[New_floe.n:])
+        line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
         
+        if (i%30 == 0):
+            time = i*4/800
+            # print("distance between floe 2 and floe 1= ", node_to_floe(First_floe.New_floe(t_end, time).nodes[2],
+                                                                   # Second_floe.New_floe(t_end, time) ))
+            if node_to_floe(First_floe.New_floe(t_end, time).nodes[2],
+                                                                   Second_floe.New_floe(t_end, time) )<0.3:
+                print("collision at time= ", time)
+                
         return line1, line2, time_text.set_text(time_template % (i*dt))
 
-    ani1 = animation.FuncAnimation(fig, animate_spring, 
+    ani = animation.FuncAnimation(fig, animate_spring, 
                                     np.arange(0, len(Sol.y[0])), interval=25, blit=False)
 
-    
+    plt.show()

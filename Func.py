@@ -12,7 +12,7 @@ from graph import *
 class Node:
     """A class representing one node of an ice floe"""
 
-    def __init__(self, position, velocity: np.array([0,0]), id_number):
+    def __init__(self, position, velocity: np.array([0,0]), id_number = None):
         self.x, self.y = position
         self.x0, self.y0 = position  # Initial position needed for plots
         self.vx, self.vy = velocity
@@ -26,12 +26,8 @@ class Node:
         return np.array([self.vx, self.vy])
 
     def get_details(self):
-        print(self.position(), self.velocity())
         return self.position(), self.velocity()
     
-    def Move(self, time):
-        return self.position() + time*self.velocity()
-
 
 class Spring:
     """
@@ -118,7 +114,7 @@ class Floe:
             Mat[j,i] = Mat[i,j]
         return Mat
 
-    def Move(self, time_end: float() ):
+    def Move(self, time_end: float()):
         N = 800
         t = np.linspace(0, time_end, N)
         All_pos = self.get_nodes()
@@ -141,6 +137,14 @@ class Floe:
             plt.text(self.nodes[j].position()[0], self.nodes[j].position()[1], self.nodes[j].id)
     
     def plot_displacements(self, time_end):
+        """
+        Parameters
+        ----------
+        time_end : .
+
+        Plot the position's evolution of all nodes.
+
+        """
         time = self.Move(time_end).t
         solution = self.Move(time_end).y
         Index_x = np.arange(0, 4*self.n, 4)
@@ -153,10 +157,72 @@ class Floe:
         plt.xlabel("time(s)")
         plt.legend()
     
+    def New_floe(self, time_end, time):
+        """
+        Parameters
+        ----------
+        time_end.
+        
+        At each time's step, save the position of all node as a floe.
+        
+        Returns
+        -------
+        Positions of all nodes at time t .
+
+        """
+        assert 0 <= time <= time_end, "time must be inside the time discretisation"
+        time = int(time*800/time_end)-1
+        Res = self.Move(time_end).y
+        
+        New_Nodes_positions = []
+        New_Nodes_velocity = []
+        Nodes = []
+        for i in range(0, self.n*4, 4):
+            # print(i)
+            New_Nodes_positions.append(np.array([Res[i ][time], Res[i+1][time]]))
+            New_Nodes_velocity.append(np.array([Res[i+2][time], Res[i+3][time]]))
+        
+        for i in range(self.n):
+            Nodes.append(Node(New_Nodes_positions[i], New_Nodes_velocity[i], i))
+        
+        New_floe = Floe(nodes = Nodes, springs=self.springs )
+        return New_floe
+    
+    def position_at_time(self, time_end, time):
+        """
+        Parameters
+        ----------
+        time_end.
+        
+        At each time's step, save the position of all node as a floe.
+        
+        Returns
+        -------
+        Position of all nodes at time t .
+
+        """
+        assert 0 <= time <= time_end, "time must be inside simulation interval"
+        return self.New_floe(time_end, time).get_nodes()
+    
+    def velocity_at_time(self, time_end, time):
+        """
+        Parameters
+        ----------
+        time_end.
+        
+        At each time's step, save the position of all node as a floe.
+        
+        Returns
+        -------
+        velocity of all nodes at time t .
+
+        """
+        assert 0 <= time <= time_end, "time must be inside the simulation interval"
+        return self.New_floe(time_end, time).get_velocity()
     
 class Percussion:
-    def __init__(self, floe1:Floe, floe2:Floe, restitution_coef=0.4, time_simulation = 4., eta = 0.0001):
-        self.t = np.linspace(0, time_simulation, 1000)
+    def __init__(self, floe1:Floe, floe2:Floe, restitution_coef=0.4, time_end = 4., eta = 0.0001):
+        self.t = np.linspace(0, time_end, 1000)
         self.floe1 = floe1
         self.floe2 = floe2
         self.eps = restitution_coef
@@ -167,12 +233,22 @@ class Percussion:
             0
         return collide
         
-    
-    
-        
+
 def node_to_floe(node: Node , floe: Floe):
+    """
+    Parameters
+    ----------
+    node : Node
+    floe : Floe
     
-    return 0
+    Returns
+    -------
+    float
+        Distance between a node and a floe.
+
+    """
+    dist = [norm(node.position() - floe.nodes[i].position()) for i in range(floe.n)]
+    return min(dist)
 
 def Unit_vect(vect1, vect2):
     if (vect1[0] == vect2[0] and vect1[1] == vect2[1]):
