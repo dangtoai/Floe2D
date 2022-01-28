@@ -179,14 +179,12 @@ def animate_spring(i):
         thisx = np.append(thisx, Sol.y[j][i])
     for j in Iy:
         thisy = np.append(thisy, Sol.y[j][i])
-    for i in Route:
-        thisx = np.append(thisx,thisx[i])
-        thisy = np.append(thisy,thisy[i])
+    for k in Route:
+        thisx = np.append(thisx,thisx[k])
+        thisy = np.append(thisy,thisy[k])
     line.set_data(thisx[nb_nodes:], thisy[nb_nodes:])
     time_text.set_text(time_template % (i*dt))
     return line, time_text
-
-
 
 ani = animation.FuncAnimation(fig, animate_spring, np.arange(1, len(Sol.y[0])),
                                 interval=2.5, blit=False, init_func=init)

@@ -151,7 +151,7 @@ class UndirectedGraph:
 					if t:
 						return t
 					graph.AddEdge(v, next)
-					trail.pop()
+				trail.pop()
 				return None
 
 		def removeDummies(trail: List[int], dummies: Set[int]):
@@ -205,8 +205,8 @@ class UndirectedGraph:
 
 if __name__ == '__main__':
 	from itertools import combinations
-	g = UndirectedGraph(4)
-	for v1, v2 in combinations(range(4), 2):
+	g = UndirectedGraph(3)
+	for v1, v2 in combinations(range(3), 2):
 		g.AddEdge(v1, v2)
 	
 	"""

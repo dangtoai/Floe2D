@@ -19,7 +19,6 @@ if __name__ == '__main__':
                        [0.02398188, 0.54464902]])
 
     Nodes = []
-    
     t_end = 4.
     dt = 0.005
     V0 = np.array([0.5, 0.])
@@ -57,17 +56,31 @@ if __name__ == '__main__':
     First_floe.plot_init()
     Second_floe.plot_init()
     # First_floe.plot_displacements(t_end)
-    # Route = First_floe.Route()
+
     Sol = First_floe.Move(t_end)
     Sol2= Second_floe.Move(t_end)
     
     ### re-implemented in Func.py!!! ###
+    #animation of floe(s)'s displacement
+    
+    
+    #I want to compute the distance between 2 floes as the smallest distance of their nodes.
+    # for instance, this is the distance from node[2] of the first floe to the second
+    # First_to_Second = np.zeros_like(Sol.t)
+    # for i in range(1, Sol.t.size):
+        # First_to_Second[i] = node_to_floe(First_floe.evolution(t_end, i*dt).nodes[2],
+                                       # Second_floe.evolution(t_end, i*dt))
+        # print(i, First_to_Second[i] )
+    # Max_range = np.where(First_to_Second == First_to_Second.min())[0][0]
+    Max_range = 593
+    
+    
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-.1, 4.), ylim=(-.0, 1.1))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 4.), ylim=(-.0, 1.1))
     ax.set_aspect('equal')
     ax.grid()
-    line1, = ax.plot([], [], 'o-', lw=1.)
-    line2, = ax.plot([], [], 'o-', lw=1.)
+    line1, = ax.plot([], [], '.-', lw= .5)
+    line2, = ax.plot([], [], '.-', lw= 1.)
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route_ = Second_floe.Route()
@@ -104,18 +117,18 @@ if __name__ == '__main__':
             thisy_ = np.append(thisy_,thisy_[k])
         line2.set_data(thisx_[Second_floe.n:], thisy_[Second_floe.n:])
         line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
-        
         if (i%30 == 0):
             time = i*4/800
-            # print("distance between floe 2 and floe 1= ", node_to_floe(First_floe.New_floe(t_end, time).nodes[2],
-                                                                   # Second_floe.New_floe(t_end, time) ))
-            if node_to_floe(First_floe.New_floe(t_end, time).nodes[2],
-                                                                   Second_floe.New_floe(t_end, time) )<0.3:
+            # print("distance between floe 2 and floe 1= ", node_to_floe(First_floe.evolution(t_end, time).nodes[2],
+                                                                    # Second_floe.evoution(t_end, time) ))
+            if node_to_floe(First_floe.evolution(t_end, time).nodes[2],
+                                                                    Second_floe.evolution(t_end, time) )<0.3:
                 print("collision at time= ", time)
                 
         return line1, line2, time_text.set_text(time_template % (i*dt))
 
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(0, len(Sol.y[0])), interval=25, blit=False)
+                                    np.arange(0, Max_range-20), interval=25, blit=False)
 
+    
     plt.show()

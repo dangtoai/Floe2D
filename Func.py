@@ -157,7 +157,7 @@ class Floe:
         plt.xlabel("time(s)")
         plt.legend()
     
-    def New_floe(self, time_end, time):
+    def evolution(self, time_end, time):
         """
         Parameters
         ----------
@@ -294,4 +294,4 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k):
                                                    + mu*(Q[2*j+1] - Q[2*i+1])@u[i, j]*u[i, j])
     return np.reshape(Y_, (nb_nodes*4))
 
-
+dt = 0.005
