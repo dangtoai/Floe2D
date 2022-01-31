@@ -161,22 +161,22 @@ class UndirectedGraph:
 				if v in dummies:
 					trail.remove(v)
 
-		def filterDuplicates(trail: List[int]):
-			"""Remove unnecessary duplicated edges at the end of trails"""
-			trailCopy = trail.copy()
-			edgesTraveled = set()
-			for i, v1 in enumerate(trailCopy[:-1]):
-				if len(edgesTraveled) == len(self._graphSet):
-					break
-				v2 = trail[i+1]
-				mini, maxi = min(v1, v2), max(v1, v2)
-				if (mini, maxi) not in edgesTraveled:
-					edgesTraveled.add((mini, maxi))
-			else:
-				return
-			i += 1
-			while i < len(trail):
-				trail.pop(i)
+# 		def filterDuplicates(trail: List[int]):
+# 			"""Remove unnecessary duplicated edges at the end of trails"""
+# 			trailCopy = trail.copy()
+# 			edgesTraveled = set()
+# 			for i, v1 in enumerate(trailCopy[:-1]):
+# 				if len(edgesTraveled) == len(self._graphSet):
+# 					break
+# 				v2 = trail[i+1]
+# 				mini, maxi = min(v1, v2), max(v1, v2)
+# 				if (mini, maxi) not in edgesTraveled:
+# 					edgesTraveled.add((mini, maxi))
+# 			else:
+# 				return
+# 			i += 1
+# 			while i < len(trail):
+# 				trail.pop(i)
 
 		if len(self.GetConnectedSubgraphs()) > 1:
 			raise Exception("Graph has multiple connected subgraphs")
@@ -199,14 +199,14 @@ class UndirectedGraph:
 		if graph is not self:
 			dummies = set(graph._graphDict.keys()) - set(self._graphDict.keys())
 			removeDummies(trail, dummies)
-		filterDuplicates(trail)
+# 		filterDuplicates(trail)
 		return trail
 
 
 if __name__ == '__main__':
 	from itertools import combinations
-	g = UndirectedGraph(3)
-	for v1, v2 in combinations(range(3), 2):
+	g = UndirectedGraph(2)
+	for v1, v2 in combinations(range(2), 2):
 		g.AddEdge(v1, v2)
 	
 	"""

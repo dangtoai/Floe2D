@@ -232,7 +232,11 @@ class Percussion:
         for i in range(len(self.t)):
             0
         return collide
-        
+     
+   
+def node_to_node(node1: Node, node2: Node):
+    #distance between 2 nodes
+    return 0
 
 def node_to_floe(node: Node , floe: Floe):
     """

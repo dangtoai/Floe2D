@@ -7,6 +7,7 @@ Created on Thu Dec  9 14:06:04 2021
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from Func import *
 
 #constant in this problem
@@ -31,13 +32,17 @@ Contact_Mat = Contact_Mat.reshape(nb_nodes,nb_nodes) - I
 # v2 = 1.3
 # v3 = 1.2
 
-v1 = 0.3
+v1 = 0.1
 v2 = 0.1
 v3 = 0.1
 
+
 theta1 = 180
-theta2 = 270
-theta3 = 240
+theta2 = 180
+theta3 = 180
+# theta1 = 180
+# theta2 = 270
+# theta3 = 240
 theta1, theta2, theta3 = np.deg2rad(theta1), np.deg2rad(theta2), np.deg2rad(theta3)
 
 #intial position
@@ -89,8 +94,10 @@ ax.grid()
 
 line, = ax.plot([], [], 'o-', lw=2)
 center,= ax.plot([], [], 'o', color='r')
+circle, = ax.plot([], [])
 time_template = 'time = %.9fs'
 time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+
 
 def init():
     line.set_data([], [])
@@ -111,8 +118,9 @@ def animate_spring(i):
     line.set_data(thisx, thisy)
     time_text.set_text(time_template % (i*dt))
     return line, time_text
-
+count = 0
 def animate_center(i):
+    global count
     thisx = []
     thisy = []
     for j in Ix:
@@ -120,11 +128,16 @@ def animate_center(i):
     for j in Iy:
         thisy = np.append(thisy, Sol.y[j][i])
     thisx = thisx.tolist()
-    thisx = [sum(thisx)/len(thisx)]
+    thisx = [sum(thisx[:-1])/3]
     thisy = thisy.tolist()
-    thisy = [sum(thisy)/len(thisy)]
+    thisy = [sum(thisy[:-1])/3]
     center.set_data(thisx[:], thisy[:])
-    return center, 
+    # A = 0.5
+    x = [0.55*math.cos(a)+thisx[0] for a in np.arange(0, 2*math.pi+0.1, 0.1)] 
+    y = [0.55*math.sin(a)+thisy[0] for a in np.arange(0, 2*math.pi+0.1, 0.1)]
+    circle.set_data(x,y)
+    count = (count + 1) % 360
+    return center, circle
 
 ani = animation.FuncAnimation(fig, animate_spring, np.arange(1, len(Sol.y[0])),
                                 interval=.1, blit=False, init_func=init)
@@ -132,5 +145,4 @@ ani2 = animation.FuncAnimation(fig, animate_center, np.arange(1, len(Sol.y[0])),
                                 interval=.1, blit=False, init_func=init)
 # ani.save('3nodes1stable_bigk.mp4', fps=1000)
 # plt.show()
-
 

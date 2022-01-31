@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 13 15:21:20 2021
 
-@author: user
-"""
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
@@ -16,7 +12,7 @@ import imageio
 # from Func import *
 from graph import *
 import random
-from test import *
+# from test import *
 
 # Constant parameters
 T_f      = 4.       #final time simulation
@@ -36,7 +32,7 @@ yDelta=yMax-yMin; #rectangle dimensions
 areaTotal=xDelta*yDelta;
 
 #Point process parameters
-lambda0 = 7                                                      #intensity 
+lambda0 = 9                                                      #intensity 
 
 #Simulate Poisson point process
 numbPoints = scipy.stats.poisson( lambda0*areaTotal ).rvs()       #Poisson number of points
@@ -190,6 +186,9 @@ ani = animation.FuncAnimation(fig, animate_spring, np.arange(1, len(Sol.y[0])),
                                 interval=2.5, blit=False, init_func=init)
 # ani.save('intensity=5_2.mp4', fps=100)
 plt.show()
+
+
+
 
 
 
