@@ -117,18 +117,21 @@ if __name__ == '__main__':
             thisy_ = np.append(thisy_,thisy_[k])
         line2.set_data(thisx_[Second_floe.n:], thisy_[Second_floe.n:])
         line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
-        if (i%30 == 0):
-            time = i*4/800
+        # if (i%30 == 0):
+        #     time = i*4/800
             # print("distance between floe 2 and floe 1= ", node_to_floe(First_floe.evolution(t_end, time).nodes[2],
                                                                     # Second_floe.evoution(t_end, time) ))
-            if node_to_floe(First_floe.evolution(t_end, time).nodes[2],
-                                                                    Second_floe.evolution(t_end, time) )<0.3:
-                print("collision at time= ", time)
+            # if node_to_floe(First_floe.evolution(t_end, time).nodes[2],
+            #                                                         Second_floe.evolution(t_end, time) )<0.3:
+            #     print("collision at time= ", time)
                 
         return line1, line2, time_text.set_text(time_template % (i*dt))
 
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(0, Max_range-20), interval=25, blit=False)
-
+                                    np.arange(0, 466), interval=25, blit=False)
     
-    plt.show()
+    # plt.show() 
+    percussion = Percussion(First_floe, Second_floe)
+    
+    
+    
