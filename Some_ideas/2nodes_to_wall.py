@@ -26,7 +26,7 @@ if __name__ == '__main__':
     
     
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 3.1), ylim=(-.5, .5))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(.5, 2.1), ylim=(-.1, .1))
     plt.plot(2,0, 'o', color='red')
     ax.set_aspect('equal')
     ax.grid()
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         return line1, center, time_text
         # return thisx, thisy
     
-    ani = animation.FuncAnimation(fig, animate2, np.arange(600, 1000),
+    ani = animation.FuncAnimation(fig, animate2, np.arange(200, 1600),
                                     interval=.1, blit=False, init_func=init)
     
     
