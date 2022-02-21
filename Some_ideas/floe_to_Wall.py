@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from Func import *
 from graph import *
 import numpy as np
@@ -30,71 +31,80 @@ if __name__ == '__main__':
     
     Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    k = 1000.
+    k = 100.
     First_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.  ,id_number = 1 )
-    # First_floe.plot_displacements(4)
-    
-    First_floe.plot_init()
 
+    t_end = 6.
+    collision_dist   = 0.01
+    coef_restitution = 0.99
+    
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 4.), ylim=(-.0, 1.1))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 8.5), ylim=(-1.5, 1.5))
     ax.set_aspect('equal')
     ax.grid()
-    line1, = ax.plot([], [], '.-', lw= .5)
+    plt.axvline(x=5., color = "red")
+    line1, = ax.plot([], [], '.-', lw= .95)
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-    Route = First_floe.Route()
+    Route = floe.Route()
     
-    Sol = First_floe.Move(t_end)
+    Sol = floe.Move(t_end)
     
-    ### Perturbation avec une masse ponctuelle
-    collision_floe = First_floe.evolution(t_end, t_end)
-    print(collision_floe.get_velocity())
-    collision_floe.update_velocity_node(5, np.array([-.125,  0]))
-    collision_floe.update_velocity_node(3, np.array([-.125,  0]))
-    collision_floe.update_velocity_node(6, np.array([-.125,  0]))
-    print(collision_floe.get_velocity())
-    # collision_floe.plot_init()
-    collision_floe.plot_displacements(4)
-    Sol2 = collision_floe.Move(t_end)
+    Positions = Sol.y
+    
+    # tant que: la position en x de n'importe quel noeud depasse Wall:
+    #   Faire:  tronquer toutes les vitesses et positions jusqu'a cette indice
+    #           update velocity of collision'nodes
+    #           lancer la simulation et concatener avec les positions et noeuds.
+    
+    
+    
+    
     
     def init():
         line1.set_data([], [])
         time_text.set_text('')
         return line1, time_text
     
-    # def animate_spring(i):
-    #     Ix = [j for j in range(0, First_floe.n*4, 4)]
-    #     Iy = [j for j in range(1, First_floe.n*4, 4)]
-    #     thisx = []
-    #     thisy = []
-    #     for j in Ix:
-    #         thisx = np.append(thisx, Sol.y[j][i])
-    #     for j in Iy:
-    #         thisy = np.append(thisy, Sol.y[j][i])
-    #     for k in Route:
-    #         thisx = np.append(thisx,thisx[k])
-    #         thisy = np.append(thisy,thisy[k])
-    #     line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
-    #     return line1,
-    
     def animate_spring(i):
-        Ix = [j for j in range(0, First_floe.n*4, 4)]
-        Iy = [j for j in range(1, First_floe.n*4, 4)]
+        Ix = [j for j in range(0, floe.n*4, 4)]
+        Iy = [j for j in range(1, floe.n*4, 4)]
         thisx = []
         thisy = []
         for j in Ix:
-            thisx = np.append(thisx, np.append(Sol.y[j], Sol2.y[j])[i])
+            thisx = np.append(thisx, [Node1x[i], Node2x[i], Node3x[i]])
         for j in Iy:
-            thisy = np.append(thisy, np.append(Sol.y[j], Sol2.y[j])[i])
+            thisy = np.append(thisy, [Node1y[i], Node2y[i], Node3y[i]])
         for k in Route:
             thisx = np.append(thisx,thisx[k])
             thisy = np.append(thisy,thisy[k])
-        line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
+        line1.set_data(thisx[floe.n:], thisy[floe.n:])
         time_text.set_text(time_template % (i*dt))
+        # return thisx, thisy
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(700, 1400), interval=25, blit=False)
+                                    np.arange(400,len(Node1x)), interval=25, blit=False)
 
-            
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
