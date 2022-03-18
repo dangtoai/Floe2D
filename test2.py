@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     Nodes = []
     t_end = 4.
-    V0 = np.array([0.25, 0.])
+    V0 = np.array([1, 0.])
     # V1 = np.array([0.5, 0.])
 
     for i in range(len(Points)):
@@ -30,14 +30,14 @@ if __name__ == '__main__':
     
     Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    k = 1000.
+    k = 100.
     First_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.  ,id_number = 1 )
     # First_floe.plot_displacements(4)
     
     First_floe.plot_init()
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 4.), ylim=(-.0, 1.1))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 5.), ylim=(-.0, 1.1))
     ax.set_aspect('equal')
     ax.grid()
     line1, = ax.plot([], [], '.-', lw= .5)
@@ -62,6 +62,8 @@ if __name__ == '__main__':
         line1.set_data([], [])
         time_text.set_text('')
         return line1, time_text
+    
+    
     
     # def animate_spring(i):
     #     Ix = [j for j in range(0, First_floe.n*4, 4)]

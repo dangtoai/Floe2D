@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from scipy.integrate import solve_ivp
 import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
 from graph import *
 
 # 4 classes Node-> Spring-> Ice-Floe-> Percussion to generate the Percussion of 2 floes

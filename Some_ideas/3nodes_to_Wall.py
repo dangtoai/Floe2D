@@ -9,6 +9,7 @@ if __name__ == '__main__':
     ######################
     
     Points = np.array([[1, 1.], [0., -1.], [-0.5, 0.]])
+    # Points = np.array([[1, 0.], [0., -1.], [-0., 1.]])
     V0     = np.array([1., 0.])
     # V1     = np.array([-1.0, 0.])
     Nodes  = []
@@ -16,7 +17,7 @@ if __name__ == '__main__':
         Nodes.append(Node(Points[i], V0, i))
 
     Springs = {(0,1),(1,2),(0,2)}
-    k = 100.
+    k = 100000.
     
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/100.,  id_number = 1 )
     # floe.plot_init()
@@ -53,8 +54,6 @@ if __name__ == '__main__':
     Node3y = Sol.y[9]
     
     j = 0
-    # m = 0
-    
     # tant que (node1x ou node2x depasse (5-collision_dist)): 
     #   do: enregistrer positions noeuds 
     #       calculer nouveau vitesse du noeud en contact (node1x ou node2x)
@@ -98,6 +97,7 @@ if __name__ == '__main__':
         Node3y = np.append(Node3y, After_shock_floe.Move(t_end).y[9])
         # break
         j = j+1
+    print("there are", j, "collisions")
         
     def init():
         line1.set_data([], [])
@@ -118,8 +118,8 @@ if __name__ == '__main__':
             thisy = np.append(thisy,thisy[k])
         line1.set_data(thisx[floe.n:], thisy[floe.n:])
         time_text.set_text(time_template % (i*dt))
-        # return thisx, thisy
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
                                     np.arange(400,len(Node1x)), interval=25, blit=False)
+    # ani.save("3nodes_to_Wall_2.mp4", fps=100)
