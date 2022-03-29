@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from Func import *
-from graph import *
+# from graph import *
 import numpy as np
+# from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay 
 
 if __name__ == '__main__':
     ######################
@@ -32,10 +33,11 @@ if __name__ == '__main__':
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
     k = 100.
     First_floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.  ,id_number = 1 )
-    # First_floe.plot_displacements(4)
-    
-    First_floe.plot_init()
 
+    
+    # First_floe.plot_init()
+    # print("all triangle in system", First_floe.simplices())
+    
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 5.), ylim=(-.0, 1.1))
     ax.set_aspect('equal')
@@ -49,36 +51,19 @@ if __name__ == '__main__':
     
     ### Perturbation avec une masse ponctuelle
     collision_floe = First_floe.evolution(t_end, t_end)
-    print(collision_floe.get_velocity())
+    # print(collision_floe.get_velocity())
     collision_floe.update_velocity_node(5, np.array([-.125,  0]))
     collision_floe.update_velocity_node(3, np.array([-.125,  0]))
     collision_floe.update_velocity_node(6, np.array([-.125,  0]))
-    print(collision_floe.get_velocity())
-    # collision_floe.plot_init()
-    collision_floe.plot_displacements(4)
+    # print(collision_floe.get_velocity())
+    collision_floe.plot_init()
+    # collision_floe.plot_displacements(4)
     Sol2 = collision_floe.Move(t_end)
     
     def init():
         line1.set_data([], [])
         time_text.set_text('')
         return line1, time_text
-    
-    
-    
-    # def animate_spring(i):
-    #     Ix = [j for j in range(0, First_floe.n*4, 4)]
-    #     Iy = [j for j in range(1, First_floe.n*4, 4)]
-    #     thisx = []
-    #     thisy = []
-    #     for j in Ix:
-    #         thisx = np.append(thisx, Sol.y[j][i])
-    #     for j in Iy:
-    #         thisy = np.append(thisy, Sol.y[j][i])
-    #     for k in Route:
-    #         thisx = np.append(thisx,thisx[k])
-    #         thisy = np.append(thisy,thisy[k])
-    #     line1.set_data(thisx[First_floe.n:], thisy[First_floe.n:])
-    #     return line1,
     
     def animate_spring(i):
         Ix = [j for j in range(0, First_floe.n*4, 4)]
@@ -97,6 +82,6 @@ if __name__ == '__main__':
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(700, 1400), interval=25, blit=False)
+                                    np.arange(600, 1000), interval=25, blit=False)
 
             
