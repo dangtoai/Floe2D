@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # print(After_shock_floe.get_velocity())
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 8.5), ylim=(-1.5, 1.5))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 6.5), ylim=(-1., 3.5))
     ax.set_aspect('equal')
     ax.grid()
     plt.axvline(x=5., color = "red")
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     #       calculer nouveau vitesse du noeud en contact (node1x ou node2x)
     #       concatener avec ancient position.     
     
-    while np.any(np.append(Node1x,Node2x) >5. - collision_dist)  :
+    while np.any(np.append(Node1x,Node2x) >5. - collision_dist) and j<= 1 :
         
         k = np.where(Node2x >= 5. - collision_dist)[0][0] 
         l = np.where(Node1x >= 5. - collision_dist)[0][0]
@@ -121,5 +121,5 @@ if __name__ == '__main__':
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(400,len(Node1x)), interval=25, blit=False)
+                                    np.arange(400,1000), interval=25, blit=False)
     # ani.save("3nodes_to_Wall_2.mp4", fps=100)

@@ -18,19 +18,15 @@ if __name__ == '__main__':
     Springs = {(0,1),(1,2),(0,2)}
     # k = 10000000.
     
-    floe = Floe(nodes=Nodes, springs=Springs, stiffness=100000., viscosity=k/10.,  id_number = 1 )
+    floe = Floe(nodes=Nodes, springs=Springs, stiffness=100., viscosity=10.,  id_number = 1 )
     # floe.plot_init()
     
     t_end = 4.
     collision_dist   = 0.01
     coef_restitution = 0.99
     
-    After_shock_floe = floe.evolution(t_end, t_end)
-    After_shock_floe.update_velocity_node(0, np.array([-1.5,  0]))
-    # print(After_shock_floe.get_velocity())
-
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 8.5), ylim=(-1.2, 1.2))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 6.5), ylim=(-2.2, 1.2))
     ax.set_aspect('equal')
     ax.grid()
     plt.plot(5,0, 'o', color='red')
@@ -57,7 +53,7 @@ if __name__ == '__main__':
     
     # tant que node1x depasse 5-collision_dist, calculer nouveau vitesse
     # et nouveau position, concatener avec ancient position.
-    while np.any(Node1x >5. - collision_dist) and j<=3:
+    while np.any(Node1x >5. - collision_dist) and j<=1:
         j += 1
         # print(len(Node1x))
         k = np.where(Node1x >= 5. - collision_dist)[0][0] 
@@ -123,8 +119,3 @@ if __name__ == '__main__':
     
     ani = animation.FuncAnimation(fig, animate_spring, 
                                     np.arange(600,len(Node1x)), interval=25, blit=False)
-
-    
-    
-    
-    

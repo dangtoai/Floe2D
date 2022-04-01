@@ -22,12 +22,12 @@ if __name__ == '__main__':
     Nodes = []
     t_end = 4.
     V0 = np.array([1, 0.])
-    # V1 = np.array([0.5, 0.])
+    V1 = np.array([0.5, 0.])
 
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
     # Nodes[1] = Node(Points[1], V1, 1)
-    # Nodes[5] = Node(Points[5], -V1, 5)
+    Nodes[5] = Node(Points[5], -V1, 5)
     
     Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
                (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # print("all triangle in system", First_floe.simplices())
     
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 5.), ylim=(-.0, 1.1))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 2.), ylim=(-.0, 3.1))
     ax.set_aspect('equal')
     ax.grid()
     line1, = ax.plot([], [], '.-', lw= .5)
@@ -49,16 +49,6 @@ if __name__ == '__main__':
     
     Sol = First_floe.Move(t_end)
     
-    ### Perturbation avec une masse ponctuelle
-    collision_floe = First_floe.evolution(t_end, t_end)
-    # print(collision_floe.get_velocity())
-    collision_floe.update_velocity_node(5, np.array([-.125,  0]))
-    collision_floe.update_velocity_node(3, np.array([-.125,  0]))
-    collision_floe.update_velocity_node(6, np.array([-.125,  0]))
-    # print(collision_floe.get_velocity())
-    collision_floe.plot_init()
-    # collision_floe.plot_displacements(4)
-    Sol2 = collision_floe.Move(t_end)
     
     def init():
         line1.set_data([], [])
@@ -71,9 +61,11 @@ if __name__ == '__main__':
         thisx = []
         thisy = []
         for j in Ix:
-            thisx = np.append(thisx, np.append(Sol.y[j], Sol2.y[j])[i])
+            # thisx = np.append(thisx, np.append(Sol.y[j], Sol2.y[j])[i])
+            thisx = np.append(thisx, Sol.y[j][i])
         for j in Iy:
-            thisy = np.append(thisy, np.append(Sol.y[j], Sol2.y[j])[i])
+            # thisy = np.append(thisy, np.append(Sol.y[j], Sol2.y[j])[i])
+            thisy = np.append(thisy, Sol.y[j][i])
         for k in Route:
             thisx = np.append(thisx,thisx[k])
             thisy = np.append(thisy,thisy[k])
@@ -82,6 +74,6 @@ if __name__ == '__main__':
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(600, 1000), interval=25, blit=False)
+                                    np.arange(0, 800), interval=25, blit=False)
 
             

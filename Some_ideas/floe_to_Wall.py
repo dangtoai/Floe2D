@@ -13,26 +13,16 @@ if __name__ == '__main__':
     ######################
 
     # first floe
-    # Points = np.array([[0.44080984, 0.55885409],
-    #                    [0.02987621, 0.25925245],
-    #                    [0.45683322, 0.4151012],
-    #                    [0.64914405, 0.28352508],
-    #                    [0.27848728, 0.69313792],
-    #                    [0.6762549, 0.44045372],
-    #                    [0.59086282, 0.15686774],
-    #                    [0.02398188, 0.54464902]])
     
     Points = np.array([[0.25298236, 0.59733394],
-     [0.43479153, 0.0089861 ],
-     [0.77938292, 0.38657128],
-     [0.19768507, 0.04416006],
-     [0.86299324, 0.95665297],
-     [0.98340068, 0.43614665],
-     [0.16384224, 0.94897731]])
-
-
+      [0.43479153, 0.0089861 ],
+      [0.77938292, 0.38657128],
+      [0.19768507, 0.04416006],
+      [0.86299324, 0.95665297],
+      [0.98340068, 0.43614665],
+      [0.16384224, 0.94897731]])
+    
     Nodes = []
-    t_end = 8.
     V0 = np.array([0.25, 0.])
     # V1 = np.array([0.5, 0.])
 
@@ -41,13 +31,9 @@ if __name__ == '__main__':
     # Nodes[1] = Node(Points[1], V1, 1)
     # Nodes[5] = Node(Points[5], -V1, 5)
 
-    # Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6),
-    #            (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    
-    # Springs = {(0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 4), (2, 3), (3, 4)}
-    # Springs = {(0, 1), (0, 7), (1, 2), (0, 4), (2, 7), (1, 5), (0, 3), (5, 7), (0, 6), (1, 4), (6, 7), (4, 5), (2, 6), (3, 6), (2, 5), (1, 3), (4, 7)}
     Springs = {(0, 1), (2, 4), (1, 2), (0, 4), (1, 5), (4, 6), (0, 3), (0, 6), (4, 5), (0, 2), (3, 6), (2, 5), (1, 3)}
-    k = 1000.
+    
+    k = 10.
     floe = Floe(nodes=Nodes, springs=Springs,
                 stiffness=k, viscosity=k/2., id_number=1)
     # floe.plot_init()
@@ -87,7 +73,7 @@ if __name__ == '__main__':
         All_x_positions = np.append(All_x_positions, Positions[i])
 
     j = 0
-    while np.any(All_x_positions > 2-collision_dist) and j <=18: 
+    while np.any(All_x_positions > 2-collision_dist) and j <=10: 
         m = len(All_positions_velocities[0])
         # print([np.where(Positions[i] >= 2-collision_dist)[0][0] for i in Ix])
         liste = []
@@ -142,9 +128,9 @@ if __name__ == '__main__':
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring,
-                                  np.arange(200, len(All_positions_velocities[0])), interval=25, blit=False)
+                                  np.arange(0, len(All_positions_velocities[0])), interval=25, blit=False)
 
-    ani.save("floe_to_wall.gif", writer=PillowWriter(fps=50))
+    # ani.save("floe_to_wall.gif", writer=PillowWriter(fps=50))
     
     
     
