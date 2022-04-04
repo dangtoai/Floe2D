@@ -176,13 +176,13 @@ class Floe:
         # stiffness constant of one TORSION's SPRING
         Mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
-            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j, k] / sin(np.pi/2.)
+            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j, k] / self.angle_init()[i,j,k]
             Mat[k, j, i] = Mat[i, j, k]
             
-            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j, k] / sin(np.pi/2.)
+            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j, k] / self.angle_init()[i,k,j]
             Mat[j, k, i] = Mat[i, k, j]
             
-            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i, k] / sin(np.pi/2.)
+            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i, k] / self.angle_init()[j,i,k]
             Mat[k, i, j] = Mat[j, i, k]
 
         return Mat
@@ -383,7 +383,7 @@ def Angle(A, B, C):
     return np.rad2deg(acos((-a**2+c**2+b**2)/(2*b*c)))
 
 
-G = 1.  # stiffness of torsion's spring
+G = 100.1  # stiffness of torsion's spring
 
 
 """ 

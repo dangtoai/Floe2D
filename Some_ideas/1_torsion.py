@@ -1,59 +1,31 @@
 # -*- coding: utf-8 -*-
 from Func import *
-from graph import *
+# from graph import *
 import numpy as np
 from matplotlib.animation import PillowWriter
-from math import acos, degrees
+# from math import acos, degrees
 
 if __name__ == '__main__':
     ######################
     ##### An ice floe ####
     ######################
     
-    #global constant:
-    T_end = 7.    
-    
-    J = 1.
-    C = 100.     #stiffness of torsion spring
-    f = 1.
-
-    R = 1. # traction spring's length
-    theta0 = np.pi/3.
-
-    def deriv(y,t):
-        dxdt = y[1]
-        dydt = -f/J *y[1] - C/J* y[0]
-        dzdt = [dxdt, dydt]
-        return dzdt
-
-    y0 = [30, 0.]
-    t = np.linspace(0,T_end,1000)
-
-    Solution = odeint(deriv, y0, t)
-    theta = np.deg2rad(Solution[:,0])
-    
+    #global constant:   
+ 
     Points = np.array([[0, 0.], [0., 1.], [1., 0.]])
     V0     = np.array([0., 0.])
-    V1     = np.array([.5, 0.])
+    V1     = np.array([0.75, 0.0])
     Nodes  = []
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
-    Nodes[1] = Node(Points[1], V1, 1)
+    Nodes[1] = Node(Points[1], V1, 0)
     Springs = {(0,1),(0,2)}
-    k = 100000.
+    k = 100.
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/100.,  id_number = 1 )
-    # floe.plot_init()
-    
-    #triangle measures
-    A = norm(Points[1]-Points[0])
-    B = norm(Points[2]-Points[0])
-    C = norm(Points[1]-Points[2])
-    
-    theta0 = degrees(acos((A * A + B * B - C * C)/(2.0 * A * B)))
     
     t_end = 4.
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.5, 1.1), ylim=(-.5, 1.5))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 1.5), ylim=(-1.5, 1.5))
     ax.set_aspect('equal')
     ax.grid()
     # plt.axvline(x=5., color = "red")
@@ -96,5 +68,5 @@ if __name__ == '__main__':
     ani = animation.FuncAnimation(fig, animate_spring, 
                                     np.arange(0,len(Node1x)), interval=25, blit=False)
     
-    # ani.save("123", writer=PillowWriter(fps=24))
+    # ani.save("0torsion.gif", writer=PillowWriter(fps=25))
 
