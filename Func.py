@@ -176,20 +176,20 @@ class Floe:
         # stiffness constant of one TORSION's SPRING
         Mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
-            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j, k] / self.angle_init()[i,j,k]
+            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j, k] / sin(self.angle_init()[i,j,k])
             Mat[k, j, i] = Mat[i, j, k]
             
-            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j, k] / self.angle_init()[i,k,j]
+            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j, k] / sin(self.angle_init()[i,k,j])
             Mat[j, k, i] = Mat[i, k, j]
             
-            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i, k] / self.angle_init()[j,i,k]
+            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i, k] / sin(self.angle_init()[j,i,k])
             Mat[k, i, j] = Mat[j, i, k]
 
         return Mat
 
-    # def torsion_mat(self, i, j, k):
-    #     # stiffness constant of one TORSION's SPRING
-    #     return G*self.length_mat()[i, j]*self.length_mat()[j, k]
+    def traction_mat(self):
+        Mat = np.zeros(self.n)
+        return Mat
 
     def Move(self, time_end: float()):
         N = 800
@@ -380,10 +380,7 @@ def Angle(A, B, C):
     a = norm(C-A)
     b = norm(B-A)
     c = norm(C-B)
-    return np.rad2deg(acos((-a**2+c**2+b**2)/(2*b*c)))
-
-
-G = 100.1  # stiffness of torsion's spring
+    return acos((-a**2+c**2+b**2)/(2*b*c))
 
 
 """ 
@@ -392,7 +389,7 @@ Each node i depends on TRACTION's spring (i.e spring between node i and node j n
 and TORSION's spring ( formed by the triangle it belongs to)
 """
 
-
+### have to add traction'constant in k[i]! 
 def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, torsion_mat, Angle_init, Triangle_list):
     """
     Parameters
@@ -425,25 +422,28 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, torsion_mat, An
         for j in range(i+1, i+nb_nodes):
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += (1./m)*Connex_Mat[i, j]*(k*(norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j])*u[i, j]
-                                                  + mu*(Q[2*j+1] - Q[2*i+1])@u[i, j]*u[i, j])
-        # to debug !!!
-
-        # definir un ensemble de toutes les triangles "liste_simple
-        # Faire une somme: Pour tout (i,j,k) un triangle,
-        # au noeud Y_[2*i] += 1./m *torsion_mat[i,k,l]*theta_k/norm(Q[2*i]-Q[2*k]) * 1/sin(theta_i)*u[i,k]
-
+            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+                                                  + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
+        # to debug again in the second example !!!
     for i, j, k in Triangle_list:
-        Y_[2*i+1] += (G[i, j, k]*(Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
-                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
+        u[i, j] = Unit_vect(Q[2*i], Q[2*j])
+        u[j, i] = -u[i, j]
+        u[i, k] = Unit_vect(Q[2*i], Q[2*k])
+        u[k, i] = -u[i, k]
+        u[j, k] = Unit_vect(Q[2*j], Q[2*k])
+        u[k, j] = -u[j, k]
+        Y_[2*i+1] += (1./m) * (G[i, j, k]*(Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j]) 
 
-        Y_[2*j+1] += (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
-                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i])
+        Y_[2*j+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
+                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i]) 
 
-        Y_[2*k+1] += (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
-                      + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i])
+        Y_[2*k+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
+                      + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i]) 
 
     return np.reshape(Y_, (nb_nodes*4))
 
 
 dt = 0.005
+G = 100.  # stiffness of torsion's spring
+

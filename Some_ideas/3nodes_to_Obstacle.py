@@ -18,12 +18,12 @@ if __name__ == '__main__':
     Springs = {(0,1),(1,2),(0,2)}
     # k = 10000000.
     
-    floe = Floe(nodes=Nodes, springs=Springs, stiffness=100., viscosity=10.,  id_number = 1 )
+    floe = Floe(nodes=Nodes, springs=Springs, stiffness=1000., viscosity=100.,  id_number = 1 )
     # floe.plot_init()
     
     t_end = 4.
     collision_dist   = 0.01
-    coef_restitution = 0.99
+    coef_restitution = 0.9
     
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 6.5), ylim=(-2.2, 1.2))
@@ -80,7 +80,6 @@ if __name__ == '__main__':
         
         floe = After_shock_floe
         # break
-        
         # print(" ------ " , After_shock_floe.Move(t_end).y[6][:5])
         Node1x = np.append(Node1x, After_shock_floe.Move(t_end).y[0])
         Node1y = np.append(Node1y, After_shock_floe.Move(t_end).y[1])

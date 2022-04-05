@@ -18,14 +18,14 @@ if __name__ == '__main__':
     Nodes  = []
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
-    Nodes[1] = Node(Points[1], V1, 0)
+    Nodes[1] = Node(Points[1], V1, 1)
     Springs = {(0,1),(0,2)}
-    k = 100.
-    floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/100.,  id_number = 1 )
+    k = 1000.
+    floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.,  id_number = 1 )
     
     t_end = 4.
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 1.5), ylim=(-1.5, 1.5))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 2.5), ylim=(-1.5, 1.5))
     ax.set_aspect('equal')
     ax.grid()
     # plt.axvline(x=5., color = "red")

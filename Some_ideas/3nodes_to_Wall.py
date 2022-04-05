@@ -17,9 +17,9 @@ if __name__ == '__main__':
         Nodes.append(Node(Points[i], V0, i))
 
     Springs = {(0,1),(1,2),(0,2)}
-    k = 100000.
+    k = 1.
     
-    floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/100.,  id_number = 1 )
+    floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.,  id_number = 1 )
     # floe.plot_init()
     
     t_end = 6.
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # print(After_shock_floe.get_velocity())
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 6.5), ylim=(-1., 3.5))
+    ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 5.5), ylim=(-1.9, 1.5))
     ax.set_aspect('equal')
     ax.grid()
     plt.axvline(x=5., color = "red")
