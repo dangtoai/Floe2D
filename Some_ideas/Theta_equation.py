@@ -77,7 +77,7 @@ def animate_spring(i):
 ani = animation.FuncAnimation(fig, animate_spring, 
                                 np.arange(0,len(Node1x)), interval=25, blit=False)
 
-ani.save("1Torsion.gif", writer=PillowWriter(fps=50))
+# ani.save("1Torsion.gif", writer=PillowWriter(fps=50))
 
 
 

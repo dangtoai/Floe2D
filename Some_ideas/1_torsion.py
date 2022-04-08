@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from Func import *
-# from graph import *
 import numpy as np
 from matplotlib.animation import PillowWriter
-# from math import acos, degrees
+import moviepy.editor as mp
+from moviepy.editor import VideoFileClip
+import moviepy.video.fx.all as vfx
+import matplotlib.animation as animation
 
 if __name__ == '__main__':
     ######################
@@ -20,10 +22,13 @@ if __name__ == '__main__':
         Nodes.append(Node(Points[i], V0, i))
     Nodes[1] = Node(Points[1], V1, 1)
     Springs = {(0,1),(0,2)}
-    k = 1000.
+    k = 10000.
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.,  id_number = 1 )
+    Torsion_Mat = floe.torsion_mat()
+    Angle_init = floe.angle_init()
     
-    t_end = 4.
+    
+    t_end = 8.
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True, xlim=(-.1, 2.5), ylim=(-1.5, 1.5))
     ax.set_aspect('equal')
@@ -35,7 +40,7 @@ if __name__ == '__main__':
     Route = floe.Route()
 
     #compute after contact
-    Sol = floe.Move(t_end)
+    Sol = floe.Move(t_end, Torsion_Mat, Angle_init)
     # floe.plot_displacements(t_end)
     Node2x = Sol.y[4]
     Node2y = Sol.y[5]
@@ -63,10 +68,35 @@ if __name__ == '__main__':
             thisy = np.append(thisy,thisy[k])
         line1.set_data(thisx[-floe.n:], thisy[-floe.n:])
         time_text.set_text(time_template % (i*dt))
-        # return thisx, thisy
         return line1, time_text
-    ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(0,len(Node1x)), interval=25, blit=False)
+    ani = animation.FuncAnimation(fig, animate_spring, np.arange(0,len(Node1x)), interval=25, blit=False)
     
-    # ani.save("0torsion.gif", writer=PillowWriter(fps=25))
+    # ani.save("k=20G.gif", writer=PillowWriter(fps=25))
+    
+
+plt.figure()
+
+A = [np.array([Node1x[i],Node1y[i]]) for i in range(len(Node1x))]
+B = [np.array([Node2x[i],Node2y[i]]) for i in range(len(Node1x))]
+C = [np.array([Node3x[i],Node3y[i]]) for i in range(len(Node1x))]
+
+t = np.linspace(0,t_end, len(Node1x))
+# plt.plot()
+angle = []
+for i in range(len(t)):
+    angle.append(Angle(B[i],A[i],C[i]))
+    
+plt.plot(t,angle,label = "$\Theta$")
+plt.xlabel("temps(s)")
+plt.ylabel("radians")
+# plt.ylim([np.pi/3, 1.5*np.pi/2])
+plt.legend()
+plt.show()
+
+
+
+
+
+
+
 
