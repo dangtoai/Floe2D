@@ -20,6 +20,9 @@ if __name__ == '__main__':
     k = 1.
     
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.,  id_number = 1 )
+    Length_Mat = floe.length_mat()
+    Torsion_Mat = floe.torsion_mat()
+    Angle_init = floe.angle_init()
     # floe.plot_init()
     
     t_end = 6.
@@ -44,7 +47,7 @@ if __name__ == '__main__':
     # update the new velocity
     
     #compute after contact
-    Sol = floe.Move(t_end)
+    Sol = floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init)
     # floe.plot_displacements(t_end)
     Node2x = Sol.y[4]
     Node2y = Sol.y[5]
@@ -75,7 +78,7 @@ if __name__ == '__main__':
         Node3x = Node3x[:min(k,l)]
         Node3y = Node3y[:min(k,l)]
         
-        After_shock_floe = floe.evolution(t_end, t_end *((min(k,l)-m)%800/800.)) 
+        After_shock_floe = floe.evolution(t_end, t_end *((min(k,l)-m)%800/800.), Length_Mat, Torsion_Mat, Angle_init) 
         print("last position of floe before collision \n", After_shock_floe.get_nodes())
         # print("last velocity of floe before collision \n", After_shock_floe.get_velocity())
         
@@ -89,12 +92,12 @@ if __name__ == '__main__':
         # print("new velocity of floe \n" , After_shock_floe.get_velocity())
         
         floe = After_shock_floe
-        Node1x = np.append(Node1x, After_shock_floe.Move(t_end).y[0])
-        Node1y = np.append(Node1y, After_shock_floe.Move(t_end).y[1])
-        Node2x = np.append(Node2x, After_shock_floe.Move(t_end).y[4])
-        Node2y = np.append(Node2y, After_shock_floe.Move(t_end).y[5])
-        Node3x = np.append(Node3x, After_shock_floe.Move(t_end).y[8])
-        Node3y = np.append(Node3y, After_shock_floe.Move(t_end).y[9])
+        Node1x = np.append(Node1x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[0])
+        Node1y = np.append(Node1y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[1])
+        Node2x = np.append(Node2x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[4])
+        Node2y = np.append(Node2y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[5])
+        Node3x = np.append(Node3x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[8])
+        Node3y = np.append(Node3y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[9])
         # break
         j = j+1
     print("there are", j, "collisions")

@@ -186,7 +186,7 @@ class Floe:
         Mat = np.zeros(self.n)
         return Mat
 
-    def Move(self, time_end: float, Torsion_Mat , Angle_Mat):
+    def Move(self, time_end: float, Length_Mat, Torsion_Mat , Angle_Mat):
         N = 800
         t = np.linspace(0, time_end, N)
         All_pos = self.get_nodes()
@@ -197,7 +197,7 @@ class Floe:
             Y0_ = np.append(Y0_, All_vel[i])
 
         Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
-                        args=(Y0_, self.n, self.connexe_mat(), self.length_mat(), self.m,
+                        args=(Y0_, self.n, self.connexe_mat(), Length_Mat, self.m,
                               self.mu, self.k, Torsion_Mat, Angle_Mat, self.simplices()))
         return Sol
 
@@ -237,7 +237,7 @@ class Floe:
         plt.xlabel("time(s)")
         plt.legend()
 
-    def evolution(self, time_end, time, Torsion_Mat, Angle_Mat):
+    def evolution(self, time_end, time, Length_Mat, Torsion_Mat, Angle_Mat):
         """
         Parameters
         ----------
@@ -250,7 +250,7 @@ class Floe:
         """
         assert 0 <= time <= time_end, "time must be inside the time discretisation"
         time = int(time*800/time_end)-1
-        Res = self.Move(time_end, Torsion_Mat, Angle_Mat).y
+        Res = self.Move(time_end, Length_Mat, Torsion_Mat, Angle_Mat).y
         New_Nodes_positions = []
         New_Nodes_velocity = []
         Nodes = []
@@ -408,6 +408,14 @@ def Angle_Mat(floe:Floe):
         Mat[k, i, j] = Mat[j, i, k]
         
     return Mat
+
+def Length_Mat(floe:Floe):
+    Mat = np.zeros((floe.n, floe.n))
+    for (i, j) in floe.springs:
+        Mat[i, j] = Spring(floe.nodes[i], floe.nodes[j], None).L0
+        Mat[j, i] = Mat[i, j]
+    return Mat
+    
 """ 
 Main system describes all nodes evolutions. 
 Each node i depends on TRACTION's spring (i.e spring between node i and node j neighbor)
@@ -472,4 +480,13 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, An
 
 dt = 0.005
 G = 100.  # stiffness of torsion's spring
+
+
+
+
+
+
+
+
+
 

@@ -14,13 +14,13 @@ if __name__ == '__main__':
 
     # first floe
     
-    # Points = np.array([[0.25298236, 0.59733394],
-    #   [0.43479153, 0.0089861 ],
-    #   [0.77938292, 0.38657128],
-    #   [0.19768507, 0.04416006],
-    #   [0.86299324, 0.95665297],
-    #   [0.98340068, 0.43614665],
-    #   [0.16384224, 0.94897731]])
+    Points = np.array([[0.25298236, 0.59733394],
+      [0.43479153, 0.0089861 ],
+      [0.77938292, 0.38657128],
+      [0.19768507, 0.04416006],
+      [0.86299324, 0.95665297],
+      [0.98340068, 0.43614665],
+      [0.16384224, 0.94897731]])
     
     # Points = np.array([[0.44080984, 0.55885409],
     #         [0.02987621, 0.25925245],
@@ -31,13 +31,13 @@ if __name__ == '__main__':
     #         [0.59086282, 0.15686774],
     #         [0.02398188, 0.54464902]])
     
-    Points = np.array([[0.0514672 , 0.59086282],
-           [0.44080984, 0.02398188],
-           [0.02987621, 0.55885409],
-           [0.45683322, 0.25925245],
-           [0.64914405, 0.4151012 ],
-           [0.27848728, 0.28352508],
-           [0.6762549 , 0.69313792]])
+    # Points = np.array([[0.0514672 , 0.59086282],
+    #        [0.44080984, 0.02398188],
+    #        [0.02987621, 0.55885409],
+    #        [0.45683322, 0.25925245],
+    #        [0.64914405, 0.4151012 ],
+    #        [0.27848728, 0.28352508],
+    #        [0.6762549 , 0.69313792]])
     
     
     Nodes = []
@@ -46,10 +46,10 @@ if __name__ == '__main__':
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
 
-    # Springs = {(0, 1), (2, 4), (1, 2), (0, 4), (1, 5), (4, 6), (0, 3), (0, 6), (4, 5), (0, 2), (3, 6), (2, 5), (1, 3)}
+    Springs = {(0, 1), (2, 4), (1, 2), (0, 4), (1, 5), (4, 6), (0, 3), (0, 6), (4, 5), (0, 2), (3, 6), (2, 5), (1, 3)}
     # Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6), (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    Springs = {(1, 2), (3, 4), (1, 5), (4, 6), (1, 4), (0, 6), (4, 5), (0, 2), (5, 6), (0, 5), (2, 5), (1, 3), (3, 5)}
-    
+    # Springs = {(1, 2), (3, 4), (1, 5), (4, 6), (1, 4), (0, 6), (4, 5), (0, 2), (5, 6), (0, 5), (2, 5), (1, 3), (3, 5)}
+    # 
     k = 1000.
     floe = Floe(nodes=Nodes, springs=Springs,
                 stiffness=k, viscosity=k/10., id_number=1)
@@ -71,10 +71,10 @@ if __name__ == '__main__':
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = floe.Route()
-
+    Length_Mat = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_Mat = floe.angle_init()
-    Sol = floe.Move(t_end, Torsion_Mat, Angle_Mat)
+    Sol = floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_Mat)
 
     Positions = Sol.y
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     
     # call = False
     
-    while np.any(All_x_positions > 2-collision_dist) and j <=6: 
+    while np.any(All_x_positions > 2-collision_dist) and j <= 8: 
         m = len(All_positions_velocities[0])
         liste = []
         for i in Ix:
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         for i in range(floe.n*4):
             All_positions_velocities[i] = All_positions_velocities[i][:k]
         
-        After_shock_floe = floe.evolution(t_end, t_end *((k-m)%800)/800., Torsion_Mat, Angle_Mat)
+        After_shock_floe = floe.evolution(t_end, t_end *((k-m)%800)/800., Length_Mat, Torsion_Mat, Angle_Mat)
         # print("last position of floe before collision \n", After_shock_floe.get_nodes())
         
         #update velocity of nodes at collision!!!
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         
         floe = After_shock_floe
         
-        New_position_velocities = After_shock_floe.Move(t_end, Torsion_Mat, Angle_Mat).y
+        New_position_velocities = After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_Mat).y
         for i in range(floe.n*4):
             All_positions_velocities[i] = np.append(All_positions_velocities[i], New_position_velocities[i])
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         # Mat.append(floe.torsion_mat())
         j = j+1
     
-    print(floe.angle_init())
+    # print(floe.angle_init())
     
     def init():
         line1.set_data([], [])

@@ -16,13 +16,13 @@ if __name__ == '__main__':
         Nodes.append(Node(Points[i], V0, i))
 
     Springs = {(0,1),(1,2),(0,2)}
-
     
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=10., viscosity=1.,  id_number = 1 )
     # floe.plot_init()
+    Length_Mat = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_init = floe.angle_init()
-    print(floe.length_mat())
+    # print(floe.length_mat())
     
     t_end = 4.
     collision_dist   = 0.01
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # update the new velocity
     
     #compute after contact
-    Sol = floe.Move(t_end, Torsion_Mat, Angle_init)
+    Sol = floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init)
     # floe.plot_displacements(t_end)
     Node2x = Sol.y[4]
     Node2y = Sol.y[5]
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         # print("last positions of collision's node", Node1x[-3:])
         # print(len(Node1x))
 
-        After_shock_floe = floe.evolution(t_end, t_end *((k-m)%800/800.), Torsion_Mat, Angle_init) 
+        After_shock_floe = floe.evolution(t_end, t_end *((k-m)%800/800.), Length_Mat, Torsion_Mat, Angle_init) 
         ###
         print("last position of floe before collision \n", After_shock_floe.get_nodes())
         # print("last velocity of floe before collision \n", After_shock_floe.get_velocity())
@@ -85,23 +85,19 @@ if __name__ == '__main__':
         floe = After_shock_floe
         # break
         # print(" ------ " , After_shock_floe.Move(t_end).y[6][:5])
-        Node1x = np.append(Node1x, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[0])
-        Node1y = np.append(Node1y, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[1])
-        Node2x = np.append(Node2x, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[4])
-        Node2y = np.append(Node2y, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[5])
-        Node3x = np.append(Node3x, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[8])
-        Node3y = np.append(Node3y, After_shock_floe.Move(t_end, Torsion_Mat, Angle_init).y[9])
-        
+        Node1x = np.append(Node1x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[0])
+        Node1y = np.append(Node1y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[1])
+        Node2x = np.append(Node2x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[4])
+        Node2y = np.append(Node2y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[5])
+        Node3x = np.append(Node3x, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[8])
+        Node3y = np.append(Node3y, After_shock_floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init).y[9])
         # j += 1
-        # print(j)
     
-    print(floe.length_mat())
     # Sol2 = After_shock_floe.Move(t_end-1.)
     def init():
         line1.set_data([], [])
         time_text.set_text('')
         return line1, time_text
-    
     
     def animate_spring(i):
         Ix = [j for j in range(0, floe.n*4, 4)]

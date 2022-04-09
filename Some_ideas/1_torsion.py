@@ -22,8 +22,9 @@ if __name__ == '__main__':
         Nodes.append(Node(Points[i], V0, i))
     Nodes[1] = Node(Points[1], V1, 1)
     Springs = {(0,1),(0,2)}
-    k = 10000.
+    k = 1000.
     floe = Floe(nodes=Nodes, springs=Springs, stiffness=k, viscosity=k/10.,  id_number = 1 )
+    Length_Mat = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_init = floe.angle_init()
     
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     Route = floe.Route()
 
     #compute after contact
-    Sol = floe.Move(t_end, Torsion_Mat, Angle_init)
+    Sol = floe.Move(t_end, Length_Mat, Torsion_Mat, Angle_init)
     # floe.plot_displacements(t_end)
     Node2x = Sol.y[4]
     Node2y = Sol.y[5]
