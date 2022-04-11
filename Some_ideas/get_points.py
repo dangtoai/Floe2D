@@ -9,7 +9,7 @@ import scipy
 from scipy import stats
 
 
-np.random.seed(3)
+np.random.seed(2)
 xMin=0;xMax=1
 yMin=0;yMax=1
 xDelta=xMax-xMin

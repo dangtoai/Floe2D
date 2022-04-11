@@ -10,6 +10,7 @@ import matplotlib.animation as animation
 
 # 4 classes Node-> Spring-> Ice-Floe-> Percussion to generate the Percussion of 2 floes
 
+
 class Node:
     """A class representing one node of an ice floe"""
 
@@ -51,7 +52,6 @@ class Spring:
         return [self.node1.position(), self.node2.position(), self.L0]
 
 
-
 class Floe:
     """
     A class representing an ice floe
@@ -75,6 +75,12 @@ class Floe:
         self.mu = viscosity
         self.L = tenacity
         self.id = id_number
+
+    def generate_springs(self):
+        l = []
+        for s in self.springs:
+            l.append(Spring(self.nodes[s[0]], self.nodes[s[1]], None))
+        return l
 
     def center(self):
         center = sum(self.get_nodes())/self.n
@@ -105,6 +111,13 @@ class Floe:
     def center_velocity(self):
         all_velocity = self.get_velocity()
         return sum(all_velocity/self.n)
+
+    def E0_traction(self):
+        Sum = 0
+        L = self.length_mat()
+        for i, j, k in self.simplices():
+            Sum += self.k * (L[i,j]**2 + L[i,k]**2 + L[j,k]**2)
+        return Sum/2.
 
     def Route(self):
         g = UndirectedGraph(self.n)
@@ -157,28 +170,34 @@ class Floe:
         Mat = np.zeros((self.n, self.n, self.n))
         Nodes_positions = self.get_nodes()
         for i, j, k in self.simplices():
-            Mat[i, j, k] = Angle(Nodes_positions[i], Nodes_positions[j], Nodes_positions[k])
+            Mat[i, j, k] = Angle(Nodes_positions[i],
+                                 Nodes_positions[j], Nodes_positions[k])
             Mat[k, j, i] = Mat[i, j, k]
-            
-            Mat[i, k, j] = Angle(Nodes_positions[i], Nodes_positions[k], Nodes_positions[j])
+
+            Mat[i, k, j] = Angle(Nodes_positions[i],
+                                 Nodes_positions[k], Nodes_positions[j])
             Mat[j, k, i] = Mat[i, k, j]
-            
-            Mat[j, i, k] = Angle(Nodes_positions[j], Nodes_positions[i], Nodes_positions[k])
+
+            Mat[j, i, k] = Angle(Nodes_positions[j],
+                                 Nodes_positions[i], Nodes_positions[k])
             Mat[k, i, j] = Mat[j, i, k]
-            
+
         return Mat
 
     def torsion_mat(self):
         """ stiffness constant of every torsion spring """
         Mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
-            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j, k] / sin(self.angle_init()[i,j,k])
+            Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j,
+                                                                           k] / sin(self.angle_init()[i, j, k])
             Mat[k, j, i] = Mat[i, j, k]
-            
-            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j, k] / sin(self.angle_init()[i,k,j])
+
+            Mat[i, k, j] = G * self.length_mat()[i, k] * self.length_mat()[j,
+                                                                           k] / sin(self.angle_init()[i, k, j])
             Mat[j, k, i] = Mat[i, k, j]
-            
-            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i, k] / sin(self.angle_init()[j,i,k])
+
+            Mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i,
+                                                                           k] / sin(self.angle_init()[j, i, k])
             Mat[k, i, j] = Mat[j, i, k]
         return Mat
 
@@ -186,13 +205,13 @@ class Floe:
         Mat = np.zeros(self.n)
         return Mat
 
-    def Move(self, time_end: float, Length_Mat, Torsion_Mat , Angle_Mat):
+    def Move(self, time_end: float, Length_Mat, Torsion_Mat, Angle_Mat):
         N = 800
         t = np.linspace(0, time_end, N)
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
         Y0_ = np.array([])
-        for i in range(self.n): 
+        for i in range(self.n):
             Y0_ = np.append(Y0_, All_pos[i])
             Y0_ = np.append(Y0_, All_vel[i])
 
@@ -298,18 +317,17 @@ class Floe:
 
 
 class Energy:
-    def __init__(self, floe: Floe, time_end = 4.):
+    def __init__(self, floe: Floe, time_end=4.):
         self.floe = floe
         self.t_end = time_end
-    
+
     # simulation = self.Move(self.t_end)
-    
+
     def Traction_energy(self):
         return 0
-    
+
     def Torsion_energy(self):
         return 0
-
 
 
 class Percussion:
@@ -337,6 +355,12 @@ class Percussion:
         distance_evolution = [
             norm(center1_position[i]-center2_position[i]) for i in range(self.t.size)]
         return distance_evolution < contact_distance
+
+
+def node_to_node(node1: Node, node2: Node):
+    position1 = node1.position()
+    position2 = node2.position()
+    return norm(position1-position2)
 
 
 def node_to_floe(node: Node, floe: Floe):
@@ -380,49 +404,61 @@ def Angle(A, B, C):
     c = norm(C-B)
     return acos((-a**2+c**2+b**2)/(2*b*c))
 
-def Torsion_Mat(floe:Floe):
+
+def Torsion_Mat(floe: Floe):
     """ stiffness constant of every torsion spring """
     Mat = np.zeros((floe.n, floe.n, floe.n))
     for i, j, k in floe.simplices():
-        Mat[i, j, k] = G * floe.length_mat()[i, j] * floe.length_mat()[j, k] / sin(floe.angle_init()[i,j,k])
+        Mat[i, j, k] = G * floe.length_mat()[i, j] * floe.length_mat()[j,
+                                                                       k] / sin(floe.angle_init()[i, j, k])
         Mat[k, j, i] = Mat[i, j, k]
-        
-        Mat[i, k, j] = G * floe.length_mat()[i, k] * floe.length_mat()[j, k] / sin(floe.angle_init()[i,k,j])
+
+        Mat[i, k, j] = G * floe.length_mat()[i, k] * floe.length_mat()[j,
+                                                                       k] / sin(floe.angle_init()[i, k, j])
         Mat[j, k, i] = Mat[i, k, j]
-        
-        Mat[j, i, k] = G * floe.length_mat()[i, j] * floe.length_mat()[i, k] / sin(floe.angle_init()[j,i,k])
+
+        Mat[j, i, k] = G * floe.length_mat()[i, j] * floe.length_mat()[i,
+                                                                       k] / sin(floe.angle_init()[j, i, k])
         Mat[k, i, j] = Mat[j, i, k]
     return Mat
 
-def Angle_Mat(floe:Floe):
+
+def Angle_Mat(floe: Floe):
     Mat = np.zeros((floe.n, floe.n, floe.n))
     Nodes_positions = floe.get_nodes()
     for i, j, k in floe.simplices():
-        Mat[i, j, k] = Angle(Nodes_positions[i], Nodes_positions[j], Nodes_positions[k])
+        Mat[i, j, k] = Angle(Nodes_positions[i],
+                             Nodes_positions[j], Nodes_positions[k])
         Mat[k, j, i] = Mat[i, j, k]
-        
-        Mat[i, k, j] = Angle(Nodes_positions[i], Nodes_positions[k], Nodes_positions[j])
+
+        Mat[i, k, j] = Angle(Nodes_positions[i],
+                             Nodes_positions[k], Nodes_positions[j])
         Mat[j, k, i] = Mat[i, k, j]
-        
-        Mat[j, i, k] = Angle(Nodes_positions[j], Nodes_positions[i], Nodes_positions[k])
+
+        Mat[j, i, k] = Angle(Nodes_positions[j],
+                             Nodes_positions[i], Nodes_positions[k])
         Mat[k, i, j] = Mat[j, i, k]
-        
+
     return Mat
 
-def Length_Mat(floe:Floe):
+
+def Length_Mat(floe: Floe):
     Mat = np.zeros((floe.n, floe.n))
     for (i, j) in floe.springs:
         Mat[i, j] = Spring(floe.nodes[i], floe.nodes[j], None).L0
         Mat[j, i] = Mat[i, j]
     return Mat
-    
+
+
 """ 
 Main system describes all nodes evolutions. 
 Each node i depends on TRACTION's spring (i.e spring between node i and node j neighbor)
 and TORSION's spring ( formed by the triangle it belongs to)
 """
 
-### have to add traction'constant in k[i]! 
+# have to add traction'constant in k[i]!
+
+
 def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, Angle_init, Triangle_list):
     """
     Parameters
@@ -456,7 +492,7 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, An
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
             Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
-                                                  + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
+                                                      + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
         # to debug again in the second example !!!
     for i, j, k in Triangle_list:
         u[i, j] = Unit_vect(Q[2*i], Q[2*j])
@@ -466,27 +502,16 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, An
         u[j, k] = Unit_vect(Q[2*j], Q[2*k])
         u[k, j] = -u[j, k]
         Y_[2*i+1] += (1./m) * (G[i, j, k]*(Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
-                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j]) 
+                               + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
 
         Y_[2*j+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
-                      + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i]) 
+                               + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i])
 
         Y_[2*k+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
-                      + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i]) 
+                               + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i])
 
     return np.reshape(Y_, (nb_nodes*4))
 
 
-
 dt = 0.005
 G = 100.  # stiffness of torsion's spring
-
-
-
-
-
-
-
-
-
-
