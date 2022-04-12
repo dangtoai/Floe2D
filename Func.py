@@ -202,10 +202,20 @@ class Floe:
         return Mat
 
     def traction_mat(self):
-        Mat = np.zeros(self.n)
+        Mat = np.zeros((self.n, self.n))
+        for i,j,k in self.simplices():
+            Mat[i,j] += self.k / sin(self.angle_init()[i,k,j]) 
+            Mat[j,i] = Mat[i,j]
+            
+            Mat[i,k] += self.k / sin(self.angle_init()[i,j,k]) 
+            Mat[k,i] = Mat[i,k]
+            
+            Mat[j,k] += self.k / sin(self.angle_init()[k,i,j]) 
+            Mat[k,j] = Mat[j,k]
+        
         return Mat
 
-    def Move(self, time_end: float, Length_Mat, Torsion_Mat, Angle_Mat):
+    def Move(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         N = 800
         t = np.linspace(0, time_end, N)
         All_pos = self.get_nodes()
@@ -217,7 +227,7 @@ class Floe:
 
         Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
                         args=(Y0_, self.n, self.connexe_mat(), Length_Mat, self.m,
-                              self.mu, self.k, Torsion_Mat, Angle_Mat, self.simplices()))
+                              self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices()))
         return Sol
 
     def plot_init(self):
@@ -256,7 +266,7 @@ class Floe:
         plt.xlabel("time(s)")
         plt.legend()
 
-    def evolution(self, time_end, time, Length_Mat, Torsion_Mat, Angle_Mat):
+    def evolution(self, time_end, time, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         """
         Parameters
         ----------
@@ -269,7 +279,7 @@ class Floe:
         """
         assert 0 <= time <= time_end, "time must be inside the time discretisation"
         time = int(time*800/time_end)-1
-        Res = self.Move(time_end, Length_Mat, Torsion_Mat, Angle_Mat).y
+        Res = self.Move(time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
         New_Nodes_positions = []
         New_Nodes_velocity = []
         Nodes = []
@@ -459,7 +469,7 @@ and TORSION's spring ( formed by the triangle it belongs to)
 # have to add traction'constant in k[i]!
 
 
-def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, Angle_init, Triangle_list):
+def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list):
     """
     Parameters
     ----------
@@ -484,16 +494,18 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, An
     u = np.zeros((nb_nodes, nb_nodes, 2))
     Q = np.reshape(Y, (nb_nodes*2, 2))
     Y_ = np.zeros_like(Q)
-    G = Torsion_mat
+    k  = Traction_mat
+    G  = Torsion_mat
     Theta0 = Angle_init
+    
     for i in range(0, nb_nodes):
         Y_[2*i] = Q[2*i+1]
         for j in range(i+1, i+nb_nodes):
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i,j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
                                                       + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
-        # to debug again in the second example !!!
+        
     for i, j, k in Triangle_list:
         u[i, j] = Unit_vect(Q[2*i], Q[2*j])
         u[j, i] = -u[i, j]
@@ -501,7 +513,7 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, k, Torsion_mat, An
         u[k, i] = -u[i, k]
         u[j, k] = Unit_vect(Q[2*j], Q[2*k])
         u[k, j] = -u[j, k]
-        Y_[2*i+1] += (1./m) * (G[i, j, k]*(Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+        Y_[2*i+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
                                + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
 
         Y_[2*j+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
