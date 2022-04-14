@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 14 14:31:44 2022
+
+@author: user
+"""
+
 from Func import *
 from graph import *
 import numpy as np
@@ -6,55 +12,37 @@ import matplotlib.animation as animation
 from matplotlib.animation import FFMpegFileWriter
 from IPython import display
 
-
 if __name__ == '__main__':
     ######################
     ##### An ice floe ####
     ######################
 
     # first floe
-    Points = np.array([[0.25298236, 0.59733394],
-      [0.43479153, 0.0089861 ],
-      [0.77938292, 0.38657128],
-      [0.19768507, 0.04416006],
-      [0.86299324, 0.95665297],
-      [0.98340068, 0.43614665],
-      [0.16384224, 0.94897731]])
-
-    # Points = np.array([[0.44080984, 0.55885409],
-    #         [0.02987621, 0.25925245],
-    #         [0.45683322, 0.4151012 ],
-    #         [0.64914405, 0.28352508],
-    #         [0.27848728, 0.69313792],
-    #         [0.6762549 , 0.44045372],
-    #         [0.59086282, 0.15686774],
-    #         [0.02398188, 0.54464902]])
-
-    # Points = np.array([[0.33033482, 0.26682728],
-    #                    [0.20464863, 0.62113383],
-    #                    [0.61927097, 0.52914209],
-    #                    [0.29965467, 0.13457995]])
-
+    Points = np.array([[0., 0.], [1.1, 0], [1, 1], [0., 1]])
+    Springs = {(0,1),(0,2),(0,3),(2,3),(1,2)}
+    
     Nodes = []
     V0 = np.array([0.75, 0.])
-
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
-
-    Springs = {(0, 1), (2, 4), (1, 2), (0, 4), (1, 5), (4, 6), (0, 3), (0, 6), (4, 5), (0, 2), (3, 6), (2, 5), (1, 3)}
-    # Springs = {(0, 7), (1, 2), (0, 4), (2, 7), (2, 3), (1, 7), (0, 2), (2, 6), (4, 5), (0, 5), (3, 6), (1, 6), (2, 5), (4, 7), (3, 5)}
-    # Springs = {(0, 1), (1, 2), (0, 3), (2, 3), (0, 2), (1, 3)}
+    
     k = 1000.
     floe = Floe(nodes=Nodes, springs=Springs,
                 stiffness=k, viscosity=k/10., id_number=1)
-
+    
+    #carateristic of floe
+    Length_Mat = floe.length_mat()
+    Traction_Mat = floe.traction_mat()
+    Torsion_Mat = floe.torsion_mat()
+    Angle_Mat = floe.angle_init()
+    
     t_end = 4.
     collision_dist = 0.01
     coef_restitution = 0.9
 
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True,
-                         xlim=(.5, 2.1), ylim=(-.5, 1.1))
+                         xlim=(0., 2.1), ylim=(-.5, 1.5))
     ax.set_aspect('equal')
     ax.grid()
     plt.axvline(x=2., color="red")
@@ -62,13 +50,8 @@ if __name__ == '__main__':
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = floe.Route()
-
-    Length_Mat = floe.length_mat()
-    Traction_Mat = floe.traction_mat()
-    Torsion_Mat = floe.torsion_mat()
-    Angle_Mat = floe.angle_init()
+    
     Sol = floe.Move(t_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
-
     Positions = Sol.y
 
     Ix = [j for j in range(0, floe.n*4, 4)]
@@ -84,7 +67,7 @@ if __name__ == '__main__':
 
     j = 0
 
-    while np.any(All_x_positions > 2-collision_dist) and j <= 8:
+    while np.any(All_x_positions > 2-collision_dist) and j <= 4:
         m = len(All_positions_velocities[0])
         liste = []
         for i in Ix:
@@ -92,9 +75,7 @@ if __name__ == '__main__':
                 np.where(All_positions_velocities[i] >= 2-collision_dist)[0])
         for i in range(len(liste)):
             if len(liste[i]) == 0:
-                liste[i] = [10000]
-        # liste = [np.where(All_positions_velocities[i] >= 2-collision_dist)[0][0] for i in Ix]
-        # print(floe.torsion_mat())
+                liste[i] = [1000]
         for i in range(len(liste)):
             liste[i] = min(liste[i])
         k = min(liste)
@@ -103,9 +84,7 @@ if __name__ == '__main__':
         for i in range(floe.n*4):
             All_positions_velocities[i] = All_positions_velocities[i][:k]
 
-        After_shock_floe = floe.evolution(
-            t_end, t_end * ((k-m) % 800)/800., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
-        # print("last position of floe before collision \n", After_shock_floe.get_nodes())
+        After_shock_floe = floe.evolution( t_end, t_end * ((k-m) % 800)/800., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
 
         # update velocity of nodes when collision!!!
         velocity_after_shock = -coef_restitution * \
@@ -125,7 +104,6 @@ if __name__ == '__main__':
         for i in Ix:
             All_x_positions = np.append(
                 All_x_positions, All_positions_velocities[i])
-
         j = j+1
 
     # Energy study:
@@ -187,6 +165,15 @@ if __name__ == '__main__':
         return line1, time_text
 
     ani = animation.FuncAnimation(fig, animate_spring,
-                                  np.arange(200, len(All_positions_velocities[0])-200), interval=25, blit=False)
+                                  np.arange(0, len(All_positions_velocities[0])-200), interval=25, blit=False)
 
-    # ani.save("floe_to_wall.gif", writer='pillow')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

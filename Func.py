@@ -116,7 +116,7 @@ class Floe:
         Sum = 0
         L = self.length_mat()
         for i, j, k in self.simplices():
-            Sum += self.k * (L[i,j]**2 + L[i,k]**2 + L[j,k]**2)
+            Sum += self.k * (L[i, j]**2 + L[i, k]**2 + L[j, k]**2)
         return Sum/2.
 
     def Route(self):
@@ -203,16 +203,16 @@ class Floe:
 
     def traction_mat(self):
         Mat = np.zeros((self.n, self.n))
-        for i,j,k in self.simplices():
-            Mat[i,j] += self.k / sin(self.angle_init()[i,k,j]) 
-            Mat[j,i] = Mat[i,j]
-            
-            Mat[i,k] += self.k / sin(self.angle_init()[i,j,k]) 
-            Mat[k,i] = Mat[i,k]
-            
-            Mat[j,k] += self.k / sin(self.angle_init()[k,i,j]) 
-            Mat[k,j] = Mat[j,k]
-        
+        for i, j, k in self.simplices():
+            Mat[i, j] += self.k / sin(self.angle_init()[i, k, j])
+            Mat[j, i] = Mat[i, j]
+
+            Mat[i, k] += self.k / sin(self.angle_init()[i, j, k])
+            Mat[k, i] = Mat[i, k]
+
+            Mat[j, k] += self.k / sin(self.angle_init()[k, i, j])
+            Mat[k, j] = Mat[j, k]
+
         return Mat
 
     def Move(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
@@ -254,8 +254,10 @@ class Floe:
         Plot the position's evolution of all nodes.
 
         """
-        time = self.Move(time_end).t
-        solution = self.Move(time_end).y
+        time = self.Move(time_end, self.traction_mat(), self.length_mat(),
+                        self.torsion_mat(), self.angle_init()).t
+        solution = self.Move(time_end, self.traction_mat(), self.length_mat(),
+                        self.torsion_mat(), self.angle_init()).y
         Index_x = np.arange(0, 4*self.n, 4)
         Index_y = Index_x + 1
         plt.figure()
@@ -264,7 +266,8 @@ class Floe:
         for i in Index_y:
             plt.plot(time, solution[i])
         plt.xlabel("time(s)")
-        plt.legend()
+        
+        # plt.legend()
 
     def evolution(self, time_end, time, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         """
@@ -279,7 +282,8 @@ class Floe:
         """
         assert 0 <= time <= time_end, "time must be inside the time discretisation"
         time = int(time*800/time_end)-1
-        Res = self.Move(time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
+        Res = self.Move(time_end, Traction_Mat, Length_Mat,
+                        Torsion_Mat, Angle_Mat).y
         New_Nodes_positions = []
         New_Nodes_velocity = []
         Nodes = []
@@ -295,32 +299,41 @@ class Floe:
         New_floe = Floe(nodes=Nodes, springs=self.springs)
         return New_floe
 
-    def position_at_time(self, time_end, time):
-        """
-        Parameters
-        ----------
-        time_end.
-        At each time's step, save the position of all node as a floe.
-        Returns
-        -------
-        Position of all nodes at time t .
-        """
-        assert 0 <= time <= time_end, "time must be inside simulation interval"
-        return self.New_floe(time_end, time).get_nodes()
+    def energy_evolution(self, time_end):
+        Length_Mat = self.length_mat()
+        Traction_Mat = self.traction_mat()
+        Torsion_Mat = self.torsion_mat()
+        Angle_Mat = self.angle_init()
+        Sol = self.Move(time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
+        
+        Traction_energy = np.zeros(len(Sol.t))
+        Torsion_energy = np.zeros(len(Sol.t))
+        
+        for index in range(len(Sol.t)):
+            Sum1 = 0.
+            Sum2 = 0.
+            for i, j, k in self.simplices():
+                Qi = np.array([Sol.y[4*i][index],
+                              Sol.y[4*i+1][index]])
+                Qj = np.array([Sol.y[4*j][index],
+                              Sol.y[4*j+1][index]])
+                Qk = np.array([Sol.y[4*k][index],
+                              Sol.y[4*k+1][index]])
+                
+                #change self.k by self.traction_mat()[i]
+                Sum1 += 0.5 * (Traction_Mat[i,j] * (norm(Qi-Qj) - Length_Mat[i, j])**2
+                                        + Traction_Mat[i,k] * (norm(Qi-Qk) - Length_Mat[i, k])**2
+                                        + Traction_Mat[j,k] * (norm(Qj-Qk) - Length_Mat[j, k])**2)
 
-    def velocity_at_time(self, time_end, time):
-        """
-        Parameters
-        ----------
-        time_end.
-        At each time's step, save the position of all node as a floe.
-        Returns
-        -------
-        velocity of all nodes at time t .
-        """
-        assert 0 <= time <= time_end, "time must be inside the simulation interval"
-        return self.New_floe(time_end, time).get_velocity()
+                Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
+                               + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
+                               + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
 
+            Traction_energy[index] = Sum1
+            Torsion_energy[index] = Sum2
+            Total_energy = Traction_energy + Torsion_energy
+        return Traction_energy, Torsion_energy, Total_energy 
+          
     def update_velocity_node(self, i, new_velocity):
         self.nodes[i] = Node(self.nodes[i].position(),
                              new_velocity, self.nodes[i].id)
@@ -494,18 +507,18 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Tors
     u = np.zeros((nb_nodes, nb_nodes, 2))
     Q = np.reshape(Y, (nb_nodes*2, 2))
     Y_ = np.zeros_like(Q)
-    k  = Traction_mat
-    G  = Torsion_mat
+    k = Traction_mat
+    G = Torsion_mat
     Theta0 = Angle_init
-    
+
     for i in range(0, nb_nodes):
         Y_[2*i] = Q[2*i+1]
         for j in range(i+1, i+nb_nodes):
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i,j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
                                                       + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
-        
+
     for i, j, k in Triangle_list:
         u[i, j] = Unit_vect(Q[2*i], Q[2*j])
         u[j, i] = -u[i, j]
