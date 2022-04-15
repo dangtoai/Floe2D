@@ -57,7 +57,7 @@ class Floe:
     A class representing an ice floe
     """
 
-    def __init__(self, nodes=None, springs=None, mass=1.0, stiffness=15, viscosity=2.0, tenacity=1.0, id_number=None):
+    def __init__(self, nodes=None, springs=None, mass=1., stiffness=15, viscosity=2.0, tenacity=1.0, id_number=None):
         if nodes:
             self.nodes = nodes
             self.n = len(nodes)
@@ -70,7 +70,7 @@ class Floe:
             print("Ice floe "+str(id_number) +
                   " created but contains no springs")
 
-        self.m = mass
+        self.m = mass  # mass of each node
         self.k = stiffness
         self.mu = viscosity
         self.L = tenacity
@@ -255,9 +255,9 @@ class Floe:
 
         """
         time = self.Move(time_end, self.traction_mat(), self.length_mat(),
-                        self.torsion_mat(), self.angle_init()).t
+                         self.torsion_mat(), self.angle_init()).t
         solution = self.Move(time_end, self.traction_mat(), self.length_mat(),
-                        self.torsion_mat(), self.angle_init()).y
+                             self.torsion_mat(), self.angle_init()).y
         Index_x = np.arange(0, 4*self.n, 4)
         Index_y = Index_x + 1
         plt.figure()
@@ -266,7 +266,7 @@ class Floe:
         for i in Index_y:
             plt.plot(time, solution[i])
         plt.xlabel("time(s)")
-        
+
         # plt.legend()
 
     def evolution(self, time_end, time, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
@@ -296,7 +296,7 @@ class Floe:
         for i in range(self.n):
             Nodes.append(
                 Node(New_Nodes_positions[i], New_Nodes_velocity[i], i))
-        New_floe = Floe(nodes=Nodes, springs=self.springs)
+        New_floe = Floe(nodes=Nodes, springs = self.springs, stiffness = self.k)
         return New_floe
 
     def energy_evolution(self, time_end):
@@ -304,11 +304,12 @@ class Floe:
         Traction_Mat = self.traction_mat()
         Torsion_Mat = self.torsion_mat()
         Angle_Mat = self.angle_init()
-        Sol = self.Move(time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
-        
+        Sol = self.Move(time_end, Traction_Mat,
+                        Length_Mat, Torsion_Mat, Angle_Mat)
+
         Traction_energy = np.zeros(len(Sol.t))
         Torsion_energy = np.zeros(len(Sol.t))
-        
+
         for index in range(len(Sol.t)):
             Sum1 = 0.
             Sum2 = 0.
@@ -319,38 +320,27 @@ class Floe:
                               Sol.y[4*j+1][index]])
                 Qk = np.array([Sol.y[4*k][index],
                               Sol.y[4*k+1][index]])
-                
-                #change self.k by self.traction_mat()[i]
-                Sum1 += 0.5 * (Traction_Mat[i,j] * (norm(Qi-Qj) - Length_Mat[i, j])**2
-                                        + Traction_Mat[i,k] * (norm(Qi-Qk) - Length_Mat[i, k])**2
-                                        + Traction_Mat[j,k] * (norm(Qj-Qk) - Length_Mat[j, k])**2)
+
+                # change self.k by self.traction_mat()[i]
+                Sum1 += 0.5 * (Traction_Mat[i, j] * (norm(Qi-Qj) - Length_Mat[i, j])**2
+                               + Traction_Mat[i, k] *
+                               (norm(Qi-Qk) - Length_Mat[i, k])**2
+                               + Traction_Mat[j, k] * (norm(Qj-Qk) - Length_Mat[j, k])**2)
 
                 Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
-                               + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
+                               + Torsion_Mat[i, k, j] *
+                               (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
                                + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
 
             Traction_energy[index] = Sum1
             Torsion_energy[index] = Sum2
             Total_energy = Traction_energy + Torsion_energy
-        return Traction_energy, Torsion_energy, Total_energy 
-          
+        return Traction_energy, Torsion_energy, Total_energy
+
     def update_velocity_node(self, i, new_velocity):
         self.nodes[i] = Node(self.nodes[i].position(),
                              new_velocity, self.nodes[i].id)
 
-
-class Energy:
-    def __init__(self, floe: Floe, time_end=4.):
-        self.floe = floe
-        self.t_end = time_end
-
-    # simulation = self.Move(self.t_end)
-
-    def Traction_energy(self):
-        return 0
-
-    def Torsion_energy(self):
-        return 0
 
 
 class Percussion:
@@ -361,11 +351,6 @@ class Percussion:
         self.eps = restitution_coef
         self.eta = eta
 
-    # def check_collision(self):
-    #     collide = False
-    #     for i in range(len(self.t)):
-    #         0
-    #     return collide
 
     def compute_before_contact(self):
         r1 = self.floe1.First_radius()
@@ -378,6 +363,77 @@ class Percussion:
         distance_evolution = [
             norm(center1_position[i]-center2_position[i]) for i in range(self.t.size)]
         return distance_evolution < contact_distance
+
+
+class Percussion_Wall:
+    def __init__(self, floe: Floe, Wall=2., restitution_coef=0.9, time_end=4., eta=0.01):
+        self.t_end = time_end
+        self.t = np.linspace(0, time_end, 800)
+        self.floe = floe
+        self.Wall = Wall
+        self.eps = restitution_coef
+        self.eta = eta  # collision distance
+
+    def simulation(self):
+        Length_Mat = self.floe.length_mat()
+        Traction_Mat = self.floe.traction_mat()
+        Torsion_Mat = self.floe.torsion_mat()
+        Angle_Mat = self.floe.angle_init()
+
+        floe = self.floe
+        Sol  = self.floe.Move(self.t_end, Traction_Mat,
+                             Length_Mat, Torsion_Mat, Angle_Mat)
+        Positions = Sol.y
+
+        Ix = [j for j in range(0, self.floe.n*4, 4)]
+        All_x_positions = []
+        # save all positions of all nodes
+        All_positions_velocities = [[]]*self.floe.n*4
+        for i in range(self.floe.n*4):
+            All_positions_velocities[i] = Positions[i]
+
+        # save positions and velocity of the first simulation
+        for i in Ix:
+            All_x_positions = np.append(All_x_positions, Positions[i])
+
+        while np.any(All_x_positions > self.Wall - self.eta):
+            m = len(All_positions_velocities[0])
+            liste = []
+            for i in Ix:
+                liste.append(
+                    np.where(All_positions_velocities[i] >= self.Wall - self.eta)[0])
+            for i in range(len(liste)):
+                if len(liste[i]) == 0:
+                    liste[i] = [1000]
+            for i in range(len(liste)):
+                liste[i] = min(liste[i])
+            k = min(liste)
+            index_nodes_contact = np.where(liste == min(liste))[0][0]
+            print(k)
+            for i in range(self.floe.n*4):
+                All_positions_velocities[i] = All_positions_velocities[i][:k]
+
+            After_shock_floe = floe.evolution(
+                self.t_end, self.t_end * ((k-m) % 800)/800., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
+            After_shock_floe = Floe(After_shock_floe.nodes, After_shock_floe.springs)
+            # update velocity of nodes when collision!!!
+            velocity_after_shock = -self.eps * \
+                After_shock_floe.get_velocity()[index_nodes_contact]
+            After_shock_floe.update_velocity_node(
+                index_nodes_contact, velocity_after_shock)
+            # run simulation again with the floe after shock
+            floe = After_shock_floe
+            New_position_velocities = After_shock_floe.Move(
+                self.t_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
+            for i in range(self.floe.n*4):
+                All_positions_velocities[i] = np.append(
+                    All_positions_velocities[i], New_position_velocities[i])
+
+            All_x_positions = []
+            for i in Ix:
+                All_x_positions = np.append(
+                    All_x_positions, All_positions_velocities[i])
+        return All_positions_velocities
 
 
 def node_to_node(node1: Node, node2: Node):
