@@ -50,6 +50,10 @@ if __name__ == '__main__':
  
     Traction_energy = np.zeros(len(All_positions_velocities[0]))
     Torsion_energy = np.zeros(len(All_positions_velocities[0]))
+    Traction_Mat = floe.traction_mat()
+    Length_Mat  = floe.length_mat()
+    Torsion_Mat = floe.torsion_mat()
+    Angle_Mat = floe.angle_init()
 
     for index in range(len(All_positions_velocities[0])):
         Sum1 = 0.
