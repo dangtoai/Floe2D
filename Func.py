@@ -296,7 +296,7 @@ class Floe:
         for i in range(self.n):
             Nodes.append(
                 Node(New_Nodes_positions[i], New_Nodes_velocity[i], i))
-        New_floe = Floe(nodes=Nodes, springs = self.springs, stiffness = self.k)
+        New_floe = Floe(nodes=Nodes, springs=self.springs, stiffness=self.k)
         return New_floe
 
     def energy_evolution(self, time_end):
@@ -342,7 +342,6 @@ class Floe:
                              new_velocity, self.nodes[i].id)
 
 
-
 class Percussion:
     def __init__(self, floe1: Floe, floe2: Floe, restitution_coef=0.4, time_end=4., eta=0.1):
         self.t = np.linspace(0, time_end, 800)
@@ -350,7 +349,6 @@ class Percussion:
         self.floe2 = floe2
         self.eps = restitution_coef
         self.eta = eta
-
 
     def compute_before_contact(self):
         r1 = self.floe1.First_radius()
@@ -381,7 +379,7 @@ class Percussion_Wall:
         Angle_Mat = self.floe.angle_init()
 
         floe = self.floe
-        Sol  = self.floe.Move(self.t_end, Traction_Mat,
+        Sol = self.floe.Move(self.t_end, Traction_Mat,
                              Length_Mat, Torsion_Mat, Angle_Mat)
         Positions = Sol.y
 
@@ -396,7 +394,8 @@ class Percussion_Wall:
         for i in Ix:
             All_x_positions = np.append(All_x_positions, Positions[i])
 
-        while np.any(All_x_positions > self.Wall - self.eta):
+        j = 0
+        while np.any(All_x_positions > self.Wall - self.eta) and j <= 8:
             m = len(All_positions_velocities[0])
             liste = []
             for i in Ix:
@@ -415,7 +414,8 @@ class Percussion_Wall:
 
             After_shock_floe = floe.evolution(
                 self.t_end, self.t_end * ((k-m) % 800)/800., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat)
-            After_shock_floe = Floe(After_shock_floe.nodes, After_shock_floe.springs)
+            After_shock_floe = Floe(
+                After_shock_floe.nodes, After_shock_floe.springs)
             # update velocity of nodes when collision!!!
             velocity_after_shock = -self.eps * \
                 After_shock_floe.get_velocity()[index_nodes_contact]
@@ -433,7 +433,30 @@ class Percussion_Wall:
             for i in Ix:
                 All_x_positions = np.append(
                     All_x_positions, All_positions_velocities[i])
+            j += 1
         return All_positions_velocities
+    
+    def position_at_time(self, time_step):
+        """
+        Parameters
+        ----------
+        time_step :.
+
+        Returns
+        -------
+        Positions of each nodes at time_step of simulation
+        """
+        All_positions_velocities = self.simulation()
+        I = [j for j in range(0, self.floe.n*4, 4)]
+        
+        Pos = [np.array([All_positions_velocities[I[i]][time_step],
+                          All_positions_velocities[I[i]+1][time_step]]) for i in range(self.floe.n)]
+        
+        Vel = [np.array([All_positions_velocities[I[i]+2][time_step],
+                          All_positions_velocities[I[i]+3][time_step]]) for i in range(self.floe.n)]
+        
+        return Pos, Vel
+        
 
 
 def node_to_node(node1: Node, node2: Node):
@@ -517,7 +540,6 @@ def Angle_Mat(floe: Floe):
         Mat[j, i, k] = Angle(Nodes_positions[j],
                              Nodes_positions[i], Nodes_positions[k])
         Mat[k, i, j] = Mat[j, i, k]
-
     return Mat
 
 
@@ -534,8 +556,6 @@ Main system describes all nodes evolutions.
 Each node i depends on TRACTION's spring (i.e spring between node i and node j neighbor)
 and TORSION's spring ( formed by the triangle it belongs to)
 """
-
-# have to add traction'constant in k[i]!
 
 
 def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list):
