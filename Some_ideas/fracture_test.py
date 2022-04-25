@@ -123,33 +123,33 @@ if __name__ == '__main__':
     print("Fracture at:", Fracture_step*dt , "s")
     
     
-    plt.figure()
-    plt.plot(Traction_energy, "-", label="Traction")
-    plt.plot(Torsion_energy, "-", label="Torsion")
-    plt.plot(E_tot, "-", label="Total")
-    plt.title("Energy without fracture")
-    plt.xlabel("time's step")
-    plt.ylabel("Energy")
-    plt.legend()
+    # plt.figure()
+    # plt.plot(Traction_energy, "-", label="Traction")
+    # plt.plot(Torsion_energy, "-", label="Torsion")
+    # plt.plot(E_tot, "-", label="Total")
+    # plt.title("Energy without fracture")
+    # plt.xlabel("time's step")
+    # plt.ylabel("Energy")
+    # plt.legend()
     
-    plt.figure()
-    plt.plot(Traction_energy_fr, "-", label="Traction if fracture ")
-    plt.plot(Torsion_energy_fr, "-", label="Torsion if fracture")
-    plt.plot(E_tot_fr, "-", label="Total if fracture")
-    plt.title("Energy with 1 fracture")
-    plt.xlabel("time's step")
-    plt.ylabel("Energy")
-    plt.legend()
+    # plt.figure()
+    # plt.plot(Traction_energy_fr, "-", label="Traction if fracture ")
+    # plt.plot(Torsion_energy_fr, "-", label="Torsion if fracture")
+    # plt.plot(E_tot_fr, "-", label="Total if fracture")
+    # plt.title("Energy with 1 fracture")
+    # plt.xlabel("time's step")
+    # plt.ylabel("Energy")
+    # plt.legend()
 
-    plt.figure()
-    plt.plot(E_tot, "--", color = 'r' , label="Total without fracture")
-    plt.plot(E_tot_fr, "--", label="Total if fracture")
-    plt.plot(Fracture_step, E_tot[Fracture_step],'o', color = 'black', label = "crack")
-    plt.plot(Fracture_step, 0,'o', color = 'black')
-    plt.title("Compare to Griffith's energy")
-    plt.xlabel("time's step")
-    plt.ylabel("Energy")
-    plt.legend()
+    # plt.figure()
+    # plt.plot(E_tot, "--", color = 'r' , label="Total without fracture")
+    # plt.plot(E_tot_fr, "--", label="Total if fracture")
+    # plt.plot(Fracture_step, E_tot[Fracture_step],'o', color = 'black', label = "crack")
+    # plt.plot(Fracture_step, 0,'o', color = 'black')
+    # plt.title("Compare to Griffith's energy")
+    # plt.xlabel("time's step")
+    # plt.ylabel("Energy")
+    # plt.legend()
     
     
     #create 2 new floes after the fracture
@@ -166,6 +166,8 @@ if __name__ == '__main__':
                    
     Springs_new = {(0,1),(1,2),(0,2)}
     New_floe1 = Floe(New_nodes, Springs_new,stiffness= floe.k, viscosity = floe.k/10., id_number=1) 
+    NewSol1 = Percussion_Wall(New_floe1).simulation()
+    
     
     New_nodes = []
     for i in Index_floe2:
@@ -175,16 +177,32 @@ if __name__ == '__main__':
     New_floe2 = Floe(New_nodes, Springs_new,stiffness= floe.k, viscosity = floe.k/10., id_number=1) 
     
     NewSol2 = Percussion_Wall(New_floe2).simulation()
-    NewSol = NewSol1+NewSol2
+    NewSol = NewSol1 + NewSol2
     
-    N_ = len(All_positions_velocities[0][Fracture_step:])
+    I = Index_floe1+Index_floe2
     
-    for i in Index_floe1+Index_floe2:
-        All_positions_velocities[i][Fracture_step: -26] = NewSol[i][: N_ ]
+    for i in range(floe.n*4):
+        All_positions_velocities[i] = All_positions_velocities[i][:Fracture_step + 1]
+        # All_positions_velocities[i] = np.append(All_positions_velocities[i], NewSol[i] )
+    # for i in I:
+    #     All_positions_velocities[4*i] = np.append(All_positions_velocities[4*i], NewSol[I.index(i)] )
+    #     All_positions_velocities[4*i+1] = np.append(All_positions_velocities[4*i+1], NewSol[I.index(i)+1] )
+    All_positions_velocities[4] = np.append(All_positions_velocities[4], NewSol[0] )
+    All_positions_velocities[5] = np.append(All_positions_velocities[5], NewSol[1] )
+    All_positions_velocities[0] = np.append(All_positions_velocities[0], NewSol[4] )
+    All_positions_velocities[1] = np.append(All_positions_velocities[1], NewSol[5] )
+    All_positions_velocities[20] = np.append(All_positions_velocities[20], NewSol[8] )
+    All_positions_velocities[21] = np.append(All_positions_velocities[21], NewSol[9] )
+    All_positions_velocities[8] = np.append(All_positions_velocities[8], NewSol[12] )
+    All_positions_velocities[9] = np.append(All_positions_velocities[9], NewSol[13] )
+    All_positions_velocities[12] = np.append(All_positions_velocities[12], NewSol[16] )
+    All_positions_velocities[13] = np.append(All_positions_velocities[13], NewSol[17] )
+    All_positions_velocities[16] = np.append(All_positions_velocities[16], NewSol[20] )
+    All_positions_velocities[17] = np.append(All_positions_velocities[17], NewSol[21] )
+    
+     
     
     # Replace the position and velocity of All_pos_vel by Pos and vel of the 2 new floe after Fracture step!
-    
-    
     
     # All_positions_velocities[]
     
@@ -215,19 +233,19 @@ if __name__ == '__main__':
         
         if i <= Fracture_step:
             line1.set_data(thisx[floe.n:], 
-                           thisy[floe.n:])
+                            thisy[floe.n:])
             line2.set_data(None, None)
         else: 
             line1.set_data(thisx[floe.n: floe.n+4], 
-                           thisy[floe.n: floe.n+4])
+                            thisy[floe.n: floe.n+4])
             line2.set_data(thisx[floe.n+4: floe.n+8 ],
-                           thisy[floe.n+4: floe.n+8 ])
+                            thisy[floe.n+4: floe.n+8 ])
         
         time_text.set_text(time_template % (i*dt))
         return line1, line2, time_text
 
     ani = animation.FuncAnimation(fig, animate_spring,
-                                  np.arange(0, len(All_positions_velocities[0])-200), interval=25, blit=False)
+                                  np.arange(0, len(All_positions_velocities[0])), interval=25, blit=False)
     # ani = animation.FuncAnimation(fig, animate_spring,
     #                               np.arange(0, Fracture_step), interval=25, blit=False)
    
