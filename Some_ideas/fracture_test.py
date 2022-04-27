@@ -23,7 +23,7 @@ if __name__ == '__main__':
     
     
     Nodes = []
-    V0 = np.array([0.75, 0.])
+    V0 = np.array([0.55, 0.])
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
     
@@ -42,8 +42,8 @@ if __name__ == '__main__':
     ax.set_aspect('equal')
     ax.grid()
     plt.axvline(x=2., color="red")
-    line1, = ax.plot([], [], '.-', lw=.95)
-    line2, = ax.plot([], [], '.-', lw=.95)
+    line1, = ax.plot([], [], '.-', color='b', lw=.95)
+    line2, = ax.plot([], [], '.-', color='b', lw=.95)
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = [1, 0, 5, 1, 2, 3, 4, 2, 5, 4] #floe.Route()
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     
     #study fracture energy
     # the only fracture admissible of this experiment is the road (2,1,4,5)
-    alpha = 1/2.
+    alpha = 1./2
     E_s = (Length_Mat[1,2] + Length_Mat[2,5] + Length_Mat[4,5]) * alpha
     
     #energy elastic if fracture happen
@@ -114,42 +114,50 @@ if __name__ == '__main__':
             Traction_energy_fr[index] = Sum1
             Torsion_energy_fr[index] = Sum2
     
+    # if np.where(E_tot_fr <= E_tot - 0.001)[0].size == 0:    Fracture_step = len(E_tot_fr)-1
+    # else: Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]
+    # Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]
+        
+    
     E_tot_fr = Traction_energy_fr + Torsion_energy_fr
-    E_tot_fr[131:] = E_tot_fr[131:] + 1/2.
+    E_tot_fr[104:] = E_tot_fr[104:] + alpha*E_s
     
+    # Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]
+    if np.where(E_tot_fr <= E_tot - 0.001)[0].size == 0:    Fracture_step = len(E_tot_fr)-1
+    else: Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]
+    # Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]    
     
-    Fracture_step = np.where(E_tot_fr <= E_tot - 0.001)[0][0]
     print("Fracture at:", Fracture_step , "step")
     print("Fracture at:", Fracture_step*dt , "s")
     
     
-    # plt.figure()
-    # plt.plot(Traction_energy, "-", label="Traction")
-    # plt.plot(Torsion_energy, "-", label="Torsion")
-    # plt.plot(E_tot, "-", label="Total")
-    # plt.title("Energy without fracture")
-    # plt.xlabel("time's step")
-    # plt.ylabel("Energy")
-    # plt.legend()
+    plt.figure()
+    plt.plot(Traction_energy, "-", label="Traction")
+    plt.plot(Torsion_energy, "-", label="Torsion")
+    plt.plot(E_tot, "-", label="Total")
+    plt.title("Energy without fracture")
+    plt.xlabel("time's step")
+    plt.ylabel("Energy")
+    plt.legend()
     
-    # plt.figure()
-    # plt.plot(Traction_energy_fr, "-", label="Traction if fracture ")
-    # plt.plot(Torsion_energy_fr, "-", label="Torsion if fracture")
-    # plt.plot(E_tot_fr, "-", label="Total if fracture")
-    # plt.title("Energy with 1 fracture")
-    # plt.xlabel("time's step")
-    # plt.ylabel("Energy")
-    # plt.legend()
+    plt.figure()
+    plt.plot(Traction_energy_fr, "-", label="Traction if fracture ")
+    plt.plot(Torsion_energy_fr, "-", label="Torsion if fracture")
+    plt.plot(E_tot_fr, "-", label="Total if fracture")
+    plt.title("Energy with 1 fracture")
+    plt.xlabel("time's step")
+    plt.ylabel("Energy")
+    plt.legend()
 
-    # plt.figure()
-    # plt.plot(E_tot, "--", color = 'r' , label="Total without fracture")
-    # plt.plot(E_tot_fr, "--", label="Total if fracture")
-    # plt.plot(Fracture_step, E_tot[Fracture_step],'o', color = 'black', label = "crack")
-    # plt.plot(Fracture_step, 0,'o', color = 'black')
-    # plt.title("Compare to Griffith's energy")
-    # plt.xlabel("time's step")
-    # plt.ylabel("Energy")
-    # plt.legend()
+    plt.figure()
+    plt.plot(E_tot, "--", color = 'r' , label="Total without fracture")
+    plt.plot(E_tot_fr, "--", label="Total if fracture")
+    plt.plot(Fracture_step, E_tot[Fracture_step],'o', color = 'black', label = "crack")
+    plt.plot(Fracture_step, 0,'o', color = 'black')
+    plt.title("Compare to Griffith's energy")
+    plt.xlabel("time's step")
+    plt.ylabel("Energy")
+    plt.legend()
     
     
     #create 2 new floes after the fracture
@@ -246,8 +254,5 @@ if __name__ == '__main__':
 
     ani = animation.FuncAnimation(fig, animate_spring,
                                   np.arange(0, len(All_positions_velocities[0])), interval=25, blit=False)
-    # ani = animation.FuncAnimation(fig, animate_spring,
-    #                               np.arange(0, Fracture_step), interval=25, blit=False)
-   
- 
+
    
