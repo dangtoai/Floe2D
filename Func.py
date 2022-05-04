@@ -6,6 +6,7 @@ from scipy.integrate import solve_ivp
 from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
 from graph import *
 from math import acos, sin
+from collections import Counter
 import matplotlib.animation as animation
 
 # 4 classes Node-> Spring-> Ice-Floe-> Percussion to generate the Percussion of 2 floes
@@ -86,15 +87,26 @@ class Floe:
         center = sum(self.get_nodes())/self.n
         return np.array([center[0], center[1]])
 
-    def border(self):
-        r = self.First_radius()/2.
-        center = self.center()
-        all_radius = [norm(center-node.position()) for node in self.nodes]
-        border = []
-        for node in self.nodes:
-            if norm(center-node.position()) >= r:
-                border.append(node)
-        return border
+    def border_vertices_index(self):
+
+        All_vertices = []
+        for triangles in self.simplices():
+            for i in range(len(triangles)):
+                for j in range(i+1, len(triangles)): 
+                    All_vertices.append((min(triangles[i], triangles[j]),max(triangles[i], triangles[j])))
+                    
+        S = set(All_vertices)
+        Border = [e for e in S if All_vertices.count(e) == 1]
+        
+        return Border
+
+    def border_nodes_index(self):
+        BV = self.border_vertices_index()
+        l = []
+        for i,j in BV: 
+            l.append(i)
+            l.append(j)
+        return set(l)
 
     def First_radius(self):
         """
