@@ -106,7 +106,7 @@ class Floe:
         for i,j in BV: 
             l.append(i)
             l.append(j)
-        return set(l)
+        return list(set(l))
 
     def First_radius(self):
         """
