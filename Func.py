@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
@@ -6,10 +5,13 @@ from scipy.integrate import solve_ivp
 from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
 from graph import *
 from math import acos, sin
-from collections import Counter
+import networkx as nx
+from itertools import combinations
+# from collections import Counter
 import matplotlib.animation as animation
 
-# 4 classes Node-> Spring-> Ice-Floe-> Percussion to generate the Percussion of 2 floes
+
+# 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
 
 class Node:
@@ -87,26 +89,45 @@ class Floe:
         center = sum(self.get_nodes())/self.n
         return np.array([center[0], center[1]])
 
-    def border_vertices_index(self):
-
+    def border_edges_index(self):
         All_vertices = []
         for triangles in self.simplices():
             for i in range(len(triangles)):
-                for j in range(i+1, len(triangles)): 
-                    All_vertices.append((min(triangles[i], triangles[j]),max(triangles[i], triangles[j])))
-                    
+                for j in range(i+1, len(triangles)):
+                    All_vertices.append(
+                        (min(triangles[i], triangles[j]), max(triangles[i], triangles[j])))
+
         S = set(All_vertices)
-        Border = [e for e in S if All_vertices.count(e) == 1]
-        
+        Border = ([e for e in S if All_vertices.count(e) == 1])
         return Border
 
     def border_nodes_index(self):
-        BV = self.border_vertices_index()
+        BV = self.border_edges_index()
         l = []
-        for i,j in BV: 
+        for i, j in BV:
             l.append(i)
             l.append(j)
         return list(set(l))
+
+    def fractures_admissible(self):
+        G = nx.Graph()
+        Border_edges = self.border_edges_index()
+        Border_nodes = self.border_nodes_index()
+        l = [i for i in range(self.n)]
+        triangle_list = [list(e) for e in self.simplices()]
+        G.add_nodes_from(l)
+        G.add_edges_from(self.springs)
+        Fractures_admissible = []
+        
+        for i,j in combinations(Border_nodes, 2):
+            for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)): 
+                path = np.sort(np.array(path))
+                if len(path) in range(int(self.n/2)-1, self.n-1):
+                    if ((tuple(path[0]) in Border_edges) == True and (tuple(path[-1]) in Border_edges) == True ):
+                        if np.all([list(set(np.append(path[i], path[i+1]))) in triangle_list for i in range(len(path)-1)]):
+                            Fractures_admissible.append(path)
+
+        return Fractures_admissible
 
     def First_radius(self):
         """
@@ -156,7 +177,7 @@ class Floe:
         """
         Points = self.get_nodes()
         tri = Delaunay(Points)
-        return tri.simplices
+        return np.sort(tri.simplices)
 
     def get_velocity(self):
         return np.array([node.velocity() for node in self.nodes])
@@ -448,6 +469,10 @@ class Percussion_Wall:
             j += 1
         return All_positions_velocities
     
+    
+    
+    
+
     def position_at_time(self, time_step):
         """
         Parameters
@@ -460,15 +485,14 @@ class Percussion_Wall:
         """
         All_positions_velocities = self.simulation()
         I = [j for j in range(0, self.floe.n*4, 4)]
-        
+
         Pos = [np.array([All_positions_velocities[I[i]][time_step],
-                          All_positions_velocities[I[i]+1][time_step]]) for i in range(self.floe.n)]
-        
+                         All_positions_velocities[I[i]+1][time_step]]) for i in range(self.floe.n)]
+
         Vel = [np.array([All_positions_velocities[I[i]+2][time_step],
-                          All_positions_velocities[I[i]+3][time_step]]) for i in range(self.floe.n)]
-        
+                         All_positions_velocities[I[i]+3][time_step]]) for i in range(self.floe.n)]
+
         return Pos, Vel
-        
 
 
 def node_to_node(node1: Node, node2: Node):

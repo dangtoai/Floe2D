@@ -15,7 +15,7 @@ l = [i for  i in range(9)]
 G.add_nodes_from(l)
 ubax1 = plt.subplot(121)
 
-G.add_edges_from([(0, 1),
+G.add_edges_from({(0, 1),
  (0, 3),
  (0, 5),
  (0, 8),
@@ -32,10 +32,18 @@ G.add_edges_from([(0, 1),
  (4, 6),
  (4, 8),
  (5, 7),
- (6, 7)])
+ (6, 7)})
 
 nx.draw(G, with_labels=True, font_weight='bold')
 for path in nx.all_simple_edge_paths(G, 8, 3, cutoff=(7)):
-    if len(path) == 7: print(path)
+    if len(path) == 6: print(path)
 
 #  idee pour la suite, chercher tous les chemin simple
+
+
+
+
+
+
+
+

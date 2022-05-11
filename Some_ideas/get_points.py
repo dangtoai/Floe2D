@@ -9,7 +9,7 @@ import scipy
 from scipy import stats
 
 
-np.random.seed(2)
+np.random.seed(7)
 xMin=0;xMax=1
 yMin=0;yMax=1
 xDelta=xMax-xMin
@@ -17,7 +17,7 @@ yDelta=yMax-yMin; #rectangle dimensions
 areaTotal=xDelta*yDelta;
 
 #Point process parameters
-lambda0 = 8                                                      #intensity 
+lambda0 = 5                                                      #intensity 
 
 #Simulate Poisson point process
 numbPoints = scipy.stats.poisson( lambda0*areaTotal ).rvs()       #Poisson number of points
@@ -29,18 +29,8 @@ for i in range(len(xx)):
 np.array(Points)
 # vor = Voronoi(Points)
 tri = Delaunay(Points)
-print("number of nodes = ", numbPoints)
+# print("number of nodes = ", numbPoints)
 nb_nodes = len(tri.points)
-
-
-#plt.figure()
-# for triangle in tri.simplices:
-#     for index1 in triangle:
-#         for index2 in triangle:
-#             if index1 != index2 :
-#                 plt.plot([tri.points[index1][0], tri.points[index2][0]], 
-#                          [tri.points[index1][1], tri.points[index2][1]])
-#                 # plt.text(tri.points[index1][0], tri.points[index1][1], str(index1), color = "red")
 
 possible = []
 for triangle in tri.simplices:
@@ -48,25 +38,13 @@ for triangle in tri.simplices:
         for index2 in triangle:
             if index1 != index2:
                 possible.append((min(index1, index2), max(index1, index2)))
-#print(possible)
-# print("set of all edge=", set(possible))
 
-
-# print("all points", tri.points)
-print("all edges", set(possible))
 
 # Points = np.array(Points)
 Springs = set(possible)
 
-#calculer les angles initiale
-# idee pour chercher la fracture: chercher les simplexes au bord tel que leurs degres egale au moins a 3
-# commencer uniquement par les arretes au bords 
-# chercher les arretes dans les simplexes voisins, 
-# chercher les arretes voisins 
 
 Points = tri.points
-# Springs = {(0,1),(1,2),(2,3),(3,4),(4,5),(0,5),(1,5),(0,5),(2,5),(2,4)}
-
 
 Nodes = []
 V0 = np.array([0.55, 0.])
@@ -76,11 +54,34 @@ for i in range(len(Points)):
 k = 100.
 floe = Floe(nodes=Nodes, springs=Springs,
             stiffness= k, viscosity=k/10., id_number=1)
+floe.plot_init()
 
+# print(floe.fractures_admissible())
 
+# # floe.fracture_admissible()
 
-c = floe.border()
+G = nx.Graph()
+BE = floe.border_edges_index()
+l = [i for i in range(floe.n)]
+l2 = [list(e) for e in floe.simplices()]
+G.add_nodes_from(l)
+G.add_edges_from(floe.springs)
 
+# nx.draw(G, with_labels=True, font_weight='bold')
+
+# floe.plot_init()
+FA = []
+for i,j in combinations(floe.border_nodes_index(), 2):
+    for path in nx.all_simple_edge_paths(G, i, j, cutoff=(floe.n-2)): 
+        path = np.sort(np.array(path))
+        if len(path) in range(3, int(floe.n - 1)):
+            # or len(path) == floe.n-2 
+            if ((tuple(path[0]) in BE) == True and (tuple(path[-1]) in BE) == True ):
+                # FA.append(path)
+                if np.all([list(set(np.append(path[i], path[i+1]))) in l2 for i in range(len(path)-1)]):
+                    FA.append(path)
+                
+# # print([list(set(np.append(FA[1][i], FA[1][i+1]))) in l2 for i in range(len(FA[1])-1)])
 
 
 
