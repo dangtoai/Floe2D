@@ -9,7 +9,7 @@ import scipy
 from scipy import stats
 
 
-np.random.seed(7)
+np.random.seed(50)
 xMin=0;xMax=1
 yMin=0;yMax=1
 xDelta=xMax-xMin
@@ -17,7 +17,7 @@ yDelta=yMax-yMin; #rectangle dimensions
 areaTotal=xDelta*yDelta;
 
 #Point process parameters
-lambda0 = 5                                                      #intensity 
+lambda0 = 6                                                      #intensity 
 
 #Simulate Poisson point process
 numbPoints = scipy.stats.poisson( lambda0*areaTotal ).rvs()       #Poisson number of points
@@ -70,21 +70,29 @@ G.add_edges_from(floe.springs)
 # nx.draw(G, with_labels=True, font_weight='bold')
 
 # floe.plot_init()
+# FA = []
+# for i,j in combinations(floe.border_nodes_index(), 2):
+#     for path in nx.all_simple_edge_paths(G, i, j, cutoff=(floe.n-2)): 
+#         path = np.sort(np.array(path))
+#         if len(path) in range(3, int(floe.n - 1)):
+#             # or len(path) == floe.n-2 
+#             if ((tuple(path[0]) in BE) == True and (tuple(path[-1]) in BE) == True ):
+#                 # FA.append(path)
+#                 if np.all([list(set(np.append(path[i], path[i+1]))) in l2 for i in range(len(path)-1)]):
+#                     FA.append(path)
+
 FA = []
 for i,j in combinations(floe.border_nodes_index(), 2):
-    for path in nx.all_simple_edge_paths(G, i, j, cutoff=(floe.n-2)): 
-        path = np.sort(np.array(path))
-        if len(path) in range(3, int(floe.n - 1)):
-            # or len(path) == floe.n-2 
-            if ((tuple(path[0]) in BE) == True and (tuple(path[-1]) in BE) == True ):
-                # FA.append(path)
-                if np.all([list(set(np.append(path[i], path[i+1]))) in l2 for i in range(len(path)-1)]):
-                    FA.append(path)
+    for path in nx.all_simple_edge_paths(G, i, j, cutoff=(floe.n-1)):
+        if len(path) in range(4, int(floe.n - 1)):
+            if ((tuple(path[0]) in BE) and (tuple(path[-1]) in BE)) :
+                l = path[0]
+                for k in range(1, len(path)-1): l += path[k]
+                l = list(l)
+                if not all(element not in BN for element in l[2:-2]): 
+                    if np.all([list(set(np.append(path[i], path[i+1]))) in l2 for i in range(len(path)-1)]):FA.append(path)
+
                 
-# # print([list(set(np.append(FA[1][i], FA[1][i+1]))) in l2 for i in range(len(FA[1])-1)])
-
-
-
 
 
 
