@@ -119,13 +119,27 @@ class Floe:
         G.add_edges_from(self.springs)
         Fractures_admissible = []
         
-        for i,j in combinations(Border_nodes, 2):
-            for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)): 
-                path = np.sort(np.array(path))
-                if len(path) in range(int(self.n/2)-1, self.n-1):
-                    if ((tuple(path[0]) in Border_edges) == True and (tuple(path[-1]) in Border_edges) == True ):
-                        if np.all([list(set(np.append(path[i], path[i+1]))) in triangle_list for i in range(len(path)-1)]):
-                            Fractures_admissible.append(path)
+        Fractures_admissible = []
+        for i, j in combinations(self.border_nodes_index(), 2):
+            for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)):
+                if len(path) in range(3, int(self.n)):
+                    if (tuple(sorted((path[0]))) in Border_edges) and (tuple(sorted(path[-1])) in Border_edges):
+                        l = path[0]
+                        for k in range(1, len(path)):
+                            l += path[k]
+                        l = list(l)
+                        # print(l)
+                        if all(element not in Border_nodes for element in l[3:-3]):
+                            l = [sorted((l[i], l[i+2], l[i+3]))
+                                 for i in range(0, len(l)-2, 2)]
+                            # print(l)
+                            if all([l[i] in self.simplices() for i in range(len(l))]):
+                                print(l)
+                                l = [l[i] in triangle_list for i in range(len(l))]
+                                print(l,all(l))
+                                if all(l): Fractures_admissible.append(path)
+                                
+                                
 
         return Fractures_admissible
 

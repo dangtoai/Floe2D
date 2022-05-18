@@ -32,7 +32,7 @@ if __name__ == '__main__':
                 stiffness= k, viscosity=k/10., id_number=1)
     
     Problem = Percussion_Wall(floe)
-
+    
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True,
                           xlim=(0., 2.1), ylim=(-.25, 1.25))
