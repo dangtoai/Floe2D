@@ -118,7 +118,7 @@ class Floe:
         G.add_nodes_from(l)
         G.add_edges_from(self.springs)
         Fractures_admissible = []
-        
+
         Fractures_admissible = []
         for i, j in combinations(self.border_nodes_index(), 2):
             for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)):
@@ -134,14 +134,25 @@ class Floe:
                                  for i in range(0, len(l)-2, 2)]
                             # print(l)
                             if all([l[i] in self.simplices() for i in range(len(l))]):
-                                print(l)
-                                l = [l[i] in triangle_list for i in range(len(l))]
-                                print(l,all(l))
-                                if all(l): Fractures_admissible.append(path)
-                                
-                                
+                                # print(l)
+                                l = [
+                                    l[i] in triangle_list for i in range(len(l))]
+                                # print(l, all(l))
+                                if all(l):
+                                    Fractures_admissible.append(path)
+                                    
+        def Thales_edge(t1, t2):
+            return (t1[0],t2[1])
+        
+        def fractures_length(Fractures_admissible):
+            length = np.zeros(len(Fractures_admissible))
+            for j in range(len(Fractures_admissible)):    
+                l = [Thales_edge(Fractures_admissible[j][i], Fractures_admissible[j][i+1]) for i in range(len(Fractures_admissible[j])-1)]
+                l = [0.5* Spring(self.nodes[l[i][0]], self.nodes[l[i][1]], None).L0 for i in range(len(l))]
+                length[j] += sum(l)
+            return length
 
-        return Fractures_admissible
+        return Fractures_admissible, fractures_length(Fractures_admissible)
 
     def First_radius(self):
         """
@@ -482,10 +493,6 @@ class Percussion_Wall:
                     All_x_positions, All_positions_velocities[i])
             j += 1
         return All_positions_velocities
-    
-    
-    
-    
 
     def position_at_time(self, time_step):
         """
@@ -507,6 +514,52 @@ class Percussion_Wall:
                          All_positions_velocities[I[i]+3][time_step]]) for i in range(self.floe.n)]
 
         return Pos, Vel
+
+def Energy_studies(All_positions_velocities, floe):
+    """
+    Parameters
+    ----------
+    All_positions_velocities : Evolution of all nodes and velocities
+    floe : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    Traction_energy 
+    Torsion_energy 
+    E_tot
+
+    """
+    Length_Mat  = floe.length_mat()
+    Torsion_Mat = floe.torsion_mat()
+    Angle_Mat = floe.angle_init()
+    Traction_energy = np.zeros(len(All_positions_velocities[0]))
+    Torsion_energy = np.zeros(len(All_positions_velocities[0]))
+
+    for index in range(len(All_positions_velocities[0])):
+        Sum1 = 0.
+        Sum2 = 0.
+        for i, j, k in floe.simplices():
+            Qi = np.array([All_positions_velocities[4*i][index],
+                          All_positions_velocities[4*i+1][index]])
+            Qj = np.array([All_positions_velocities[4*j][index],
+                          All_positions_velocities[4*j+1][index]])
+            Qk = np.array([All_positions_velocities[4*k][index],
+                          All_positions_velocities[4*k+1][index]])
+
+            Sum1 += 0.5 * ((floe.k/sin(Angle_Mat[i, k, j])) * (norm(Qi-Qj) - Length_Mat[i, j])**2
+                           + (floe.k/sin(Angle_Mat[i, j, k])) * (norm(Qi-Qk) - Length_Mat[i, k])**2
+                           + (floe.k/sin(Angle_Mat[j, i, k])) * (norm(Qj-Qk) - Length_Mat[j, k])**2)
+
+            Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
+                           + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
+                           + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
+
+        Traction_energy[index] = Sum1
+        Torsion_energy[index] = Sum2
+
+    E_tot = Traction_energy + Torsion_energy
+    return Traction_energy, Torsion_energy, E_tot
 
 
 def node_to_node(node1: Node, node2: Node):
