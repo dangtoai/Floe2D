@@ -117,7 +117,6 @@ class Floe:
         triangle_list = [list(e) for e in self.simplices()]
         G.add_nodes_from(l)
         G.add_edges_from(self.springs)
-        Fractures_admissible = []
 
         Fractures_admissible = []
         for i, j in combinations(self.border_nodes_index(), 2):
@@ -142,6 +141,14 @@ class Floe:
                                     Fractures_admissible.append(path)
                                     
         def Thales_edge(t1, t2):
+            """
+            Parameters
+            ----------
+            t1, t2: first and second edge of a triangle 
+            Returns
+            -------
+            the third edge of triangle
+            """
             return (t1[0],t2[1])
         
         def fractures_length(Fractures_admissible):
@@ -169,13 +176,6 @@ class Floe:
     def center_velocity(self):
         all_velocity = self.get_velocity()
         return sum(all_velocity/self.n)
-
-    def E0_traction(self):
-        Sum = 0
-        L = self.length_mat()
-        for i, j, k in self.simplices():
-            Sum += self.k * (L[i, j]**2 + L[i, k]**2 + L[j, k]**2)
-        return Sum/2.
 
     def Route(self):
         g = UndirectedGraph(self.n)
@@ -292,16 +292,16 @@ class Floe:
         plt.figure()
         for (i, j) in self.springs:
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
-                     [self.nodes[i].position()[1], self.nodes[j].position()[1]])
+                     [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],
                      self.nodes[i].position()[1], self.nodes[i].id)
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
-        plt.plot(self.center()[0], self.center()[1], 'o', color='red')
-        theta = np.linspace(0, 2*np.pi, 100)
-        x = self.First_radius()*np.cos(theta) + self.center()[0]
-        y = self.First_radius()*np.sin(theta) + self.center()[1]
-        plt.plot(x, y, "--")
+        # plt.plot(self.center()[0], self.center()[1], 'o', color='red')
+        # theta = np.linspace(0, 2*np.pi, 100)
+        # x = self.First_radius()*np.cos(theta) + self.center()[0]
+        # y = self.First_radius()*np.sin(theta) + self.center()[1]
+        # plt.plot(x, y, "--")
 
     def plot_displacements(self, time_end):
         """
@@ -399,26 +399,6 @@ class Floe:
         self.nodes[i] = Node(self.nodes[i].position(),
                              new_velocity, self.nodes[i].id)
 
-
-class Percussion:
-    def __init__(self, floe1: Floe, floe2: Floe, restitution_coef=0.4, time_end=4., eta=0.1):
-        self.t = np.linspace(0, time_end, 800)
-        self.floe1 = floe1
-        self.floe2 = floe2
-        self.eps = restitution_coef
-        self.eta = eta
-
-    def compute_before_contact(self):
-        r1 = self.floe1.First_radius()
-        r2 = self.floe1.First_radius()
-        contact_distance = r1 + r2 + self.eta
-        center1_position = [self.floe1.center(
-        ) + self.t[i]*self.floe1.center_velocity() for i in range(self.t.size)]
-        center2_position = [self.floe2.center(
-        ) + self.t[i]*self.floe2.center_velocity() for i in range(self.t.size)]
-        distance_evolution = [
-            norm(center1_position[i]-center2_position[i]) for i in range(self.t.size)]
-        return distance_evolution < contact_distance
 
 
 class Percussion_Wall:
@@ -561,6 +541,70 @@ def Energy_studies(All_positions_velocities, floe):
     E_tot = Traction_energy + Torsion_energy
     return Traction_energy, Torsion_energy, E_tot
 
+def Energy_studies_fr(All_positions_velocities, floe):
+    """
+    Parameters
+    ----------
+    All_positions_velocities : Evolution of all nodes and velocities
+        DESCRIPTION.
+    Returns
+    -------
+    Traction_energy, Torsion_energy, E_tot when each fracture situation happen
+    """
+    all_frac, length_frac = floe.fractures_admissible()
+    alpha = 1./2    #ductibility coef
+    Length_Mat  = floe.length_mat()
+    Torsion_Mat = floe.torsion_mat()
+    Angle_Mat = floe.angle_init()
+    Traction_energy = np.zeros(len(All_positions_velocities[0]))
+    Torsion_energy = np.zeros(len(All_positions_velocities[0]))
+    triangle_list = [list(triangle) for triangle in floe.simplices()]
+    
+    NewTriangle =  [el for el in triangle_list if el not in frac_triangle(all_frac[0])]
+    
+    for index in range(len(All_positions_velocities[0])):
+        Sum1 = 0.
+        Sum2 = 0.
+        for i, j, k in NewTriangle:
+            Qi = np.array([All_positions_velocities[4*i][index],
+                          All_positions_velocities[4*i+1][index]])
+            Qj = np.array([All_positions_velocities[4*j][index],
+                          All_positions_velocities[4*j+1][index]])
+            Qk = np.array([All_positions_velocities[4*k][index],
+                          All_positions_velocities[4*k+1][index]])
+
+            Sum1 += 0.5 * ((floe.k/sin(Angle_Mat[i, k, j])) * (norm(Qi-Qj) - Length_Mat[i, j])**2
+                           + (floe.k/sin(Angle_Mat[i, j, k])) * (norm(Qi-Qk) - Length_Mat[i, k])**2
+                           + (floe.k/sin(Angle_Mat[j, i, k])) * (norm(Qj-Qk) - Length_Mat[j, k])**2)
+
+            Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
+                           + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
+                           + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
+
+        Traction_energy[index] = Sum1
+        Torsion_energy[index] = Sum2
+
+    E_tot = np.array(Traction_energy + Torsion_energy) + length_frac[0]
+    return Traction_energy, Torsion_energy, E_tot
+
+def frac_triangle(l):
+    
+    """
+    Parameters
+    ----------
+    l : fracture road.
+
+    Returns
+    -------
+    simplices that have to be remove when compute energy
+
+    """
+    triangle_to_del = []
+    for i in range(len(l)-1):
+        triangle_to_del.append(list(set(l[i]+l[i+1])))
+    
+    return triangle_to_del
+    
 
 def node_to_node(node1: Node, node2: Node):
     position1 = node1.position()
@@ -592,10 +636,19 @@ def Unit_vect(vect1, vect2):
     else:
         return (vect2-vect1)/norm(vect2-vect1)
 
-
 def Orthogonal_vect(vect):
     return np.array([-vect[1], vect[0]])
 
+def find_simplice(v1,v2):
+    """
+    Parameters
+    ----------
+    v1,v2 : 1st and 2nd springs.
+    Returns
+    the simplice that its belong to
+    """
+    l = ((v1[0], v1[1], v2[1]))
+    return l
 
 def Angle(A, B, C):
     """
