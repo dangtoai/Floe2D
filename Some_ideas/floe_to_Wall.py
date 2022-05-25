@@ -36,7 +36,7 @@ if __name__ == '__main__':
     #                     [0.29965467, 0.13457995]])
 
     Nodes = []
-    V0 = np.array([0.75, 0.])
+    V0 = np.array([0.5, 0.])
 
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
@@ -56,7 +56,6 @@ if __name__ == '__main__':
     
     All_positions_velocities = Problem.simulation()
     
-
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True,
                           xlim=(.5, 2.1), ylim=(-.5, 1.1))
@@ -70,46 +69,43 @@ if __name__ == '__main__':
 
     Traction_energy, Torsion_energy, E_tot = Energy_studies(All_positions_velocities, floe)
     plt.figure()
-    # plt.plot(Traction_energy [200:], "-",color="green", label="Traction")
-    # plt.plot(Torsion_energy[200:], "-", color="blue",  label="Torsion")
-    plt.plot(E_tot[200:], "--", color= "r" ,label="Total")
+
+    plt.plot(E_tot[:], "--", color= "r" ,label="Total")
     
     
-    Traction_energy, Torsion_energy, E_tot = Energy_studies_fr(All_positions_velocities, floe)
-    # plt.plot(Traction_energy [200:], "-",color="green", label="Traction if frac 0")
-    # plt.plot(Torsion_energy[200:], "-", color="blue",  label="Torsion if frac 0")
-    plt.plot(E_tot[200:], "--", color= "b" ,label="Total if frac 0")
-    
-    
+    Traction_energy_fr, Torsion_energy_fr, E_tot_fr = Energy_studies_fr(All_positions_velocities, floe)
+
+    for i in range(3):
+        plt.plot(E_tot_fr[i], "-",label="Total if frac" + str (i))
     
     plt.xlabel("time's step")
     plt.ylabel("Energy")
     plt.tight_layout()
     plt.legend()
     
-    # animation
+    ### animation
 
-    # def init():
-    #     line1.set_data([], [])
-    #     time_text.set_text('')
-    #     return line1, time_text
+    def init():
+        line1.set_data([], [])
+        time_text.set_text('')
+        return line1, time_text
 
-    # def animate_spring(i):
-    #     Ix = [j for j in range(0, floe.n*4, 4)]
-    #     Iy = [j for j in range(1, floe.n*4, 4)]
-    #     thisx = []
-    #     thisy = []
-    #     for j in Ix:
-    #         thisx = np.append(thisx, All_positions_velocities[j][i])
-    #     for j in Iy:
-    #         thisy = np.append(thisy, All_positions_velocities[j][i])
-    #     for k in Route:
-    #         thisx = np.append(thisx, thisx[k])
-    #         thisy = np.append(thisy, thisy[k])
-    #     line1.set_data(thisx[floe.n:], thisy[floe.n:])
-    #     time_text.set_text(time_template % (i*dt))
-    #     return line1, time_text
+    def animate_spring(i):
+        Ix = [j for j in range(0, floe.n*4, 4)]
+        Iy = [j for j in range(1, floe.n*4, 4)]
+        thisx = []
+        thisy = []
+        for j in Ix:
+            thisx = np.append(thisx, All_positions_velocities[j][i])
+        for j in Iy:
+            thisy = np.append(thisy, All_positions_velocities[j][i])
+        for k in Route:
+            thisx = np.append(thisx, thisx[k])
+            thisy = np.append(thisy, thisy[k])
+        line1.set_data(thisx[floe.n:], thisy[floe.n:])
+        time_text.set_text(time_template % (i*dt))
+        return line1, time_text
 
-    # ani = animation.FuncAnimation(fig, animate_spring,
-    #                               np.arange(200, len(All_positions_velocities[0])-200), interval=25, blit=False)
+    ani = animation.FuncAnimation(fig, animate_spring,
+                                  np.arange(200, len(All_positions_velocities[0])-200), interval=25, blit=False)
     # ani.save("floe_to_wall.gif", writer='pillow')

@@ -556,36 +556,57 @@ def Energy_studies_fr(All_positions_velocities, floe):
     Length_Mat  = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_Mat = floe.angle_init()
-    Traction_energy = np.zeros(len(All_positions_velocities[0]))
-    Torsion_energy = np.zeros(len(All_positions_velocities[0]))
+    All_Traction_energy = np.zeros((len(all_frac),len(All_positions_velocities[0])))
+    All_Torsion_energy = np.zeros_like(All_Traction_energy)
     triangle_list = [list(triangle) for triangle in floe.simplices()]
     
-    NewTriangle =  [el for el in triangle_list if el not in frac_triangle(all_frac[0])]
     
-    for index in range(len(All_positions_velocities[0])):
-        Sum1 = 0.
-        Sum2 = 0.
-        for i, j, k in NewTriangle:
-            Qi = np.array([All_positions_velocities[4*i][index],
-                          All_positions_velocities[4*i+1][index]])
-            Qj = np.array([All_positions_velocities[4*j][index],
-                          All_positions_velocities[4*j+1][index]])
-            Qk = np.array([All_positions_velocities[4*k][index],
-                          All_positions_velocities[4*k+1][index]])
+    for l in range(len(all_frac)):
+        Triangle_after_eliminate =  [el for el in triangle_list if el not in frac_triangle(all_frac[l])]
+    
+        for index in range(len(All_positions_velocities[0])):
+            Sum1 = 0.
+            Sum2 = 0.
+            for i, j, k in Triangle_after_eliminate:
+                Qi = np.array([All_positions_velocities[4*i][index],
+                               All_positions_velocities[4*i+1][index]])
+                Qj = np.array([All_positions_velocities[4*j][index],
+                               All_positions_velocities[4*j+1][index]])
+                Qk = np.array([All_positions_velocities[4*k][index],
+                               All_positions_velocities[4*k+1][index]])
 
-            Sum1 += 0.5 * ((floe.k/sin(Angle_Mat[i, k, j])) * (norm(Qi-Qj) - Length_Mat[i, j])**2
-                           + (floe.k/sin(Angle_Mat[i, j, k])) * (norm(Qi-Qk) - Length_Mat[i, k])**2
-                           + (floe.k/sin(Angle_Mat[j, i, k])) * (norm(Qj-Qk) - Length_Mat[j, k])**2)
+                Sum1 += 0.5 * ((floe.k/sin(Angle_Mat[i, k, j])) * (norm(Qi-Qj) - Length_Mat[i, j])**2
+                               + (floe.k/sin(Angle_Mat[i, j, k])) * (norm(Qi-Qk) - Length_Mat[i, k])**2
+                               + (floe.k/sin(Angle_Mat[j, i, k])) * (norm(Qj-Qk) - Length_Mat[j, k])**2)
+                
+                Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
+                               + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
+                               + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
 
-            Sum2 += 0.5 * (Torsion_Mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_Mat[i, j, k])**2
-                           + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
-                           + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
+            All_Traction_energy[l][index] = Sum1 + length_frac[l]
+            All_Torsion_energy[l][index] = Sum2
 
-        Traction_energy[index] = Sum1
-        Torsion_energy[index] = Sum2
+    All_E_tot = All_Traction_energy + All_Torsion_energy
+    return All_Traction_energy, All_Torsion_energy, All_E_tot
 
-    E_tot = np.array(Traction_energy + Torsion_energy) + length_frac[0]
-    return Traction_energy, Torsion_energy, E_tot
+def Find_frac(E_tot_frac, E_tot):
+    """
+    
+
+    Parameters
+    ----------
+    E_tot_frac : array (n* nb of time step) of all possible energy when fracture,
+    E_tot_frac[i] correspond to total energy if fracture number i happen .
+    E_tot : total energy with no fracture.
+
+    Returns
+    -------
+    The index of fracture that happen, i.e i0 in {0,1,..,n-1}
+
+    """
+    
+    #to complete
+    return frac_number, time_step_frac
 
 def frac_triangle(l):
     
