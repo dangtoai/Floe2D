@@ -297,11 +297,6 @@ class Floe:
                      self.nodes[i].position()[1], self.nodes[i].id)
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
-        # plt.plot(self.center()[0], self.center()[1], 'o', color='red')
-        # theta = np.linspace(0, 2*np.pi, 100)
-        # x = self.First_radius()*np.cos(theta) + self.center()[0]
-        # y = self.First_radius()*np.sin(theta) + self.center()[1]
-        # plt.plot(x, y, "--")
 
     def plot_displacements(self, time_end):
         """
@@ -472,6 +467,22 @@ class Percussion_Wall:
                 All_x_positions = np.append(
                     All_x_positions, All_positions_velocities[i])
             j += 1
+            
+        # study fracture energy here, find frac and compute new position for new floes
+        
+        E_nofrac = Energy_studies(All_positions_velocities, self.floe)[-1]
+        E_allfrac= Energy_studies_fr(All_positions_velocities, self.floe)[-1]
+        frac_ind, last_step_bef_frac = Find_frac_index(E_allfrac, E_nofrac)[-2:]
+        
+        for i in range(self.floe.n*4):
+            All_positions_velocities[i] = All_positions_velocities[i][:last_step_bef_frac+2]
+        
+        # create 2 new floes in order to respect the fracture
+        # use networkx to find the index of new floes
+        # compute new position of new floes
+        # concatenante to all_pos_vel
+        
+            
         return All_positions_velocities
 
     def position_at_time(self, time_step):
@@ -552,7 +563,7 @@ def Energy_studies_fr(All_positions_velocities, floe):
     Traction_energy, Torsion_energy, E_tot when each fracture situation happen
     """
     all_frac, length_frac = floe.fractures_admissible()
-    alpha = 1./2    #ductibility coef
+    alpha = 1.    #ductibility coef
     Length_Mat  = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_Mat = floe.angle_init()
@@ -583,13 +594,13 @@ def Energy_studies_fr(All_positions_velocities, floe):
                                + Torsion_Mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_Mat[i, k, j])**2
                                + Torsion_Mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_Mat[j, i, k])**2)
 
-            All_Traction_energy[l][index] = Sum1 + length_frac[l]
+            All_Traction_energy[l][index] = Sum1 + alpha * length_frac[l]
             All_Torsion_energy[l][index] = Sum2
 
     All_E_tot = All_Traction_energy + All_Torsion_energy
     return All_Traction_energy, All_Torsion_energy, All_E_tot
 
-def Find_frac(E_tot_frac, E_tot):
+def Find_frac_index(E_tot_frac, E_tot):
     """
     
 
@@ -606,7 +617,15 @@ def Find_frac(E_tot_frac, E_tot):
     """
     
     #to complete
-    return frac_number, time_step_frac
+    
+    ar = np.zeros(len(E_tot_frac)) + len(E_tot)
+    for i in range(len(E_tot_frac)):
+        if len(np.where(E_tot_frac[i]<E_tot)[0]) != 0: ar[i] = np.where(E_tot_frac[i]<E_tot)[0][0]
+    time_step_frac = min(ar)
+    frac_number = np.where(ar == time_step_frac)[0][0]
+    
+    
+    return ar, frac_number, int(time_step_frac)
 
 def frac_triangle(l):
     
