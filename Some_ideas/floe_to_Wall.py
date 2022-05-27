@@ -48,64 +48,61 @@ if __name__ == '__main__':
     floe = Floe(nodes=Nodes, springs=Springs,
                 stiffness=k, viscosity=k/10., id_number=1)
 
-    # t_end = 4.
-    # collision_dist = 0.01
-    # coef_restitution = 0.9
-    # print(floe.fractures_admissible())
     Problem = Percussion_Wall(floe, Wall = 2.) 
+    # F1,F2 = Problem.simulation_with_fracture()
+    # print(S,F1,F2) 
     
-    All_positions_velocities = Problem.simulation()
+    All_positions_velocities, F1, F2 = Problem.simulation_with_fracture()
     
-    fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True,
-                          xlim=(.5, 2.1), ylim=(-.5, 1.1))
-    ax.set_aspect('equal')
-    ax.grid()
-    plt.axvline(x=2., color="red")
-    line1, = ax.plot([], [], '.-', lw=.95)
-    time_template = 'time = % 10fs'
-    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-    Route = floe.Route()
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, autoscale_on=True,
+    #                       xlim=(.5, 2.1), ylim=(-.5, 1.1))
+    # ax.set_aspect('equal')
+    # ax.grid()
+    # plt.axvline(x=2., color="red")
+    # line1, = ax.plot([], [], '.-', lw=.95)
+    # time_template = 'time = % 10fs'
+    # time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+    # Route = floe.Route()
+    
+    # Traction_energy, Torsion_energy, E_tot = Energy_studies(All_positions_velocities, floe)
+    # plt.figure()
 
-    Traction_energy, Torsion_energy, E_tot = Energy_studies(All_positions_velocities, floe)
-    plt.figure()
-
-    plt.plot(E_tot[:], "--", color= "r" ,label="Total")
+    # plt.plot(E_tot[:], "--", color= "r" ,label="Total")
     
+    # Traction_energy_fr, Torsion_energy_fr, E_tot_fr = Energy_studies_fr(All_positions_velocities, floe)
+    # print(Find_frac_index(E_tot_fr, E_tot))
+    # for i in range(3):
+    #     plt.plot(E_tot_fr[i], "-",label="Total if frac" + str (i))
     
-    Traction_energy_fr, Torsion_energy_fr, E_tot_fr = Energy_studies_fr(All_positions_velocities, floe)
-    print(Find_frac_index(E_tot_fr, E_tot))
-    for i in range(3):
-        plt.plot(E_tot_fr[i], "-",label="Total if frac" + str (i))
-    
-    plt.xlabel("time's step")
-    plt.ylabel("Energy")
-    plt.tight_layout()
-    plt.legend()
+    # plt.xlabel("time's step")
+    # plt.ylabel("Energy")
+    # plt.tight_layout()
+    # plt.legend()
     
     ### animation
 
-    def init():
-        line1.set_data([], [])
-        time_text.set_text('')
-        return line1, time_text
+    # def init():
+    #     line1.set_data([], [])
+    #     time_text.set_text('')
+    #     return line1, time_text
 
-    def animate_spring(i):
-        Ix = [j for j in range(0, floe.n*4, 4)]
-        Iy = [j for j in range(1, floe.n*4, 4)]
-        thisx = []
-        thisy = []
-        for j in Ix:
-            thisx = np.append(thisx, All_positions_velocities[j][i])
-        for j in Iy:
-            thisy = np.append(thisy, All_positions_velocities[j][i])
-        for k in Route:
-            thisx = np.append(thisx, thisx[k])
-            thisy = np.append(thisy, thisy[k])
-        line1.set_data(thisx[floe.n:], thisy[floe.n:])
-        time_text.set_text(time_template % (i*dt))
-        return line1, time_text
+    # def animate_spring(i):
+    #     Ix = [j for j in range(0, floe.n*4, 4)]
+    #     Iy = [j for j in range(1, floe.n*4, 4)]
+    #     thisx = []
+    #     thisy = []
+    #     for j in Ix:
+    #         thisx = np.append(thisx, All_positions_velocities[j][i])
+    #     for j in Iy:
+    #         thisy = np.append(thisy, All_positions_velocities[j][i])
+    #     for k in Route:
+    #         thisx = np.append(thisx, thisx[k])
+    #         thisy = np.append(thisy, thisy[k])
+    #     line1.set_data(thisx[floe.n:], thisy[floe.n:])
+    #     time_text.set_text(time_template % (i*dt))
+    #     return line1, time_text
 
-    ani = animation.FuncAnimation(fig, animate_spring,
-                                  np.arange(0, len(All_positions_velocities[0])), interval=25, blit=False)
+    # ani = animation.FuncAnimation(fig, animate_spring,
+    #                               np.arange(0, len(All_positions_velocities[0])), interval=25, blit=False)
     # ani.save("floe_to_wall.gif", writer='pillow')

@@ -212,14 +212,22 @@ class Floe:
 
     def connexe_mat(self):
         Mat = np.zeros((self.n, self.n))
+        # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
+            # i = np.where(l==i)[0][0]
+            # j = np.where(l==j)[0][0]
             Mat[i, j] = 1
             Mat[j, i] = Mat[i, j]
+            # print(i,j,"ok")
+            
         return Mat
 
     def length_mat(self):
         Mat = np.zeros((self.n, self.n))
+        # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
+            # i = np.where(l==i)[0][0]
+            # j = np.where(l==j)[0][0]
             Mat[i, j] = Spring(self.nodes[i], self.nodes[j], None).L0
             Mat[j, i] = Mat[i, j]
         return Mat
@@ -276,6 +284,7 @@ class Floe:
     def Move(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         N = 800
         t = np.linspace(0, time_end, N)
+        CM = self.connexe_mat()
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
         Y0_ = np.array([])
@@ -284,13 +293,16 @@ class Floe:
             Y0_ = np.append(Y0_, All_vel[i])
 
         Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
-                        args=(Y0_, self.n, self.connexe_mat(), Length_Mat, self.m,
+                        args=(Y0_, self.n, CM, Length_Mat, self.m,
                               self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices()))
         return Sol
 
     def plot_init(self):
         plt.figure()
+        l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
+            i = np.where(l==i)[0][0]
+            j = np.where(l==j)[0][0]
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
                      [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],
@@ -374,7 +386,6 @@ class Floe:
                 Qk = np.array([Sol.y[4*k][index],
                               Sol.y[4*k+1][index]])
 
-                # change self.k by self.traction_mat()[i]
                 Sum1 += 0.5 * (Traction_Mat[i, j] * (norm(Qi-Qj) - Length_Mat[i, j])**2
                                + Traction_Mat[i, k] *
                                (norm(Qi-Qk) - Length_Mat[i, k])**2
@@ -468,29 +479,66 @@ class Percussion_Wall:
                     All_x_positions, All_positions_velocities[i])
             j += 1
             
-        # study fracture energy here, find frac and compute new position for new floes
-        
+        return All_positions_velocities
+
+
+    def simulation_with_fracture(self):
+        All_positions_velocities = self.simulation()
         E_nofrac = Energy_studies(All_positions_velocities, self.floe)[-1]
         E_allfrac= Energy_studies_fr(All_positions_velocities, self.floe)[-1]
         frac_ind, last_step_bef_frac = Find_frac_index(E_allfrac, E_nofrac)[-2:]
         
         for i in range(self.floe.n*4):
-            All_positions_velocities[i] = All_positions_velocities[i][:last_step_bef_frac+2]
+            All_positions_velocities[i] = All_positions_velocities[i][:last_step_bef_frac+1]
+        
+        frac = self.floe.fractures_admissible()[0][frac_ind]
+        frac = [tuple(set(frac[i])) for i in range(len(frac))]
+        Springs = [el for el in self.floe.springs if el not in frac]
+        
+        G = nx.Graph()
+        G.add_edges_from(Springs)
+        Springs_new1, Springs_new2 = nx.biconnected_component_edges(G)
+        Springs_new1, Springs_new2 = set(Springs_new1), set(Springs_new2)
         
         # create 2 new floes in order to respect the fracture
-        # use networkx to find the index of new floes
-        # compute new position of new floes
-        # concatenante to all_pos_vel
+        IndexNewfloe1 = list([el for el in nx.connected_components(G)][0])
+        IndexNewfloe2 = list([el for el in nx.connected_components(G)][1])
         
-            
-        return All_positions_velocities
+        
+        Points_new = [np.array([All_positions_velocities[4*i][-1],
+                                All_positions_velocities[4*i+1][-1]]) for i in range(self.floe.n)]
+        Vel_new = [np.array([All_positions_velocities[4*i+2][-1],
+                                All_positions_velocities[4*i+3][-1]]) for i in range(self.floe.n)]
+        nodes = []
+        for i in range(len(IndexNewfloe1)):
+            nodes.append(Node(Points_new[IndexNewfloe1[i]], Vel_new[IndexNewfloe1[i]],IndexNewfloe1[i]))
+        New_floe1 = Floe(nodes, Springs_new1, stiffness= self.floe.k, viscosity = self.floe.k/10., id_number=1) 
+        
+        nodes = []
+        for i in range(len(IndexNewfloe2)):
+            nodes.append(Node(Points_new[IndexNewfloe2[i]], Vel_new[IndexNewfloe2[i]],IndexNewfloe2[i]))
+        New_floe2 = Floe(nodes, Springs_new2, stiffness= self.floe.k, viscosity = self.floe.k/10., id_number=2) 
+        
+        # Problem here, need re-define id_numb and [index] from {1,..nb_node} to compute matrix associated to floe such as length, connect...
+        
+        # Solution1 = Percussion_Wall(New_floe1).simulation()
+        # Solution2 = Percussion_Wall(New_floe2).simulation()
+        
+        
+        # compute new position of new floes
+        
+        # watch floe.simplices again! it may influence the creation of new floes!
+        # concatenante to all_pos_vel
+        # return All_positions_velocities
+        # New_floe1.plot_init()
+        # New_floe2.plot_init()
+        return All_positions_velocities, New_floe1, New_floe2
 
     def position_at_time(self, time_step):
         """
         Parameters
         ----------
         time_step :.
-
         Returns
         -------
         Positions of each nodes at time_step of simulation
@@ -563,7 +611,7 @@ def Energy_studies_fr(All_positions_velocities, floe):
     Traction_energy, Torsion_energy, E_tot when each fracture situation happen
     """
     all_frac, length_frac = floe.fractures_admissible()
-    alpha = 1.    #ductibility coef
+    alpha = 1.                                              #ductibility coef
     Length_Mat  = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_Mat = floe.angle_init()
@@ -602,8 +650,6 @@ def Energy_studies_fr(All_positions_velocities, floe):
 
 def Find_frac_index(E_tot_frac, E_tot):
     """
-    
-
     Parameters
     ----------
     E_tot_frac : array (n* nb of time step) of all possible energy when fracture,
