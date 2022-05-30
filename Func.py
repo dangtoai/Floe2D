@@ -5,6 +5,7 @@ from scipy.integrate import solve_ivp
 from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
 from graph import *
 from math import acos, sin
+from scipy.sparse import coo_matrix
 import networkx as nx
 from itertools import combinations
 # from collections import Counter
@@ -211,28 +212,27 @@ class Floe:
         return [(self.get_nodes()[i], self.get_nodes()[j]) for (i, j) in self.springs]
 
     def connexe_mat(self):
-        Mat = np.zeros((self.n, self.n))
-        # l = np.array([node.id for node in self.nodes])
+        k = max(max(self.springs))+1
+        Mat = np.zeros((k, k))
         for (i, j) in self.springs:
-            # i = np.where(l==i)[0][0]
-            # j = np.where(l==j)[0][0]
             Mat[i, j] = 1
             Mat[j, i] = Mat[i, j]
-            # print(i,j,"ok")
-            
-        return Mat
+        Mat =  coo_matrix(Mat)
+        return Mat.todok()
 
     def length_mat(self):
+        # k = max(max(self.springs))+1
+        # Mat = np.zeros((k, k))
         Mat = np.zeros((self.n, self.n))
-        # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
-            # i = np.where(l==i)[0][0]
-            # j = np.where(l==j)[0][0]
             Mat[i, j] = Spring(self.nodes[i], self.nodes[j], None).L0
             Mat[j, i] = Mat[i, j]
-        return Mat
+        Mat =  coo_matrix(Mat)
+        return Mat.todok()
 
     def angle_init(self):
+        # k = max(max(self.springs))+1
+        # Mat = np.zeros((k, k, k))
         Mat = np.zeros((self.n, self.n, self.n))
         Nodes_positions = self.get_nodes()
         for i, j, k in self.simplices():
@@ -247,11 +247,13 @@ class Floe:
             Mat[j, i, k] = Angle(Nodes_positions[j],
                                  Nodes_positions[i], Nodes_positions[k])
             Mat[k, i, j] = Mat[j, i, k]
-
+    
         return Mat
 
     def torsion_mat(self):
         """ stiffness constant of every torsion spring """
+        # k = max(max(self.springs))+1
+        # Mat = np.zeros((k, k, k))
         Mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
             Mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j,
@@ -268,6 +270,8 @@ class Floe:
         return Mat
 
     def traction_mat(self):
+        # k = max(max(self.springs))+1
+        # Mat = np.zeros((k, k))
         Mat = np.zeros((self.n, self.n))
         for i, j, k in self.simplices():
             Mat[i, j] += self.k / sin(self.angle_init()[i, k, j])
@@ -278,8 +282,8 @@ class Floe:
 
             Mat[j, k] += self.k / sin(self.angle_init()[k, i, j])
             Mat[k, j] = Mat[j, k]
-
-        return Mat
+        Mat =  coo_matrix(Mat)
+        return Mat.todok()
 
     def Move(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         N = 800
@@ -299,10 +303,10 @@ class Floe:
 
     def plot_init(self):
         plt.figure()
-        l = np.array([node.id for node in self.nodes])
+        # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
-            i = np.where(l==i)[0][0]
-            j = np.where(l==j)[0][0]
+            # i = np.where(l==i)[0][0]
+            # j = np.where(l==j)[0][0]
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
                      [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],
@@ -510,29 +514,33 @@ class Percussion_Wall:
         Vel_new = [np.array([All_positions_velocities[4*i+2][-1],
                                 All_positions_velocities[4*i+3][-1]]) for i in range(self.floe.n)]
         nodes = []
+        Springs1 = set()
+        for i,j in Springs_new1:
+            i = IndexNewfloe1.index(i)
+            j = IndexNewfloe1.index(j)
+            Springs1.add((i,j))
         for i in range(len(IndexNewfloe1)):
             nodes.append(Node(Points_new[IndexNewfloe1[i]], Vel_new[IndexNewfloe1[i]],IndexNewfloe1[i]))
-        New_floe1 = Floe(nodes, Springs_new1, stiffness= self.floe.k, viscosity = self.floe.k/10., id_number=1) 
+        New_floe1 = Floe(nodes, Springs1, stiffness= self.floe.k, viscosity = self.floe.mu, id_number=1) 
+        
+        
         
         nodes = []
+        Springs2 = set()
+        for i,j in Springs_new2:
+            i = IndexNewfloe2.index(i)
+            j = IndexNewfloe2.index(j)
+            Springs2.add((i,j))
         for i in range(len(IndexNewfloe2)):
             nodes.append(Node(Points_new[IndexNewfloe2[i]], Vel_new[IndexNewfloe2[i]],IndexNewfloe2[i]))
-        New_floe2 = Floe(nodes, Springs_new2, stiffness= self.floe.k, viscosity = self.floe.k/10., id_number=2) 
+        New_floe2 = Floe(nodes, Springs2, stiffness= self.floe.k, viscosity = self.floe.mu, id_number=2) 
         
-        # Problem here, need re-define id_numb and [index] from {1,..nb_node} to compute matrix associated to floe such as length, connect...
+       
+        Solution1 = Percussion_Wall(New_floe1).simulation()
+        Solution2 = Percussion_Wall(New_floe2).simulation()
         
-        # Solution1 = Percussion_Wall(New_floe1).simulation()
-        # Solution2 = Percussion_Wall(New_floe2).simulation()
         
-        
-        # compute new position of new floes
-        
-        # watch floe.simplices again! it may influence the creation of new floes!
-        # concatenante to all_pos_vel
-        # return All_positions_velocities
-        # New_floe1.plot_init()
-        # New_floe2.plot_init()
-        return All_positions_velocities, New_floe1, New_floe2
+        return All_positions_velocities, New_floe1, New_floe2, Solution1, Solution2, last_step_bef_frac
 
     def position_at_time(self, time_step):
         """
