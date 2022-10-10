@@ -299,14 +299,30 @@ class Floe:
         Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
                         args=(Y0_, self.n, CM, Length_Mat, self.m,
                               self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices()))
+        
         return Sol
+    
+    def Move_stable(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
+        N = 800
+        t = np.linspace(0, time_end, N)
+        CM = self.connexe_mat()
+        All_pos = self.get_nodes()
+        All_vel = self.get_velocity()
+        Y0_ = np.array([])
+        for i in range(self.n):
+            Y0_ = np.append(Y0_, All_pos[i])
+            Y0_ = np.append(Y0_, All_vel[i])
 
+        Sol = solve_ivp(System_stable, [0, time_end], Y0_, t_eval=t,
+                        args=(Y0_, self.n, CM, Length_Mat, self.m,
+                              self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices(), contact_node))
+        return Sol
+    
     def plot_init(self):
         plt.figure()
         # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
-            # i = np.where(l==i)[0][0]
-            # j = np.where(l==j)[0][0]
+
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
                      [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],
@@ -863,6 +879,85 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Tors
 
     return np.reshape(Y_, (nb_nodes*4))
 
+def System_stable(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
+    """
+    Parameters
+    ----------
+    t : time discretisation.
+    Y : TYPE
+        DESCRIPTION.
+    Y0 : init condition of system (init position and velocity).
+    nb_nodes : number of nodes.
+    Connexe_Mat : connectivity between nodes's matrix.
+    Length_Mat : length matrix.
+    m : mass of each node.
+    mu : viscosity const.
+    k : stiffness const of traction spring.
+    Torsion_mat: stiffness constant of torsion spring at (i,j,k)
+    contac_nodes: Nodes in contact with objects
 
-dt = 0.005
+    Returns
+    -------
+    (evolution of node_i, velo_i
+      for i in range nb_nodes as a dynamical system).
+
+    """
+    u = np.zeros((nb_nodes, nb_nodes, 2))
+    Q = np.reshape(Y, (nb_nodes*2, 2))
+    Y_ = np.zeros_like(Q)
+    k = Traction_mat
+    G = Torsion_mat
+    Theta0 = Angle_init
+    
+    for i in range(nb_nodes): 
+        if i == contact_node: 
+            Y_[2*i] = Q[2*i+1]
+        
+            for j in range(i+1, i+nb_nodes):
+                j = j % nb_nodes
+                u[i, j] = Unit_vect(Q[2*i], Q[2*j])
+                Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+                                                          + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
+                # Y_[2*i+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+                #                             + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
+    for i, j, k in Triangle_list:
+        u[i, j] = Unit_vect(Q[2*i], Q[2*j])
+        u[j, i] = -u[i, j]
+        u[i, k] = Unit_vect(Q[2*i], Q[2*k])
+        u[k, i] = -u[i, k]
+        u[j, k] = Unit_vect(Q[2*j], Q[2*k])
+        u[k, j] = -u[j, k]
+    
+        if i == contact_node: Y_[2*i+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+                                        + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
+
+            
+    # for i in range(0, nb_nodes) and (i == contact_node):
+    #     Y_[2*i] = Q[2*i+1]
+    #     for j in range(i+1, i+nb_nodes):
+    #         j = j % nb_nodes
+    #         u[i, j] = Unit_vect(Q[2*i], Q[2*j])
+    #         Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+    #                                                   + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
+
+    # for i, j, k in Triangle_list:
+    #     u[i, j] = Unit_vect(Q[2*i], Q[2*j])
+    #     u[j, i] = -u[i, j]
+    #     u[i, k] = Unit_vect(Q[2*i], Q[2*k])
+    #     u[k, i] = -u[i, k]
+    #     u[j, k] = Unit_vect(Q[2*j], Q[2*k])
+    #     u[k, j] = -u[j, k]
+    #     Y_[2*i+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+    #                            + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
+
+    #     Y_[2*j+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
+    #                            + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i])
+
+    #     Y_[2*k+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
+    #                            + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i])
+
+    return np.reshape(Y_, (nb_nodes*4))
+
+
+dt = 0.00125
 G = 100.  # stiffness of torsion's spring
