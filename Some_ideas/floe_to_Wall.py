@@ -117,7 +117,3 @@ if __name__ == '__main__':
     ani = animation.FuncAnimation(fig, animate_spring,
                                   np.arange(0, len(AP2[0])+len(All_positions_velocities[0])-200), interval=25, blit=False)
     
-    # end = datetime.now()
-    # print("The time of execution of above program is :",
-    #   str(end-start)[5:])
-    # ani.save("floe_to_wall.gif", writer='pillow')
