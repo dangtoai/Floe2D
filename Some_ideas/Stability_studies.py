@@ -17,9 +17,10 @@ from Func import *
 from graph import *
 import numpy as np
 import matplotlib.animation as animation
-from matplotlib.animation import FFMpegFileWriter
-from IPython import display
-from datetime import datetime
+# from matplotlib.animation import FFMpegFileWriter
+# from IPython import display
+# from datetime import datetime
+from matplotlib import transforms
 
 if __name__ == '__main__':
     ######################
@@ -37,7 +38,8 @@ if __name__ == '__main__':
     
     Nodes = []
     V0 = np.array([0., 0.])
-    V1 = np.array([3.5, 3.5])*2.6
+    V1 = np.array([3.5, 3.5])*4.
+    # V1 = np.array([-30.5, 0.])
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
     
@@ -57,15 +59,16 @@ if __name__ == '__main__':
      (3, 6),
      (4, 5),
      (4, 6)}
+    
     k = 1000.
     floe = Floe(nodes=Nodes, springs=Springs,
-                stiffness=k, viscosity=10., id_number=1)
+                stiffness=k, viscosity=k/5, id_number=1)
     
     Traction_Mat = floe.traction_mat() 
     Length_Mat   = floe.length_mat()
     Torsion_Mat  = floe.torsion_mat()
     Angle_Mat    = floe.angle_init()
-
+    
     # All_positions_velocities = floe.Move_stable_1(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
     # All_positions_velocities = floe.Move(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
     All_positions_velocities = floe.Move_stable_neighbor(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
@@ -104,23 +107,25 @@ if __name__ == '__main__':
 
         time_text.set_text(time_template % (i*dt))
         return line1, time_text
-
     
     ani = animation.FuncAnimation(fig, animate_spring,
                                   np.arange(0, len(All_positions_velocities[0])), interval=2, blit=False)
 
+    
+    # plt.figure()
+    # Traction_energy, Torsion_energy, Total_energy = Energy_studies(All_positions_velocities, floe)
+    # # Traction_energy, Torsion_energy, Total_energy = floe.energy_evolution_stable(1., contact_node)
+    # # Traction_energy, Torsion_energy, Total_energy = floe.energy_evolution(1.)
+    # t = np.linspace(0,1,800)
+    # plt.plot(t, Traction_energy, label = "Traction energy")
+    # plt.plot(t, Torsion_energy, label = "Torsion energy")
+    # plt.plot(t, Total_energy, label = "Total energy") 
+    # plt.legend()
 
-    plt.figure()
-    Traction_energy, Torsion_energy, Total_energy = floe.energy_evolution_stable(1., contact_node)
-    Traction_energy, Torsion_energy, Total_energy = floe.energy_evolution(1.)
-    t = np.linspace(0,1,800)
-    plt.plot(t, Traction_energy)
-    plt.plot(t, Torsion_energy)
-    plt.plot(t, Total_energy)
-
-
-
-
+    # plt.show()
+    
+    # floe.plot_displacements_1free(1.,Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node)
+    # floe.plot_displacements_Neighborfree(1.,Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node)
 
 
 

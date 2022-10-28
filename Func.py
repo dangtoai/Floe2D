@@ -327,7 +327,7 @@ class Floe:
                         args=(Y0_, self.n, CM, Length_Mat, self.m,
                               self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices(), contact_node))
         return Sol
-    
+
     def Move_stable_neighbor(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
         N = 800
         t = np.linspace(0, time_end, N)
@@ -356,6 +356,15 @@ class Floe:
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
 
+        plt.plot(self.nodes[3].position()[0], self.nodes[3].position()[
+                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
+        plt.plot(self.nodes[6].position()[0], self.nodes[6].position()[
+                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
+        plt.plot(self.nodes[1].position()[0], self.nodes[1].position()[
+                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
+        plt.plot(self.nodes[0].position()[0], self.nodes[0].position()[
+                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
+
     def plot_displacements(self, time_end):
         """
         Parameters
@@ -379,6 +388,50 @@ class Floe:
         plt.xlabel("time(s)")
 
         # plt.legend()
+
+    def plot_displacements_1free(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
+        """
+        Parameters
+        ----------
+        time_end : .
+
+        Plot the position's evolution of all nodes.
+
+        """
+        time = self.Move_stable_1(
+            time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).t
+        solution = self.Move_stable_1(
+            time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
+        Index_x = np.arange(0, 4*self.n, 4)
+        Index_y = Index_x + 1
+        plt.figure()
+        for i in Index_x:
+            plt.plot(time, solution[i])
+        for i in Index_y:
+            plt.plot(time, solution[i])
+        plt.xlabel("time(s)")
+
+    def plot_displacements_Neighborfree(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
+        """
+        Parameters
+        ----------
+        time_end : .
+
+        Plot the position's evolution of all nodes.
+
+        """
+        time = self.Move_stable_neighbor(
+            time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).t
+        solution = self.Move_stable_neighbor(
+            time_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
+        Index_x = np.arange(0, 4*self.n, 4)
+        Index_y = Index_x + 1
+        plt.figure()
+        for i in Index_x:
+            plt.plot(time, solution[i])
+        for i in Index_y:
+            plt.plot(time, solution[i])
+        plt.xlabel("time(s)")
 
     def evolution(self, time_end, time, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
         """
@@ -1006,14 +1059,14 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_
         u[k, j] = -u[j, k]
     # all nodes stable, only the contact node can move
         if i == contact_node or j == contact_node or k == contact_node:
-            Y_[2*contact_node+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/
+            Y_[2*contact_node+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k]) /
                                               (norm(Q[2*i] - Q[2*j])) * u[i, k]
-                                        + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/
-                                        norm(Q[2*i] - Q[2*k]) * u[i, j])
+                                              + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j]) /
+                                              norm(Q[2*i] - Q[2*k]) * u[i, j])
 
     return np.reshape(Y_, (nb_nodes*4))
 
-    
+
 def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
     """
     Parameters
@@ -1052,12 +1105,12 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
     list_contact = []
     for i in range(len(Neighbor_contact)):
         list_contact = list_contact + Neighbor_contact[i]
-    
+
     for i in list_contact:
         # if i == contact_node:
         Y_[2*i] = Q[2*i+1]
         for j in range(i+1, i+nb_nodes):
-                
+
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
             Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
@@ -1066,7 +1119,5 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
     return np.reshape(Y_, (nb_nodes*4))
 
 
-
-
 dt = 0.00125
-G = 10.  # stiffness of torsion's spring
+G = 1000.  # stiffness of torsion's spring
