@@ -80,7 +80,7 @@ if __name__ == '__main__':
     ax.grid()
     # plt.axvline(x=2., color="red")
     line1, = ax.plot([], [], '.-', lw=1.95)
-    line2, = ax.plot([], [], '.-', lw=1.95)
+    # line2, = ax.plot([], [], '.-', lw=1.95)
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = floe.Route()

@@ -1120,4 +1120,4 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
 
 
 dt = 0.00125
-G = 1000.  # stiffness of torsion's spring
+G = 100.  # stiffness of torsion's spring

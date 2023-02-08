@@ -2,9 +2,9 @@
 from Func import *
 import numpy as np
 from matplotlib.animation import PillowWriter
-import moviepy.editor as mp
-from moviepy.editor import VideoFileClip
-import moviepy.video.fx.all as vfx
+# import moviepy.editor as mp
+# from moviepy.editor import VideoFileClip
+# import moviepy.video.fx.all as vfx
 import matplotlib.animation as animation
 
 if __name__ == '__main__':
