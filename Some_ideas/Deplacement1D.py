@@ -13,12 +13,12 @@ import matplotlib.pyplot as plt
 
 N = 10       #nombre de noeuds 
 L = 1.      #longueur du reseau
-k = 160.     #raideur
+k = 1600.     #raideur
 m = 1.      #masse
 mu = 40.     #viscosity
 x0 = np.array(np.linspace(0,L,N))       #position initiale des noeuds
 v0 = np.zeros(N-1)                  
-v  = np.array([-0.25])
+v  = np.array([-0.25*5])
 v0 = np.concatenate([v0, v])            #vitesse initiale des noeuds
 L0 = L/(N-1)*np.ones(N-1)               #longueurs vide de chaque ressorts
 t_simu = 2.
@@ -68,21 +68,47 @@ t,y  = Model(L, N, x0, v0)
 
 plt.figure()
 for i in range(N):
-    plt.plot(t,y[:,i])
-plt.show()
+    plt.plot(t,y[:,i],label = i)
+plt.xlabel("times")
+plt.ylabel("positions")    
+plt.legend()
+
+plt.figure()
+for i in range(N,2*N):
+    plt.plot(t,y[:,i],label = i-N)
+plt.xlabel("times")
+plt.ylabel("velocities")   
+plt.legend()
 
 Variation = []          #variation de l'atome i par rapport a sa pos init
 for i in range(N):
     Variation.append(max(abs(y[:,i]-x0[i])))
 
 plt.figure()
-plt.bar(np.arange(N), Variation, width = 0.05)
+plt.bar(np.arange(N), Variation, width = 0.1, label='123')
+plt.xlabel("i-th node")
+plt.ylabel("$\epsilon$")
+plt.title("Stable zone of each node")
 
 ###mesure la deformation. 
 
-# print(y[500,:N]) # la position de chaque noeud à l'instant 500 du discretisation de temps
+# print(y[500,:N]) # la position courant des noeuds à l'instant 500 
+plt.figure()
+for i in range(0,n,20):
+    plt.plot(x0, y[i,:N], "--")
+plt.xlabel("x") 
+plt.ylabel("$\phi$- Deformation field")
+
+### mesure le champs de deplacement 1D
+plt.figure()
+for i in range(0,n,20):
+    plt.plot(x0, y[i,:N]-y[0,:N], "--")
+plt.xlabel("x") 
+plt.ylabel("$u=\phi-Id$- Displacement field")
 
 
+
+plt.show()
 
 
 
