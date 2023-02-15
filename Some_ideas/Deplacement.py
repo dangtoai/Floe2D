@@ -68,6 +68,7 @@ if __name__ == '__main__':
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = floe.Route()
+    # Route = [0,1,2,3,0]
     def init():
         line1.set_data([], [])
         time_text.set_text(' ')
