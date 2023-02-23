@@ -10,18 +10,19 @@ import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from collections import deque
+# import matplotlib
+# from collections import deque
 
-N = 10       #nombre de noeuds 
+N = 20       #nombre de noeuds 
 L = 1.      #longueur du reseau
-k = 1600.     #raideur
+k = 10000.     #raideur
 m = 1.      #masse
-mu = 40.     #viscosity
+mu = 400.     #viscosity
 x0 = np.array(np.linspace(0,L,N))       #position initiale des noeuds
 v0 = np.zeros(N-1)                  
-v  = np.array([-0.25*10])
+v  = np.array([-0.25*10])               #vitesse init noeud libre
 v0 = np.concatenate([v0, v])            #vitesse initiale des noeuds
-L0 = L/(N-1)*np.ones(N-1)               #longueurs vide de chaque ressorts
+L0 = L/(N-1)*np.ones(N-1)               #longueurs a vides de chaque ressorts
 t_simu = 2.
 n  = 500
 dt = t_simu/n
@@ -69,12 +70,12 @@ t,y  = Model(L, N, x0, v0)
 # print(Y0)
 # print(LL)
 
-plt.figure()
-for i in range(N):
-    plt.plot(t,y[:,i],label = i)
-plt.xlabel("times")
-plt.ylabel("positions")    
-plt.legend()
+# plt.figure()
+# for i in range(N):
+#     plt.plot(t,y[:,i],label = i)
+# plt.xlabel("times")
+# plt.ylabel("positions")    
+# plt.legend()
 
 # plt.figure()
 # for i in range(N,2*N):
@@ -83,9 +84,9 @@ plt.legend()
 # plt.ylabel("velocities")   
 # plt.legend()
 
-Variation = []          #variation de l'atome i par rapport a sa pos init
-for i in range(N):
-    Variation.append(max(abs(y[:,i]-x0[i])))
+# Variation = []          #variation de l'atome i par rapport a sa pos init
+# for i in range(N):
+#     Variation.append(max(abs(y[:,i]-x0[i])))
 
 # plt.figure()
 # plt.bar(np.arange(N), Variation, width = 0.1, label='123')
@@ -93,108 +94,107 @@ for i in range(N):
 # plt.ylabel("$\epsilon$")
 # plt.title("Stable zone of each node")
 
-###mesure la deformation. 
+##mesure la deformation. 
 
 # print(y[500,:N]) # la position courant des noeuds à l'instant 500 
-# plt.figure()
-# for i in range(0,n,20):
-#     plt.plot(x0, y[i,:N], "--")
-# plt.xlabel("x") 
-# plt.ylabel("$\phi$- Deformation field")
+plt.figure()
+for i in range(0,50,5):
+    plt.plot(x0, y[i,:N], "--")
+plt.xlabel("x") 
+plt.ylabel("$\phi$- Deformation field")
 
-### mesure le champs de deplacement 1D
-# plt.figure()
-# for i in range(0,n,20):
-#     plt.plot(x0, y[i,:N]-y[0,:N], "--")
-# plt.xlabel("x") 
-# plt.ylabel("$u=\phi-Id$- Displacement field")
+## mesure le champs de deplacement 1D
+plt.figure()
+for i in range(0,50,5):
+    plt.plot(x0, y[i,:N]-y[0,:N], "--")
+plt.xlabel("x") 
+plt.ylabel("$u=\phi-Id$- Displacement field")
 
-
-# fig = plt.figure()
-# ax = fig.add_subplot(111, autoscale_on=True,
-#                       xlim=(-.5, 1.5), ylim=(-.51, .51))
-# ax.set_aspect('equal')
-# ax.grid()
-# # plt.axvline(x=2., color="red")
-# line1, = ax.plot([], [], '.-', lw=1.95)
-# time_template = 'time = % 10fs'
-# time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-# Route = [0,1,2,3] #range(0,N)
-
-fig = plt.figure(figsize=(5, 4))
-ax = fig.add_subplot(autoscale_on=False, xlim=(-0.1, L+0.5), ylim=(-L, L))
-ax.set_aspect('equal')
-ax.grid()
-line, = ax.plot([], [], 'o-', lw=2)
-# trace, = ax.plot([], [], '.-', lw=1, ms=2)
-time_template = 'time = %.1fs'
-time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-history_x, history_y = deque(maxlen=history_len), deque(maxlen=history_len)
 
 
 #animation positions
-def animate(i):
-    thisx = [y[:,j][i] for j in range(N)]
-    thisx.insert(0,0)
-    thisy = np.zeros_like(thisx)
-        
-    # line1.set_data()
-    
-    # time_text.set_text(time_template % (i*dt))
-    # return line1, time_text
-    if i == 0:
-        history_x.clear()
-        history_y.clear()
+# fig = plt.figure(figsize=(5, 4))
+# ax = fig.add_subplot(autoscale_on=False, xlim=(-0.1, L+0.2), ylim=(-.2, .2))
+# ax.set_aspect('equal')
+# ax.grid()
+# line, = ax.plot([], [], 'o-', lw=2)
+# # trace, = ax.plot([], [], '.-', lw=1, ms=2)
+# time_template = 'time = %.1fs'
+# time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+# history_x, history_y = deque(maxlen=history_len), deque(maxlen=history_len)
+# plt.title("Floe's evolution after choc")
 
-    history_x.appendleft(thisx[2])
-    history_y.appendleft(thisy[2])
 
-    line.set_data(thisx, thisy)
-    # trace.set_data(history_x, history_y)
-    time_text.set_text(time_template % (i*dt))
-    return line, time_text
 
-# ani = animation.FuncAnimation(fig, animate_spring,
-#                               np.arange(0, len(y[0])), interval=2, blit=False)
-ani = animation.FuncAnimation(fig, animate, len(y), interval=dt*1000, blit=True)
-plt.show()
+# def animate(i):
+#     thisx = [y[:,j][i] for j in range(N)]
+#     thisx.insert(0,0)
+#     thisy = np.zeros_like(thisx)
+#     if i == 0:
+#         history_x.clear()
+#         history_y.clear()
+
+#     history_x.appendleft(thisx[2])
+#     history_y.appendleft(thisy[2])
+
+#     line.set_data(thisx, thisy)
+#     # trace.set_data(history_x, history_y)
+#     time_text.set_text(time_template % (i*dt))
+#     return line, time_text
+
+# ani = animation.FuncAnimation(fig, animate, len(y), interval=dt*1000, blit=True)
+# writergif = animation.PillowWriter(fps=30)
+# ani.save('filename.gif',writer=writergif)
+# plt.show()
 
 
 
 #animation deformation
 
-fig, ax = plt.subplots()
-deformation, = ax.plot(x0, y[0, :N])
+# fig1, ax1 = plt.subplots()
+# deformation, = ax1.plot(x0, y[0, :N], )
+# time_template = 'time = %.1fs'
+# time_text = ax1.text(0.05, 0.9, '', transform=ax1.transAxes)
+# plt.title("$\phi$ - Deformation function")
 
-
-def animate1(i):
-    deformation.set_ydata(y[i,:N])  # update the data
-    return deformation,
-
-
-# # Init only required for blitting to give a clean slate.
-def init():
-    deformation.set_ydata(np.ma.array(x0, mask=True))
-    return deformation,
-
-ani1 = animation.FuncAnimation(fig, animate1, np.arange(1, 200), init_func=init,
-                              interval=25, blit=True)
-plt.show()
-
-
-fig2, ax2 = plt.subplots()
-displacement, = ax2.plot(x0, y[0, :N] - y[0, :N])
-
-def animate2(i):
-    displacement.set_ydata(y[i, :N] - y[0, :N])  # update the data
-    return displacement,
-
+# def animate1(i):
+#     deformation.set_ydata(y[i,:N])  # update the data
+#     time_text.set_text(time_template % (i*dt))
+#     return deformation, time_text
 
 # # Init only required for blitting to give a clean slate.
-def init2():
-    displacement.set_ydata(np.ma.array(x0, mask=True))
-    return displacement,
+# def init():
+#     deformation.set_ydata(np.ma.array(x0, mask=True))
+#     return deformation, 
 
-ani2 = animation.FuncAnimation(fig, animate2, np.arange(1, 200), init_func=init2,
-                              interval=25, blit=True)
-plt.show()
+# ani1 = animation.FuncAnimation(fig1, animate1, len(y), init_func=init,
+#                                interval=dt*1000, blit=True)
+# writergif = animation.PillowWriter(fps=30)
+# ani1.save('filename.gif',writer=writergif)
+# # plt.show()
+
+# animation displacement field
+# fig2, ax2 = plt.subplots()
+# ax2.set_ylim([-0.075, 0.075])
+
+# displacement, = ax2.plot(x0, y[0, :N] - y[0, :N])
+# time_template = 'time = %.1fs'
+# time_text = ax2.text(0.05, 0.9, '', transform=ax2.transAxes)
+# plt.title("$u=\phi-Id$ - Displacement function")
+
+# def animate2(i):
+#     displacement.set_ydata(y[i, :N] - y[0, :N])  # update the data
+#     time_text.set_text(time_template % (i*dt))
+#     return displacement, time_text
+
+
+# # # Init only required for blitting to give a clean slate.
+# def init2():
+#     displacement.set_ydata(np.ma.array(x0, mask=True))
+#     return displacement,
+
+# ani2 = animation.FuncAnimation(fig2, animate2, len(y), init_func=init2,
+#                                interval=dt*1000, blit=True)
+# ani2.save('filename.gif',writer=writergif)
+
+# plt.show()
