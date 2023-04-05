@@ -73,44 +73,70 @@ if __name__ == '__main__':
     # All_positions_velocities = floe.Move(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
     All_positions_velocities = floe.Move_stable_neighbor(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=True,
-                          xlim=(-.2, 1.2), ylim=(-.75, 1.51))
-    ax.set_aspect('equal')
-    ax.grid()
-    # plt.axvline(x=2., color="red")
-    line1, = ax.plot([], [], '.-', lw=1.95)
-    # line2, = ax.plot([], [], '.-', lw=1.95)
-    time_template = 'time = % 10fs'
-    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-    Route = floe.Route()
-    def init():
-        line1.set_data([], [])
-        time_text.set_text(' ')
-        return line1, time_text
     
-    def animate_spring(i):
-        Ix = [j for j in range(0, floe.n*4, 4)]
-        Iy = [j for j in range(1, floe.n*4, 4)]
-        thisx = []
-        thisy = []
-        for j in Ix:
-            thisx = np.append(thisx, All_positions_velocities[j][i])
-        for j in Iy:
-            thisy = np.append(thisy, All_positions_velocities[j][i])
-        for k in Route:
-            thisx = np.append(thisx, thisx[k])
-            thisy = np.append(thisy, thisy[k])
+    Energy = Energy_studies(All_positions_velocities, floe)
+    M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
+    
+    t = np.linspace(0,1,800)
+    plt.figure()
+    plt.plot(t[:M], Energy[0][:M])
+    plt.plot(t[:M], Energy[1][:M])
+    plt.plot(t[:M], Energy[2][:M])
+    
+    All_pos_vel = All_positions_velocities[:,:M]
+    
+    All_pos = np.zeros((floe.n * 2, 16))
+    
+    for i in range(0,floe.n):
+        All_pos[2*i]   = All_pos_vel[4*i]
+        All_pos[2*i+1] = All_pos_vel[4*i+1]
+        
+    # All_pos = All_pos.reshape(floe.n, 32)
+        
+    for i in range(floe.n*2):
+        All_pos[i] = All_pos[i]-All_pos[i][0]
+    
+    plt.plot(Points,All_pos[:,0].reshape(7,2))
+    
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, autoscale_on=True,
+    #                       xlim=(-.2, 1.2), ylim=(-.75, 1.51))
+    # ax.set_aspect('equal')
+    # ax.grid()
+    # # plt.axvline(x=2., color="red")
+    # line1, = ax.plot([], [], '.-', lw=1.95)
+    # # line2, = ax.plot([], [], '.-', lw=1.95)
+    # time_template = 'time = % 10fs'
+    # time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+    # Route = floe.Route()
+    # def init():
+    #     line1.set_data([], [])
+    #     time_text.set_text(' ')
+    #     return line1, time_text
+    
+    # def animate_spring(i):
+    #     Ix = [j for j in range(0, floe.n*4, 4)]
+    #     Iy = [j for j in range(1, floe.n*4, 4)]
+    #     thisx = []
+    #     thisy = []
+    #     for j in Ix:
+    #         thisx = np.append(thisx, All_positions_velocities[j][i])
+    #     for j in Iy:
+    #         thisy = np.append(thisy, All_positions_velocities[j][i])
+    #     for k in Route:
+    #         thisx = np.append(thisx, thisx[k])
+    #         thisy = np.append(thisy, thisy[k])
             
-        line1.set_data(thisx[floe.n: ], 
-                       thisy[floe.n: ])
+    #     line1.set_data(thisx[floe.n: ], 
+    #                     thisy[floe.n: ])
 
-        time_text.set_text(time_template % (i*dt))
-        return line1, time_text
+    #     time_text.set_text(time_template % (i*dt))
+    #     return line1, time_text
     
-    ani = animation.FuncAnimation(fig, animate_spring,
-                                  np.arange(0, len(All_positions_velocities[0])), interval=2, blit=False)
-
+    # ani = animation.FuncAnimation(fig, animate_spring,
+    #                               np.arange(0, M), interval=2, blit=False)
+    
+    
     
     # plt.figure()
     # Traction_energy, Torsion_energy, Total_energy = Energy_studies(All_positions_velocities, floe)

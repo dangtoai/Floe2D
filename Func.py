@@ -356,14 +356,6 @@ class Floe:
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
 
-        plt.plot(self.nodes[3].position()[0], self.nodes[3].position()[
-                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
-        plt.plot(self.nodes[6].position()[0], self.nodes[6].position()[
-                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
-        plt.plot(self.nodes[1].position()[0], self.nodes[1].position()[
-                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
-        plt.plot(self.nodes[0].position()[0], self.nodes[0].position()[
-                 1], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="green")
 
     def plot_displacements(self, time_end):
         """
@@ -698,14 +690,13 @@ def Energy_studies(All_positions_velocities, floe):
     Parameters
     ----------
     All_positions_velocities : Evolution of all nodes and velocities
-    floe : TYPE
-        DESCRIPTION.
+    floe : result of simulation, vector contains positions and velocity of all node.
 
     Returns
     -------
     Traction_energy 
     Torsion_energy 
-    E_tot
+    E_tot : elastic energy of a floe. 
 
     """
     Length_Mat = floe.length_mat()
@@ -753,7 +744,7 @@ def Energy_studies_fr(All_positions_velocities, floe):
     Traction_energy, Torsion_energy, E_tot when each fracture situation happen
     """
     all_frac, length_frac = floe.fractures_admissible()
-    alpha = 1.  # ductibility coef
+    alpha = 1.                                              # ductibility coef
     Length_Mat = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
     Angle_Mat = floe.angle_init()
@@ -867,10 +858,6 @@ def Unit_vect(vect1, vect2):
         return 0.
     else:
         return (vect2-vect1)/norm(vect2-vect1)
-
-
-def Orthogonal_vect(vect):
-    return np.array([-vect[1], vect[0]])
 
 
 def find_simplice(v1, v2):

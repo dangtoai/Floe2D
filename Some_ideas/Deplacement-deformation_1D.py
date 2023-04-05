@@ -13,26 +13,26 @@ import matplotlib.animation as animation
 import matplotlib
 from collections import deque
 
-N = 50          #nombre de noeuds 
+N = 1000          #nombre de noeuds 
 L = 1.          #longueur du reseau
-k = 100.      #raideur de chaque ressort
-m = 1.          #masse
-mu = 40.       #viscosity
+k = 30.       #raideur de chaque ressort
+m = 1./N           #masse
+mu = 10.        #viscosity
 x0 = np.array(np.linspace(0,L,N))       #position initiale des noeuds
 v0 = np.zeros(N-1)                  
-v  = np.array([-0.25*1])               #vitesse init noeud libre
+v  = np.array([-0.25*10])               #vitesse init noeud libre
 v0 = np.concatenate([v0, v])            #vitesse initiale des noeuds
 L0 = L/(N-1)*np.ones(N-1)               #longueurs a vides de chaque ressorts
-t_simu = 3.
-n  = 1000
+t_simu = 5.
+n  = 500
 dt = t_simu/n
+
 
 
 #on utilise la meme notation que Desmond dans son rapport
 
 def Model(L, N, x0, v0):
     diagB = -2.0 * k * np.ones((N))
-    diagB[0] = -k
     diagB[-1] = -k
     B = np.diag(diagB / m) + np.diag(k * np.ones((N - 1)) / m, 1) + np.diag(k * np.ones((N - 1)) / m, -1)
 
@@ -70,12 +70,12 @@ t,y  = Model(L, N, x0, v0)
 # print(Y0)
 # print(LL)
 
-# plt.figure()
-# for i in range(N):
-#     plt.plot(t,y[:,i],label = i)
-# plt.xlabel("times")
-# plt.ylabel("positions")    
-# plt.legend()
+plt.figure()
+for i in range(N-3,N):
+    plt.plot(t,y[:,i],label = i)
+plt.xlabel("times")
+plt.ylabel("positions")    
+plt.legend()
 
 # plt.figure()
 # for i in range(N,2*N):
@@ -98,20 +98,20 @@ t,y  = Model(L, N, x0, v0)
 
 # print(y[500,:N]) # la position courant des noeuds à l'instant 500 
 
-Compression = np.zeros_like(t)
-for i in range(n+1):
-    Compression[i] = y[i,:N][-1]-L
-plt.figure()
-plt.plot(t,Compression, label = "Compression")
-plt.hlines(0, xmin = 0, xmax = t_simu, color='black' )
-plt.xlabel("time")
-plt.legend()
+# Compression = np.zeros_like(t)
+# for i in range(n+1):
+#     Compression[i] = y[i,:N][-1]-L
+# plt.figure()
+# plt.plot(t,Compression, label = "Compression")
+# plt.hlines(0, xmin = 0, xmax = t_simu, color='black' )
+# plt.xlabel("time")
+# plt.legend()
 
-plt.figure()
-for i in range(0,5):
-    plt.plot(x0, y[i,:N], "--")
-plt.xlabel("x") 
-plt.ylabel("$\phi$- Deformation field")
+# plt.figure()
+# for i in range(0,5):
+#     plt.plot(x0, y[i,:N], "--")
+# plt.xlabel("x") 
+# plt.ylabel("$\phi$- Deformation field")
 
 ## mesure le champs de deplacement 1D
 
@@ -131,7 +131,7 @@ for i in range(n+1):
 # plt.plot(t, E_c, label = 'Energie cinetique')
 
 M = np.where(E_l == max(E_l))[0][0]
-MM = np.where(Compression == min(Compression))[0][0]
+# MM = np.where(Compression == min(Compression))[0][0]
 
 plt.plot(t[:], E_l[:], label = 'Energie elastique')
 plt.xlabel("time(s)") 
@@ -139,15 +139,14 @@ plt.legend()
 
 plt.figure()
 for i in range(0,M):
-    plt.plot(x0, y[i,:N]-y[0,:N], "--",)
+    plt.plot(x0, y[i,:N]-y[0,:N], "--")
 plt.xlabel("x") 
 
-plt.figure()
-plt.plot(x0, y[M,:N]-y[0,:N], "--", label=" Max $E_l$ ")
-plt.plot(x0, y[MM,:N]-y[0,:N], "--", label = "Min Compression")
-
-plt.ylabel("$u=\phi-Id$- Displacement field")
-plt.legend()
+# plt.figure()
+# plt.plot(x0, y[M,:N]-y[0,:N], "--", label=" Max $E_l$ ")
+# # plt.plot(x0, y[MM,:N]-y[0,:N], "--", label = "Min Compression")
+# plt.ylabel("$u=\phi-Id$- Displacement field")
+# plt.legend()
 
 # plt.figure()
 # for i in range(0, M):
