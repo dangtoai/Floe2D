@@ -214,8 +214,8 @@ class Floe:
         return [(self.get_nodes()[i], self.get_nodes()[j]) for (i, j) in self.springs]
 
     def connexe_mat(self):
-        k = max(max(self.springs))+1
-        Mat = np.zeros((k, k))
+        # k = max(max(self.springs))+1
+        Mat = np.zeros((self.n, self.n))
         for (i, j) in self.springs:
             Mat[i, j] = 1
             Mat[j, i] = Mat[i, j]
@@ -296,7 +296,7 @@ class Floe:
         return Neighbor_contact
 
     def Move(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat):
-        N = 800
+        N = 200
         t = np.linspace(0, time_end, N)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
@@ -313,7 +313,7 @@ class Floe:
         return Sol
 
     def Move_stable_1(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
-        N = 800
+        N = 200
         t = np.linspace(0, time_end, N)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
@@ -329,7 +329,7 @@ class Floe:
         return Sol
 
     def Move_stable_neighbor(self, time_end: float, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node):
-        N = 800
+        N = 200
         t = np.linspace(0, time_end, N)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
@@ -1106,5 +1106,5 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
     return np.reshape(Y_, (nb_nodes*4))
 
 
-dt = 0.00125
-G = 100.  # stiffness of torsion's spring
+dt = 1./200
+G = 1000.  # stiffness of torsion's spring
