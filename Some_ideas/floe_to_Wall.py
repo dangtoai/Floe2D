@@ -72,7 +72,7 @@ if __name__ == '__main__':
     
     # Traction_energy, Torsion_energy, E_tot = Energy_studies(All_positions_velocities, floe)
     # plt.figure()
-
+    
     # plt.plot(E_tot[:], "--", color= "r" ,label="Total")
     
     # Traction_energy_fr, Torsion_energy_fr, E_tot_fr = Energy_studies_fr(All_positions_velocities, floe)

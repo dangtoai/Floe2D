@@ -2,9 +2,9 @@
 from Func import *
 import numpy as np
 from matplotlib.animation import PillowWriter
-import moviepy.editor as mp
-from moviepy.editor import VideoFileClip
-import moviepy.video.fx.all as vfx
+# import moviepy.editor as mp
+# from moviepy.editor import VideoFileClip
+# import moviepy.video.fx.all as vfx
 import matplotlib.animation as animation
 
 if __name__ == '__main__':
@@ -16,7 +16,7 @@ if __name__ == '__main__':
  
     Points = np.array([[0, 0.], [0., 1.], [1., 0.]])
     V0     = np.array([0., 0.])
-    V1     = np.array([0.75, 0.0])
+    V1     = np.array([15.75, 0.0])
     Nodes  = []
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))

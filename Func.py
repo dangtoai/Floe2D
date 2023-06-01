@@ -305,8 +305,6 @@ class Floe:
         plt.figure()
         # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
-            # i = np.where(l==i)[0][0]
-            # j = np.where(l==j)[0][0]
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
                      [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],
