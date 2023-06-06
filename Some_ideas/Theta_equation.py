@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 J = 1.
 C = 100.     #stiffness of torsion spring
-f = 1.
-T_end = 7.
+f = 0.
+T_end = 3.
 
 R = 1. # traction spring's length
 theta0 = np.pi/3.
@@ -19,14 +19,14 @@ def deriv(y,t):
     dzdt = [dxdt, dydt]
     return dzdt
 
-y0 = [30, 0.]
-t = np.linspace(0,T_end,1000)
+y0 = [0, 0.]
+t = np.linspace(0,T_end,500)
 
 Sol = odeint(deriv, y0, t)
 
 plt.figure()
 plt.plot(t,Sol[:,0], label='$\Theta$(rad)')
-plt.plot(t,Sol[:,1], label="$\dot{\Theta}$(rad/s)")
+# plt.plot(t,Sol[:,1], label="$\dot{\Theta}$(rad/s)")
 plt.tight_layout()
 plt.xlabel("temps(s)")
 plt.ylabel("rad")

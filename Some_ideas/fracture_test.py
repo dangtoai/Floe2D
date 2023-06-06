@@ -48,8 +48,6 @@ if __name__ == '__main__':
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     Route = [1, 0, 5, 1, 2, 3, 4, 2, 5, 4] #floe.Route()
     
-    
-    
     ## Energy studies
     Traction_energy = np.zeros(len(All_positions_velocities[0]))
     Torsion_energy = np.zeros(len(All_positions_velocities[0]))

@@ -35,6 +35,7 @@ if __name__ == '__main__':
     Route = floe.Route()
     
     All_positions_velocities = Problem.simulation()
+    
     def init():
         line1.set_data([], [])
         time_text.set_text('')
