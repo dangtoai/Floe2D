@@ -9,7 +9,7 @@ if __name__ == '__main__':
     ######################
     
     Points = np.array([[1, 0.], [0., -1.], [0., 1.]])
-    V0     = np.array([1., 0.])
+    V0     = np.array([20.5, 0.])
     # V1     = np.array([-1.0, 0.])
     Nodes  = []
     for i in range(len(Points)):
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     
     t_end = 4.
     collision_dist   = 0.01
-    coef_restitution = 0.9
+    coef_restitution = 1.9
     
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True, xlim=(-2.1, 6.5), ylim=(-2.2, 1.2))
@@ -118,4 +118,4 @@ if __name__ == '__main__':
         return line1, time_text
     
     ani = animation.FuncAnimation(fig, animate_spring, 
-                                    np.arange(600,len(Node1x)), interval=25, blit=False)
+                                    np.arange(0,len(Node1x)), interval=25, blit=False)

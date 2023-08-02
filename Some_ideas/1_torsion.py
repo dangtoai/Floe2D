@@ -16,7 +16,7 @@ if __name__ == '__main__':
  
     Points = np.array([[0, 0.], [0., 1.], [1., 0.]])
     V0     = np.array([0., 0.])
-    V1     = np.array([0.75, 0.0])
+    V1     = np.array([15.75, 0.0])
     Nodes  = []
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
