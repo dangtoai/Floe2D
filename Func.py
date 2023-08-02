@@ -344,11 +344,28 @@ class Floe:
                               self.mu, Traction_Mat, Torsion_Mat, Angle_Mat, self.simplices(), contact_node))
         return Sol
 
-    def plot_init(self):
+    def plot_init(self, figax=None):
+        # if not figax:
+        #   figax = plt.subplots()
+        #   fig, ax = figax
+        #   ax.set_aspect('equal')
+        
+        # super().plot(figax)
         plt.figure()
         # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
 
+            plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
+                     [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
+            plt.text(self.nodes[i].position()[0],
+                     self.nodes[i].position()[1], self.nodes[i].id)
+            plt.text(self.nodes[j].position()[0],
+                     self.nodes[j].position()[1], self.nodes[j].id)
+            
+    def plot_border(self):
+        plt.figure()
+        l = self.border_edges_index()
+        for (i, j) in l:
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
                      [self.nodes[i].position()[1], self.nodes[j].position()[1]],  color='blue')
             plt.text(self.nodes[i].position()[0],

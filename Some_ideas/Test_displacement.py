@@ -105,7 +105,7 @@ if __name__ == '__main__':
    
     Nodes = []
     V0 = np.array([0., 0.])
-    V1 = np.array([-4.5, 0])
+    V1 = np.array([-.05, 0])
 
     for i in range(len(Points)):
         Nodes.append(Node(Points[i], V0, i))
@@ -457,6 +457,8 @@ if __name__ == '__main__':
     floe = Floe(nodes=Nodes, springs=Springs,
                 stiffness=k, viscosity=k/5, id_number=1)
     
+    floe.plot_border()
+    
     Traction_Mat = floe.traction_mat()
     Length_Mat = floe.length_mat()
     Torsion_Mat = floe.torsion_mat()
@@ -503,10 +505,10 @@ if __name__ == '__main__':
         plt.quiver(Points[i][0], Points[i][1],
                    deformation_field[2*i][M-1], deformation_field[2*i+1][M-1])
     
-    DD = [deformation_field[2*i][M-1] for i in range(len(Points))]
-    DDD = [deformation_field[2*i+1][M-1] for i in range(len(Points))]
-    plt.figure()
-    plt.quiver(Points[:,0], Points[:,1],DD,DDD)
+    # DD = [deformation_field[2*i][M-1] for i in range(len(Points))]
+    # DDD = [deformation_field[2*i+1][M-1] for i in range(len(Points))]
+    # plt.figure()
+    # plt.quiver(Points[:,0], Points[:,1], DD, DDD)
     #compute the norm of deformation field at each 
 
     data_deformation = deformation_field[:,-1].reshape(floe.n,2)
@@ -535,6 +537,17 @@ if __name__ == '__main__':
         deformation_norm[i] = norm(data_deformation[i])
     deformation_norm = np.array([deformation_norm])
     
+    DD = np.array([deformation_field[2*i][M-1] for i in range(len(Points))])
+    DDD = np.array([deformation_field[2*i+1][M-1] for i in range(len(Points))])
+    plt.figure()
+    plt.quiver(Points[:,0], Points[:,1], DD, DDD)
+    plt.tight_layout()
+    
+    #only plot displacement at border : 
+    plt.figure()
+    plt.quiver(Points[:,0][floe.border_nodes_index()], Points[:,1][floe.border_nodes_index()], 
+               DD[floe.border_nodes_index()], DDD[floe.border_nodes_index()])
+    plt.tight_layout()
     # x,y = np.array([Points[:,0]]), np.array([Points[:,1]])
     
     #plot norm of deformation at each point 

@@ -4,8 +4,12 @@ from collections import namedtuple
 from enum import Enum
 import numpy as np
 import re
+import random 
+from numpy.random import randint
 
 from . import geometry as geo
+from griffith.geometry import dist 
+
 sys.path.append(os.path.abspath('..'))
 import plotrc as plot_options
 
@@ -457,10 +461,14 @@ class Mesh:
         node._add_triangle(t.id_number)
         node._add_neighboors((n.id_number for n in t.nodes))
     
+  
+
   def _read_mesh_format(self, lines):
     lines = lines.splitlines()
     mesh_format = lines[0].split(' ')[0]
     assert(mesh_format == '2.2')
+      
+  
 
   def _read_physical(self, lines):
     lines = lines.splitlines()
@@ -570,7 +578,64 @@ class Mesh:
     for t in self.triangles:
       t.plot(figax, **plot_options.triangles)
     return figax
+    
 
+  def adjacent_element(self, point, triangle):
+    """
+    Find a adjacent triangle K* of the triangle K at point P. 
+    intersection of K* and K is P, they don't have common edge.
+    """
+    list_triangles = []
+    list_triangles_index = point._of_triangles
+    for i in list_triangles_index: 
+        list_triangles.append(self.triangles[i])
+    list_points = list(triangle.points)
+    filtered_list = list_points.copy()
+    if point in filtered_list: filtered_list.remove(point)
+    if filtered_list: 
+        element_to_remove = random.choice(filtered_list)
+        list_points.remove(element_to_remove)
+
+    ### 
+    for t in list_triangles:
+        # if not t.has_point(list_points[0]) and not t.has_point(list_points[1]) :
+        if t.has_point(list_points[0]) and t.has_point(list_points[1]) :
+            if t == triangle: continue 
+            return t
+            break
+    
+
+  def find_triangle_test(self, point):
+    ### somehow, in this algorithm, sometimes the "triangle_test" returns None, to debug!!!
+     n = len(self.triangles)
+     try: 
+         triangle_test = self.triangles[randint(0,n)]
+         p = triangle_test.points
+         res = [False, False, False]
+         l = []
+         n = 0
+         while not all(res):
+             p = triangle_test.points
+             t1 = Triangle(p[0], p[1], point, None)
+             t2 = Triangle(p[1], p[2], point, None)
+             t3 = Triangle(p[2], p[0], point, None)
+             t1 = t1.oriented_area() > 0
+             t2 = t2.oriented_area() > 0
+             t3 = t3.oriented_area() > 0
+             res = [t1, t2, t3]
+             l.append(triangle_test)
+             min_index, min_element = min(enumerate([dist(p[i], point) for i in range(3)]), key=lambda x: x[1])
+             triangle_test = self.adjacent_element(p[min_index], triangle_test)
+         return l
+     except AttributeError: return None
+     # return l
+ 
+    
+  def find_triangle(self, point):
+      while True: 
+          answer = self.find_triangle_test(point)
+          if answer is not None:
+              return answer 
 
 class Broken_Mesh(Mesh):
   """

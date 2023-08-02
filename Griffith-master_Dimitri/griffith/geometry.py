@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi, sqrt, cos, sin, fabs, atan2
+from numpy.linalg import det
 
-PRECISION = 1e-5
+PRECISION = 1e-8
 
 
 class GeometricException(Exception):
@@ -478,7 +479,7 @@ class Point:
       return True
     return False
 
-  def __repr__ (self) :
+  def __repr__ (self):
     return "Point at : (x, y) = {}".format((self.x, self.y))
   
   def plot(self, figax=None, **kwargs):
@@ -508,6 +509,26 @@ class Triangle:
   def previous_edge(self, e):
     return self.edges[self.edges.index(e) - 1]
   
+  def oriented_area(self):
+      """
+      return the oriented area of the triangle ABC
+      S = 1/2 * det(vector(AB), vector (AC))
+      """
+      p1, p2, p3 = self.points
+      vector1 = p2.array - p1.array
+      vector2 = p3.array - p1.array
+      return 0.5 * det([vector1, vector2])
+  
+    
+  def all_oriented_area(self):
+      res = []
+      p = 2*self.points
+      for i in range(3):
+          vector1 = p[i+1].array - p[i].array
+          vector2 = p[i+2].array - p[i].array
+          res.append(0.5 * det([vector1, vector2]))
+      return res
+      
   @property
   def mid_point(self):
     try:
