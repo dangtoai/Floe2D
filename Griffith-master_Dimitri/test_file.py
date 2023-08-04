@@ -22,7 +22,7 @@ from Func import *
 
 if __name__ == '__main__':
     
-    #define Lame tensor. 
+    # define Lame tensor. 
     # T = problem_data.lame_tensor_ice
     # print(" Lame constant are: ", T._lambda, T._mu)
     
@@ -65,20 +65,8 @@ if __name__ == '__main__':
     # print(m.has_point(mesh.boundary_mesh.points[0])) #test if a triangle contains a point. 
     
     
-    # if the oriented area is positive, then the point belongs to the interior of the triangle
-    # print(" oriented area of triangle ",mesh.triangles[0].oriented_area())
-    # print(" All oriented area of triangle ",mesh.triangles[0].all_oriented_area())
-    
-    
-    # if not, one of the oriented area is negative 
-    
-    # triangle_test = Triangle(mesh.nodes[186],mesh.nodes[75], mesh.nodes[0], None)
-    # print(triangle_test.oriented_area())
-    # triangle_test = Triangle(mesh.nodes[75], mesh.nodes[268],mesh.nodes[0], None)
-    # print(triangle_test.oriented_area())
-    # triangle_test = Triangle(mesh.nodes[186], mesh.nodes[268], mesh.nodes[0], None)
-    # print(triangle_test.oriented_area())
-    
+
+
     ##############################################
     
     # triangles = mesh.triangles
@@ -223,8 +211,10 @@ if __name__ == '__main__':
     l = []
     for i in border_data_:
         pp.append(Point(Points[i][0], Points[i][1]))
-        ax.plot(Points[i][0] ,Points[i][1] ,'o')
-        mesh.find_triangle(pp[-1])[-1].plot(figax)
+        ax.plot(Points[i][0] ,Points[i][1] ,'x')
+        P = projection_on_boundary(mesh, pp[-1])
+        ax.plot(P.x, P.y, 'o')
+        mesh.find_triangle(pp[-1]).plot(figax)
         
         # l.append(mesh.find_triangle(pp[i])[-1])
         
@@ -245,9 +235,10 @@ if __name__ == '__main__':
     
     # BM = Boundary_Mesh(mesh)
     
-    
-    
-    
+    p1 = Point(1.4, 3)
+    print(p1)
+    print(closest_point_on_segment(p1, mesh.boundary_mesh.edges[0]))
+    print(projection_on_boundary(mesh, p1))
     
     
     

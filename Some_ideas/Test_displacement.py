@@ -114,455 +114,343 @@ if __name__ == '__main__':
 
     Nodes[contact_node] = Node(Points[contact_node], V1, contact_node)
     
-    # Springs = {(0, 8),
-    #  (0, 9),
-    #  (0, 10),
-    #  (0, 21),
+    
+    # Springs = {(0, 11),
+    #  (0, 19),
     #  (0, 23),
-    #  (0, 26),
-    #  (1, 4),
-    #  (1, 16),
+    #  (0, 29),
     #  (1, 25),
-    #  (1, 31),
-    #  (1, 37),
-    #  (1, 39),
-    #  (1, 41),
-    #  (2, 12),
-    #  (2, 14),
-    #  (2, 18),
-    #  (2, 19),
-    #  (2, 35),
-    #  (2, 36),
-    #  (3, 9),
-    #  (3, 10),
-    #  (3, 22),
-    #  (3, 31),
-    #  (3, 33),
+    #  (1, 44),
+    #  (1, 46),
+    #  (1, 56),
+    #  (1, 78),
+    #  (2, 43),
+    #  (2, 45),
+    #  (2, 57),
+    #  (2, 74),
+    #  (3, 4),
+    #  (3, 16),
+    #  (3, 17),
+    #  (3, 30),
+    #  (3, 76),
     #  (4, 12),
     #  (4, 16),
-    #  (4, 25),
     #  (4, 30),
-    #  (4, 36),
-    #  (5, 13),
+    #  (4, 46),
+    #  (4, 72),
     #  (5, 14),
-    #  (5, 15),
-    #  (5, 16),
-    #  (5, 22),
-    #  (5, 33),
+    #  (5, 18),
+    #  (5, 35),
+    #  (5, 66),
+    #  (6, 10),
     #  (6, 13),
-    #  (6, 14),
-    #  (6, 20),
-    #  (6, 32),
-    #  (6, 38),
-    #  (7, 11),
+    #  (6, 22),
+    #  (6, 24),
+    #  (6, 49),
+    #  (6, 53),
+    #  (6, 73),
     #  (7, 15),
-    #  (7, 22),
-    #  (7, 24),
-    #  (7, 28),
-    #  (7, 29),
+    #  (7, 20),
+    #  (7, 52),
+    #  (7, 69),
+    #  (7, 74),
     #  (8, 11),
     #  (8, 23),
-    #  (8, 27),
-    #  (8, 28),
-    #  (9, 10),
-    #  (9, 26),
+    #  (8, 34),
+    #  (8, 50),
+    #  (8, 63),
+    #  (9, 30),
     #  (9, 31),
-    #  (9, 39),
-    #  (9, 40),
-    #  (10, 21),
+    #  (9, 48),
+    #  (9, 56),
+    #  (9, 57),
+    #  (9, 74),
     #  (10, 22),
-    #  (10, 29),
+    #  (10, 49),
+    #  (10, 64),
+    #  (10, 75),
+    #  (11, 23),
     #  (11, 27),
-    #  (11, 28),
     #  (11, 29),
-    #  (12, 25),
-    #  (12, 36),
-    #  (13, 14),
-    #  (13, 15),
+    #  (11, 63),
+    #  (12, 46),
+    #  (12, 60),
+    #  (12, 72),
+    #  (12, 78),
+    #  (13, 22),
     #  (13, 24),
-    #  (13, 32),
-    #  (14, 16),
-    #  (14, 17),
+    #  (13, 71),
     #  (14, 19),
-    #  (14, 20),
+    #  (14, 29),
+    #  (14, 33),
     #  (14, 35),
-    #  (15, 22),
-    #  (15, 24),
+    #  (14, 38),
+    #  (14, 47),
+    #  (14, 66),
+    #  (14, 70),
+    #  (15, 20),
+    #  (15, 43),
+    #  (15, 74),
     #  (16, 17),
-    #  (16, 30),
-    #  (16, 31),
     #  (16, 33),
-    #  (17, 18),
-    #  (17, 30),
-    #  (17, 35),
-    #  (18, 30),
+    #  (16, 72),
+    #  (16, 75),
+    #  (17, 49),
+    #  (17, 75),
+    #  (17, 76),
     #  (18, 35),
-    #  (18, 36),
-    #  (19, 20),
-    #  (19, 32),
+    #  (18, 41),
+    #  (18, 58),
+    #  (18, 59),
+    #  (18, 61),
+    #  (18, 66),
+    #  (18, 68),
+    #  (19, 23),
+    #  (19, 29),
     #  (19, 38),
-    #  (20, 38),
-    #  (21, 23),
-    #  (21, 27),
-    #  (21, 29),
-    #  (22, 29),
-    #  (22, 33),
-    #  (23, 27),
-    #  (24, 28),
-    #  (24, 32),
-    #  (24, 34),
+    #  (20, 21),
+    #  (20, 43),
+    #  (20, 45),
+    #  (20, 69),
+    #  (21, 45),
+    #  (21, 51),
+    #  (21, 53),
+    #  (21, 69),
+    #  (21, 73),
+    #  (22, 64),
+    #  (22, 71),
+    #  (23, 32),
+    #  (23, 38),
+    #  (23, 50),
+    #  (23, 71),
+    #  (24, 51),
+    #  (24, 53),
+    #  (24, 65),
+    #  (24, 71),
+    #  (24, 79),
     #  (25, 37),
+    #  (25, 44),
+    #  (25, 78),
     #  (26, 37),
-    #  (26, 40),
+    #  (26, 41),
+    #  (26, 61),
+    #  (26, 77),
     #  (27, 29),
-    #  (28, 34),
-    #  (30, 36),
-    #  (31, 33),
-    #  (31, 39),
+    #  (27, 35),
+    #  (27, 63),
+    #  (27, 68),
+    #  (28, 32),
+    #  (28, 42),
+    #  (28, 65),
+    #  (28, 79),
+    #  (29, 35),
+    #  (30, 46),
+    #  (30, 56),
+    #  (30, 57),
+    #  (30, 76),
+    #  (31, 48),
+    #  (31, 56),
+    #  (31, 62),
     #  (32, 34),
-    #  (32, 38),
+    #  (32, 42),
+    #  (32, 50),
+    #  (32, 71),
+    #  (32, 79),
+    #  (33, 36),
+    #  (33, 47),
+    #  (33, 70),
+    #  (33, 72),
+    #  (33, 75),
+    #  (34, 42),
+    #  (34, 50),
+    #  (34, 63),
+    #  (34, 68),
+    #  (35, 68),
+    #  (36, 39),
+    #  (36, 47),
+    #  (36, 55),
+    #  (36, 58),
+    #  (36, 59),
+    #  (36, 67),
+    #  (36, 72),
     #  (37, 40),
-    #  (37, 41),
+    #  (37, 44),
+    #  (37, 60),
+    #  (37, 77),
+    #  (37, 78),
+    #  (38, 64),
+    #  (38, 70),
+    #  (38, 71),
     #  (39, 40),
-    #  (39, 41),
-    #  (40, 41)}
-    
-    Springs = {(0, 11),
-     (0, 19),
-     (0, 23),
-     (0, 29),
-     (1, 25),
-     (1, 44),
-     (1, 46),
-     (1, 56),
-     (1, 78),
-     (2, 43),
-     (2, 45),
-     (2, 57),
-     (2, 74),
-     (3, 4),
-     (3, 16),
-     (3, 17),
-     (3, 30),
-     (3, 76),
-     (4, 12),
-     (4, 16),
-     (4, 30),
-     (4, 46),
-     (4, 72),
-     (5, 14),
-     (5, 18),
-     (5, 35),
-     (5, 66),
-     (6, 10),
-     (6, 13),
-     (6, 22),
-     (6, 24),
-     (6, 49),
-     (6, 53),
-     (6, 73),
-     (7, 15),
-     (7, 20),
-     (7, 52),
-     (7, 69),
-     (7, 74),
-     (8, 11),
-     (8, 23),
-     (8, 34),
-     (8, 50),
-     (8, 63),
-     (9, 30),
-     (9, 31),
-     (9, 48),
-     (9, 56),
-     (9, 57),
-     (9, 74),
-     (10, 22),
-     (10, 49),
-     (10, 64),
-     (10, 75),
-     (11, 23),
-     (11, 27),
-     (11, 29),
-     (11, 63),
-     (12, 46),
-     (12, 60),
-     (12, 72),
-     (12, 78),
-     (13, 22),
-     (13, 24),
-     (13, 71),
-     (14, 19),
-     (14, 29),
-     (14, 33),
-     (14, 35),
-     (14, 38),
-     (14, 47),
-     (14, 66),
-     (14, 70),
-     (15, 20),
-     (15, 43),
-     (15, 74),
-     (16, 17),
-     (16, 33),
-     (16, 72),
-     (16, 75),
-     (17, 49),
-     (17, 75),
-     (17, 76),
-     (18, 35),
-     (18, 41),
-     (18, 58),
-     (18, 59),
-     (18, 61),
-     (18, 66),
-     (18, 68),
-     (19, 23),
-     (19, 29),
-     (19, 38),
-     (20, 21),
-     (20, 43),
-     (20, 45),
-     (20, 69),
-     (21, 45),
-     (21, 51),
-     (21, 53),
-     (21, 69),
-     (21, 73),
-     (22, 64),
-     (22, 71),
-     (23, 32),
-     (23, 38),
-     (23, 50),
-     (23, 71),
-     (24, 51),
-     (24, 53),
-     (24, 65),
-     (24, 71),
-     (24, 79),
-     (25, 37),
-     (25, 44),
-     (25, 78),
-     (26, 37),
-     (26, 41),
-     (26, 61),
-     (26, 77),
-     (27, 29),
-     (27, 35),
-     (27, 63),
-     (27, 68),
-     (28, 32),
-     (28, 42),
-     (28, 65),
-     (28, 79),
-     (29, 35),
-     (30, 46),
-     (30, 56),
-     (30, 57),
-     (30, 76),
-     (31, 48),
-     (31, 56),
-     (31, 62),
-     (32, 34),
-     (32, 42),
-     (32, 50),
-     (32, 71),
-     (32, 79),
-     (33, 36),
-     (33, 47),
-     (33, 70),
-     (33, 72),
-     (33, 75),
-     (34, 42),
-     (34, 50),
-     (34, 63),
-     (34, 68),
-     (35, 68),
-     (36, 39),
-     (36, 47),
-     (36, 55),
-     (36, 58),
-     (36, 59),
-     (36, 67),
-     (36, 72),
-     (37, 40),
-     (37, 44),
-     (37, 60),
-     (37, 77),
-     (37, 78),
-     (38, 64),
-     (38, 70),
-     (38, 71),
-     (39, 40),
-     (39, 59),
-     (39, 60),
-     (39, 67),
-     (40, 59),
-     (40, 60),
-     (40, 77),
-     (41, 61),
-     (42, 52),
-     (42, 65),
-     (43, 45),
-     (43, 74),
-     (44, 54),
-     (44, 56),
-     (45, 49),
-     (45, 57),
-     (45, 73),
-     (45, 76),
-     (46, 56),
-     (46, 78),
-     (47, 55),
-     (47, 66),
-     (48, 62),
-     (48, 74),
-     (49, 73),
-     (49, 75),
-     (49, 76),
-     (51, 52),
-     (51, 53),
-     (51, 65),
-     (51, 69),
-     (52, 65),
-     (52, 69),
-     (53, 73),
-     (54, 56),
-     (54, 62),
-     (55, 58),
-     (55, 66),
-     (56, 62),
-     (57, 74),
-     (57, 76),
-     (58, 59),
-     (58, 66),
-     (59, 61),
-     (59, 77),
-     (60, 67),
-     (60, 72),
-     (60, 78),
-     (61, 77),
-     (62, 74),
-     (63, 68),
-     (64, 70),
-     (64, 71),
-     (64, 75),
-     (65, 79),
-     (67, 72),
-     (70, 75),
-     (71, 79)}
+    #  (39, 59),
+    #  (39, 60),
+    #  (39, 67),
+    #  (40, 59),
+    #  (40, 60),
+    #  (40, 77),
+    #  (41, 61),
+    #  (42, 52),
+    #  (42, 65),
+    #  (43, 45),
+    #  (43, 74),
+    #  (44, 54),
+    #  (44, 56),
+    #  (45, 49),
+    #  (45, 57),
+    #  (45, 73),
+    #  (45, 76),
+    #  (46, 56),
+    #  (46, 78),
+    #  (47, 55),
+    #  (47, 66),
+    #  (48, 62),
+    #  (48, 74),
+    #  (49, 73),
+    #  (49, 75),
+    #  (49, 76),
+    #  (51, 52),
+    #  (51, 53),
+    #  (51, 65),
+    #  (51, 69),
+    #  (52, 65),
+    #  (52, 69),
+    #  (53, 73),
+    #  (54, 56),
+    #  (54, 62),
+    #  (55, 58),
+    #  (55, 66),
+    #  (56, 62),
+    #  (57, 74),
+    #  (57, 76),
+    #  (58, 59),
+    #  (58, 66),
+    #  (59, 61),
+    #  (59, 77),
+    #  (60, 67),
+    #  (60, 72),
+    #  (60, 78),
+    #  (61, 77),
+    #  (62, 74),
+    #  (63, 68),
+    #  (64, 70),
+    #  (64, 71),
+    #  (64, 75),
+    #  (65, 79),
+    #  (67, 72),
+    #  (70, 75),
+    #  (71, 79)}
     
 
     k = 1000.
-    floe = Floe(nodes=Nodes, springs=Springs,
+    floe = Floe(nodes=Nodes,#, springs=Springs,
                 stiffness=k, viscosity=k/5, id_number=1)
     
     floe.plot_border()
     
-    Traction_Mat = floe.traction_mat()
-    Length_Mat = floe.length_mat()
-    Torsion_Mat = floe.torsion_mat()
-    Angle_Mat = floe.angle_init()
+    # Traction_Mat = floe.traction_mat()
+    # Length_Mat = floe.length_mat()
+    # Torsion_Mat = floe.torsion_mat()
+    # Angle_Mat = floe.angle_init()
     
-    T_end = 0.1
-    dt = 1./N_t
-    # All_positions_velocities = floe.Move_stable_1(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
-    All_positions_velocities = floe.Move(
-        T_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
-    # All_positions_velocities = floe.Move_stable_neighbor(T_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
+    # T_end = 0.1
+    # dt = 1./N_t
+    # # All_positions_velocities = floe.Move_stable_1(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
+    # All_positions_velocities = floe.Move(
+    #     T_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
+    # # All_positions_velocities = floe.Move_stable_neighbor(T_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
 
-    Energy = Energy_studies(All_positions_velocities, floe)
-    #finding time T* when energy elastic is max
-    M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
+    # Energy = Energy_studies(All_positions_velocities, floe)
+    # #finding time T* when energy elastic is max
+    # M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
     
-    t = np.linspace(0, T_end, N_t)
+    # t = np.linspace(0, T_end, N_t)
+    
+    # # plt.figure()
+    # # plt.plot(t, Energy[0], label = "traction")
+    # # plt.plot(t, Energy[1], label = "torsion")
+    # # plt.plot(t, Energy[2], label = "elastic")
+    # # plt.legend()
+    # # plt.show()
+    
+    # # plt.figure()
+    # # plt.plot(t[:M], Energy[0][:M])
+    # # plt.plot(t[:M], Energy[1][:M])
+    # # plt.plot(t[:M], Energy[2][:M])
+
+    # All_pos_vel = All_positions_velocities[:, :M]
+    
+    # deformation_field = np.zeros((floe.n * 2, M))
+    
+    # for i in range(0, floe.n):
+    #     deformation_field[2*i] = All_pos_vel[4*i]
+    #     deformation_field[2*i+1] = All_pos_vel[4*i+1]
+
+    # for i in range(floe.n*2):
+    #     deformation_field[i] = deformation_field[i]-deformation_field[i][0]  # compute displacement field
+
+    # plt.figure()
+    # for i in range(len(Points)):
+    #     plt.quiver(Points[i][0], Points[i][1],
+    #                deformation_field[2*i][M-1], deformation_field[2*i+1][M-1])
+    
+    # # DD = [deformation_field[2*i][M-1] for i in range(len(Points))]
+    # # DDD = [deformation_field[2*i+1][M-1] for i in range(len(Points))]
+    # # plt.figure()
+    # # plt.quiver(Points[:,0], Points[:,1], DD, DDD)
+    # #compute the norm of deformation field at each 
+
+    # data_deformation = deformation_field[:,-1].reshape(floe.n,2)
+    # x,y = np.array([Points[:,0]]), np.array([Points[:,1]])
+    # #plot displacement field in the x-direction
+    # plt.figure()
+    # ax = plt.axes(projection='3d')
+    # ax.plot_trisurf(x[0], y[0], data_deformation[:,0], 
+    #                 cmap='RdYlBu', edgecolor='none')
+    # plt.title("$u_1$")
+    # plt.show()
+    
+    
+    # #plot displacement field in the y-direction
     
     # plt.figure()
-    # plt.plot(t, Energy[0], label = "traction")
-    # plt.plot(t, Energy[1], label = "torsion")
-    # plt.plot(t, Energy[2], label = "elastic")
-    # plt.legend()
+    # ax = plt.axes(projection='3d')
+    # ax.plot_trisurf(x[0], y[0], data_deformation[:,1],
+    #                 cmap='bwr', edgecolor='none');
+    # plt.title("$u_2$")
+    # plt.show()
+    
+    
+    # deformation_norm = np.zeros(floe.n)
+    # for i in range(floe.n):
+    #     deformation_norm[i] = norm(data_deformation[i])
+    # deformation_norm = np.array([deformation_norm])
+    
+    # DD = np.array([deformation_field[2*i][M-1] for i in range(len(Points))])
+    # DDD = np.array([deformation_field[2*i+1][M-1] for i in range(len(Points))])
+    # plt.figure()
+    # plt.quiver(Points[:,0], Points[:,1], DD, DDD)
+    # plt.tight_layout()
+    
+    # #only plot displacement at border : 
+    # plt.figure()
+    # plt.quiver(Points[:,0][floe.border_nodes_index()], Points[:,1][floe.border_nodes_index()], 
+    #            DD[floe.border_nodes_index()], DDD[floe.border_nodes_index()])
+    # plt.tight_layout()
+    # # x,y = np.array([Points[:,0]]), np.array([Points[:,1]])
+    
+    # #plot norm of deformation at each point 
+    # #plot heat map of the norm of deformation 
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(x, y, deformation_norm, c=deformation_norm, alpha=0.5)
     # plt.show()
     
     # plt.figure()
-    # plt.plot(t[:M], Energy[0][:M])
-    # plt.plot(t[:M], Energy[1][:M])
-    # plt.plot(t[:M], Energy[2][:M])
-
-    All_pos_vel = All_positions_velocities[:, :M]
-    
-    deformation_field = np.zeros((floe.n * 2, M))
-    
-    for i in range(0, floe.n):
-        deformation_field[2*i] = All_pos_vel[4*i]
-        deformation_field[2*i+1] = All_pos_vel[4*i+1]
-
-    for i in range(floe.n*2):
-        deformation_field[i] = deformation_field[i]-deformation_field[i][0]  # compute displacement field
-
-    plt.figure()
-    for i in range(len(Points)):
-        plt.quiver(Points[i][0], Points[i][1],
-                   deformation_field[2*i][M-1], deformation_field[2*i+1][M-1])
-    
-    # DD = [deformation_field[2*i][M-1] for i in range(len(Points))]
-    # DDD = [deformation_field[2*i+1][M-1] for i in range(len(Points))]
-    # plt.figure()
-    # plt.quiver(Points[:,0], Points[:,1], DD, DDD)
-    #compute the norm of deformation field at each 
-
-    data_deformation = deformation_field[:,-1].reshape(floe.n,2)
-    x,y = np.array([Points[:,0]]), np.array([Points[:,1]])
-    #plot displacement field in the x-direction
-    plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_trisurf(x[0], y[0], data_deformation[:,0], 
-                    cmap='RdYlBu', edgecolor='none')
-    plt.title("$u_1$")
-    plt.show()
-    
-    
-    #plot displacement field in the y-direction
-    
-    plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_trisurf(x[0], y[0], data_deformation[:,1],
-                    cmap='bwr', edgecolor='none');
-    plt.title("$u_2$")
-    plt.show()
-    
-    
-    deformation_norm = np.zeros(floe.n)
-    for i in range(floe.n):
-        deformation_norm[i] = norm(data_deformation[i])
-    deformation_norm = np.array([deformation_norm])
-    
-    DD = np.array([deformation_field[2*i][M-1] for i in range(len(Points))])
-    DDD = np.array([deformation_field[2*i+1][M-1] for i in range(len(Points))])
-    plt.figure()
-    plt.quiver(Points[:,0], Points[:,1], DD, DDD)
-    plt.tight_layout()
-    
-    #only plot displacement at border : 
-    plt.figure()
-    plt.quiver(Points[:,0][floe.border_nodes_index()], Points[:,1][floe.border_nodes_index()], 
-               DD[floe.border_nodes_index()], DDD[floe.border_nodes_index()])
-    plt.tight_layout()
-    # x,y = np.array([Points[:,0]]), np.array([Points[:,1]])
-    
-    #plot norm of deformation at each point 
-    #plot heat map of the norm of deformation 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(x, y, deformation_norm, c=deformation_norm, alpha=0.5)
-    plt.show()
-    
-    plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_trisurf(x[0], y[0], deformation_norm[0],
-                    cmap='Reds', edgecolor='none')
-    plt.title("Displacement's norm")
-    plt.show()
+    # ax = plt.axes(projection='3d')
+    # ax.plot_trisurf(x[0], y[0], deformation_norm[0],
+    #                 cmap='Reds', edgecolor='none')
+    # plt.title("Displacement's norm")
+    # plt.show()
     
     
     

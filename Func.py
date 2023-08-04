@@ -79,6 +79,14 @@ class Floe:
         self.mu = viscosity
         self.L = tenacity
         self.id = id_number
+        if springs==None: 
+            possible = []
+            for triangle in self.simplices():
+                for index1 in triangle:
+                    for index2 in triangle:
+                        if index1 != index2:
+                            possible.append((min(index1, index2), max(index1, index2)))
+        self.springs = set(possible)
 
     def generate_springs(self):
         l = []
@@ -272,8 +280,6 @@ class Floe:
         return Mat
 
     def traction_mat(self):
-        # k = max(max(self.springs))+1
-        # Mat = np.zeros((k, k))
         Mat = np.zeros((self.n, self.n))
         for i, j, k in self.simplices():
             Mat[i, j] += self.k / sin(self.angle_init()[i, k, j])
@@ -345,14 +351,7 @@ class Floe:
         return Sol
 
     def plot_init(self, figax=None):
-        # if not figax:
-        #   figax = plt.subplots()
-        #   fig, ax = figax
-        #   ax.set_aspect('equal')
-        
-        # super().plot(figax)
         plt.figure()
-        # l = np.array([node.id for node in self.nodes])
         for (i, j) in self.springs:
 
             plt.plot([self.nodes[i].position()[0], self.nodes[j].position()[0]],
@@ -877,17 +876,6 @@ def Unit_vect(vect1, vect2):
     else:
         return (vect2-vect1)/norm(vect2-vect1)
 
-
-def find_simplice(v1, v2):
-    """
-    Parameters
-    ----------
-    v1,v2 : 1st and 2nd springs.
-    Returns
-    the simplice that its belong to
-    """
-    l = ((v1[0], v1[1], v2[1]))
-    return l
 
 
 def Angle(A, B, C):

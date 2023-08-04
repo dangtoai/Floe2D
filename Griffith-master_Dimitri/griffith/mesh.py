@@ -10,6 +10,7 @@ from numpy.random import randint
 from . import geometry as geo
 from griffith.geometry import dist 
 
+
 sys.path.append(os.path.abspath('..'))
 import plotrc as plot_options
 
@@ -461,7 +462,7 @@ class Mesh:
         node._add_triangle(t.id_number)
         node._add_neighboors((n.id_number for n in t.nodes))
     
-  
+    
 
   def _read_mesh_format(self, lines):
     lines = lines.splitlines()
@@ -583,7 +584,7 @@ class Mesh:
   def adjacent_element(self, point, triangle):
     """
     Find a adjacent triangle K* of the triangle K at point P. 
-    intersection of K* and K is P, they don't have common edge.
+    intersection of K* and K is P and common edge.
     """
     list_triangles = []
     list_triangles_index = point._of_triangles
@@ -606,36 +607,69 @@ class Mesh:
     
 
   def find_triangle_test(self, point):
-    ### somehow, in this algorithm, sometimes the "triangle_test" returns None, to debug!!!
-     n = len(self.triangles)
-     try: 
-         triangle_test = self.triangles[randint(0,n)]
-         p = triangle_test.points
-         res = [False, False, False]
-         l = []
-         n = 0
-         while not all(res):
-             p = triangle_test.points
-             t1 = Triangle(p[0], p[1], point, None)
-             t2 = Triangle(p[1], p[2], point, None)
-             t3 = Triangle(p[2], p[0], point, None)
-             t1 = t1.oriented_area() > 0
-             t2 = t2.oriented_area() > 0
-             t3 = t3.oriented_area() > 0
-             res = [t1, t2, t3]
-             l.append(triangle_test)
-             min_index, min_element = min(enumerate([dist(p[i], point) for i in range(3)]), key=lambda x: x[1])
-             triangle_test = self.adjacent_element(p[min_index], triangle_test)
-         return l
-     except AttributeError: return None
-     # return l
- 
+    """
+    if the 3 oriented area of the associated triangle with the point P are positif,
+    the triangle contains P
+    """
+    n = len(self.triangles)
+    try:
+        triangle_test = self.triangles[randint(0, n)] #Somehow, in this algorithm, sometimes the "triangle_test" returns None, to debug!!!
+        res = [False, False, False]
+        l = [] #stock the path of triangles that lead to the one contains the point P
+        while not all(res):
+            p = triangle_test.points
+            t1 = Triangle(p[0], p[1], point, None)
+            t2 = Triangle(p[1], p[2], point, None)
+            t3 = Triangle(p[2], p[0], point, None)
+            t1 = t1.oriented_area() > 0
+            t2 = t2.oriented_area() > 0
+            t3 = t3.oriented_area() > 0
+            res = [t1, t2, t3]
+            l.append(triangle_test)
+            min_index, min_element = min(enumerate([dist(p[i], point) for i in range(3)]), key=lambda x: x[1])
+            triangle_test = self.adjacent_element(p[min_index], triangle_test)
+        return l[-1]
+    except AttributeError: return None
+
     
   def find_triangle(self, point):
       while True: 
           answer = self.find_triangle_test(point)
           if answer is not None:
               return answer 
+
+
+def closest_point_on_segment(P: geo.Point, edge: Edge):
+    """
+    Find the projection of a point on a segment. 
+    """
+    p1, p2 = edge.point_1, edge.point_2
+    distance = dist(p1, p2)
+    dx = p2.x - p1.x
+    dy = p2.y - p1.y
+    if distance == 0: return p1
+    t = max(0, min(1, ((P.x - p1.x) * dx + (P.y - p1.y) * dy) / distance**2)) # return value between 0 and 1, 0 or 1 means the projection is outside of the edge
+    projection_x = p1.x + t * dx
+    projection_y = p1.y + t * dy
+    return geo.Point(projection_x, projection_y)
+    
+def projection_on_boundary(mesh: Mesh, P: geo.Point):  
+    """
+    Find the projection on the boundary of a given point.
+    """
+    projection_on_boundary = None #projection on boundary result
+    edges = mesh.boundary_mesh.edges #list of all edges (segment because the domain is always a polygon)
+    min_distance = np.inf 
+    for edge in edges:
+        point_on_boundary = closest_point_on_segment(P, edge)
+        distance = dist(point_on_boundary, P)
+        if distance < min_distance: 
+            min_distance = distance
+            projection_on_boundary = point_on_boundary
+    return projection_on_boundary
+
+
+
 
 class Broken_Mesh(Mesh):
   """
