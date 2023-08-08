@@ -86,7 +86,7 @@ class Floe:
                     for index2 in triangle:
                         if index1 != index2:
                             possible.append((min(index1, index2), max(index1, index2)))
-        self.springs = set(possible)
+            self.springs = set(possible)
 
     def generate_springs(self):
         l = []
@@ -231,8 +231,6 @@ class Floe:
         return Mat.todok()
 
     def length_mat(self):
-        # k = max(max(self.springs))+1
-        # Mat = np.zeros((k, k))
         Mat = np.zeros((self.n, self.n))
         for (i, j) in self.springs:
             Mat[i, j] = Spring(self.nodes[i], self.nodes[j], None).L0
@@ -241,8 +239,6 @@ class Floe:
         return Mat.todok()
 
     def angle_init(self):
-        # k = max(max(self.springs))+1
-        # Mat = np.zeros((k, k, k))
         Mat = np.zeros((self.n, self.n, self.n))
         Nodes_positions = self.get_nodes()
         for i, j, k in self.simplices():
@@ -970,13 +966,14 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Tors
     k = Traction_mat
     G = Torsion_mat
     Theta0 = Angle_init
+    inv_m = 1./m
 
     for i in range(0, nb_nodes):
         Y_[2*i] = Q[2*i+1]
         for j in range(i+1, i+nb_nodes):
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+            Y_[2*i+1] += inv_m * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
                                                       + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
 
     for i, j, k in Triangle_list:
@@ -986,16 +983,16 @@ def System(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Tors
         u[k, i] = -u[i, k]
         u[j, k] = Unit_vect(Q[2*j], Q[2*k])
         u[k, j] = -u[j, k]
-        Y_[2*i+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
+        Y_[2*i+1] += inv_m * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
                                + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
 
-        Y_[2*j+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
+        Y_[2*j+1] += inv_m * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
                                + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i])
 
-        Y_[2*k+1] += (1./m) * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
+        Y_[2*k+1] += inv_m * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
                                + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i])
 
-    return np.reshape(Y_, (nb_nodes*4))
+    return np.reshape(Y_, (nb_nodes * 4))
 
 
 def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
@@ -1027,6 +1024,8 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_
     k = Traction_mat
     G = Torsion_mat
     Theta0 = Angle_init
+    inv_m = 1./m
+    
     # find the neigborhood of contact node
     Neighbor_contact = [np.any(Triangle_list[i] == contact_node)
                         for i in range(len(Triangle_list))]
@@ -1040,7 +1039,7 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_
             for j in range(i+1, i+nb_nodes):
                 j = j % nb_nodes
                 u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-                Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+                Y_[2*i+1] += inv_m * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
                                                           + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
 
     for i, j, k in Triangle_list:
@@ -1052,7 +1051,7 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_
         u[k, j] = -u[j, k]
     # all nodes stable, only the contact node can move
         if i == contact_node or j == contact_node or k == contact_node:
-            Y_[2*contact_node+1] += (1./m) * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k]) /
+            Y_[2*contact_node+1] += inv_m * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k]) /
                                               (norm(Q[2*i] - Q[2*j])) * u[i, k]
                                               + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j]) /
                                               norm(Q[2*i] - Q[2*k]) * u[i, j])
@@ -1083,12 +1082,15 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
       for i in range nb_nodes as a dynamical system for a neighborhood of contact node) .
 
     """
+    
+    # not done yet!!!
     u = np.zeros((nb_nodes, nb_nodes, 2))
     Q = np.reshape(Y, (nb_nodes*2, 2))
     Y_ = np.zeros_like(Q)
     k = Traction_mat
-    G = Torsion_mat
-    Theta0 = Angle_init
+    # G = Torsion_mat
+    # Theta0 = Angle_init
+    inv_m = 1./m
     # find the neigborhood of contact node
     Neighbor_contact = [np.any(Triangle_list[i] == contact_node)
                         for i in range(len(Triangle_list))]
@@ -1106,7 +1108,7 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
 
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += (1./m) * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
+            Y_[2*i+1] += inv_m * Connex_Mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_Mat[i, j]) * u[i, j]
                                                       + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
 
     return np.reshape(Y_, (nb_nodes*4))

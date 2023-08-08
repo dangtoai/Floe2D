@@ -15,6 +15,8 @@ from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
 from griffith.mesh import *
 from griffith.geometry import Point, Segment
+from scipy.interpolate import Rbf
+from scipy.interpolate import LinearNDInterpolator
 import numpy as np
 # from griffith.mesh import 
 from Func import * 
@@ -208,49 +210,145 @@ if __name__ == '__main__':
     ax.set_aspect('equal')
     mesh.plot(figax)
     pp = []
+    projected_pp = []
     l = []
     for i in border_data_:
         pp.append(Point(Points[i][0], Points[i][1]))
-        ax.plot(Points[i][0] ,Points[i][1] ,'x')
+        ax.plot(Points[i][0] ,Points[i][1] ,'x', color = 'blue')
         P = projection_on_boundary(mesh, pp[-1])
-        ax.plot(P.x, P.y, 'o')
+        projected_pp.append(P)
+        ax.plot(P.x, P.y, 'o', color = 'r')
         mesh.find_triangle(pp[-1]).plot(figax)
-        
         # l.append(mesh.find_triangle(pp[i])[-1])
         
-        
-    # for i in range(37):
-        # l.append(mesh.find_triangle(pp[i])[-1])
-        # print(mesh.find_triangle(pp[i])[-1])
-    
-
-    # ax.plot(point_test.x ,point_test.y ,'o')
-    # point_test.plot(figax, 'o')
-    # l[-1].plot(figax)
-    # triangle.plot(figax)
-    # mesh.adjacent_element(point, triangle).plot(figax)
-    
-    # for e in l[:]:
-        # e.plot(figax)
-    
     # BM = Boundary_Mesh(mesh)
     
-    p1 = Point(1.4, 3)
-    print(p1)
-    print(closest_point_on_segment(p1, mesh.boundary_mesh.edges[0]))
-    print(projection_on_boundary(mesh, p1))
+    # p1 = Point(1.4, 3)
+    # print(p1)
+    # print(projection_on_boundary(mesh, p1))
+    
+    data_deformation = np.array([[-3.41564832e-11,  2.57830424e-11],
+           [-1.85632055e-05,  1.60722770e-05],
+           [-1.68090776e-07,  5.46621101e-09],
+           [-5.90340877e-07,  3.30167871e-07],
+           [-1.73471728e-07,  2.98723199e-07],
+           [-4.26390578e-09, -9.02010577e-10],
+           [-9.10353676e-09, -9.09289866e-11],
+           [-2.84013588e-07, -1.65241980e-08],
+           [-2.36965031e-11,  3.13005177e-11],
+           [-6.91180390e-06, -5.22930459e-06],
+           [-1.28927169e-08,  1.10020130e-08],
+           [-6.86573853e-11, -1.23645538e-11],
+           [-5.31102186e-07,  2.64411533e-07],
+           [-3.66286779e-10,  2.19537888e-10],
+           [-2.27156699e-09,  1.03928866e-09],
+           [-3.07803054e-07, -1.78753714e-08],
+           [-3.24440611e-08,  7.07586515e-08],
+           [-9.96135235e-08,  1.06302033e-07],
+           [-3.16967317e-08,  7.67280417e-09],
+           [-2.96822678e-10,  7.40313366e-11],
+           [-7.33792120e-08, -1.67906928e-08],
+           [-2.56531951e-08, -5.14857504e-09],
+           [-1.39390521e-09, -5.69953196e-10],
+           [-6.19866936e-11,  2.11769491e-11],
+           [-1.19518179e-09, -2.75484635e-11],
+           [-8.76883123e-06,  6.45705240e-06],
+           [-1.68036509e-07,  1.26565855e-06],
+           [-9.82863652e-10,  1.02475806e-10],
+           [ 5.36953641e-11,  6.53346655e-10],
+           [-7.62802765e-10,  4.30283587e-11],
+           [-2.60321540e-06,  1.55478140e-06],
+           [-3.50276836e-06, -5.16977010e-06],
+           [ 1.24188888e-11,  3.70704689e-10],
+           [-1.48122060e-08,  1.07737762e-08],
+           [-1.57431613e-10,  1.62251879e-10],
+           [-4.01763789e-09, -7.25233096e-10],
+           [-2.97540446e-08,  2.03909694e-08],
+           [ 1.02407351e-06,  5.99424169e-06],
+           [-5.91996785e-10,  4.31133573e-10],
+           [-7.16648130e-08,  1.30981994e-07],
+           [ 9.35105804e-08,  3.66702893e-07],
+           [-1.22356978e-07,  1.91494036e-07],
+           [-1.64501331e-09,  3.08136194e-09],
+           [-1.88512149e-07,  4.05692886e-08],
+           [-1.62956887e-04, -4.23574112e-06],
+           [-1.65706386e-07,  1.12943992e-08],
+           [-4.65129630e-06, -3.46665979e-09],
+           [-5.04706887e-09,  3.51773632e-09],
+           [-1.06312720e-06, -1.68442299e-06],
+           [-8.58842049e-08,  5.73161460e-08],
+           [-1.04872465e-11,  6.68903821e-11],
+           [-3.36958308e-09,  4.00421735e-09],
+           [-3.26280235e-08,  1.49091369e-08],
+           [-4.18891494e-09, -1.01954631e-09],
+           [-9.01131036e-06, -3.64816986e-06],
+           [-1.22843236e-09,  4.79960827e-09],
+           [-3.69792557e-05, -6.81259045e-06],
+           [-7.61860042e-07,  1.62195023e-07],
+           [ 1.57917002e-09,  5.38664213e-09],
+           [ 1.41696419e-08,  6.18326643e-08],
+           [ 4.62336754e-07,  1.60572083e-06],
+           [-1.20418035e-07,  1.60805077e-07],
+           [-2.05413696e-06, -2.22421480e-06],
+           [-5.06905268e-10,  2.08218776e-10],
+           [-3.75964970e-09,  1.66969472e-09],
+           [-1.66255316e-09,  3.42459711e-09],
+           [-4.84872253e-10,  6.26695362e-11],
+           [-6.28926858e-08,  6.58440377e-08],
+           [-4.22673813e-09, -6.28026520e-11],
+           [-1.19261106e-08, -2.00837065e-09],
+           [-3.78260062e-09,  4.15184997e-10],
+           [-3.03252284e-10, -6.68750610e-11],
+           [-6.63710703e-08,  1.19405506e-07],
+           [-2.53531429e-08,  1.05397728e-08],
+           [-1.28482418e-06, -1.42335666e-06],
+           [-1.27142917e-08,  2.40307161e-08],
+           [-6.04920633e-07,  1.76406808e-07],
+           [-3.72702007e-07,  1.12824000e-06],
+           [-4.18852618e-07,  4.09280536e-06],
+           [ 5.95624799e-11,  2.86838220e-10]])
     
     
+    Points[border_data_], data_deformation[border_data_] # Point d'interpolation et donnees
     
     
+    # Sample data points (replace with your own data)
+    # Extract coordinates and values
     
+    x = Points[border_data_][:,0] 
+    # x = np.array([projected_pp[i].x for i in range(len(border_data_))])
+    y = Points[border_data_][:,1] 
+    # y = np.array([projected_pp[i].y for i in range(len(border_data_))])
+    values_directionx = data_deformation[border_data_][:,0]
+    values_directiony = data_deformation[border_data_][:,1]
     
+    interp_function_x = LinearNDInterpolator(list(zip(x, y)), values_directionx)
+    interp_function_y = LinearNDInterpolator(list(zip(x, y)), values_directiony)
     
+    def f_x(x_eval, y_eval):
+        # return rbf_x(x_eval, y_eval)
+        return interp_function_x(x_eval, y_eval)
     
+    def f_y(x_eval, y_eval):
+        # return rbf_x(x_eval, y_eval)
+        return interp_function_y(x_eval, y_eval)
     
-    
-    
-    
+    plt.figure()
+    grid_x, grid_y = np.meshgrid(np.linspace(0, 100, num=100),
+                             np.linspace(0, 100, num=100))
+    grid_values_x = f_x(grid_x, grid_y)
+
+    # Plot the interpolated values
+    plt.imshow(grid_values_x, origin='lower', aspect='auto')
+    plt.colorbar()
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.title('Interpolated Function using Rbf')
+    plt.show()
+
+    # Evaluate the interpolated function at specific points
+    result = f_x(0.5, 0.5)
+    print(result)
     
     
     
