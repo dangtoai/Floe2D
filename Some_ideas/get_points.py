@@ -9,7 +9,10 @@ import scipy
 from scipy import stats
 
 
-np.random.seed(4)
+np.random.seed(5)
+
+
+# # unit square poisson point process
 xMin = 0
 xMax = 1
 yMin = 0
@@ -19,7 +22,8 @@ yDelta = yMax-yMin  # rectangle dimensions
 areaTotal = xDelta*yDelta
 
 # Point process parameters
-lambda0 = 7  # intensity
+lambda0 = 88
+  # intensity
 
 # Simulate Poisson point process
 numbPoints = scipy.stats.poisson(
@@ -28,7 +32,9 @@ numbPoints = scipy.stats.poisson(
 xx = xDelta*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + xMin
 # y coordinates of Poisson points
 yy = yDelta*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + yMin
+
 Points = []  # points coordinates
+
 for i in range(len(xx)):
     Points.append([xx[i][0], yy[i][0]])
 np.array(Points)
@@ -48,7 +54,6 @@ for triangle in tri.simplices:
 # Points = np.array(Points)
 Springs = set(possible)
 
-
 Points = tri.points
 
 Nodes = []
@@ -61,7 +66,7 @@ floe = Floe(nodes=Nodes, springs=Springs,
             stiffness=k, viscosity=k/10., id_number=1)
 floe.plot_init()
 
-print(floe.fractures_admissible())
+# print(floe.fractures_admissible())
 
 # nx.draw(G, with_labels=True, font_weight='bold')
 

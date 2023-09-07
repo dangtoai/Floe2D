@@ -6,7 +6,7 @@ Created on Mon Jul 17 10:52:55 2023
 @author: phandangtoai
 """
 import time
-# import argparse
+
 import matplotlib.pyplot as plt
 from math import pi
 import plotrc
@@ -19,7 +19,7 @@ from scipy.interpolate import Rbf
 from scipy.interpolate import LinearNDInterpolator
 import numpy as np
 # from griffith.mesh import 
-from Func import * 
+# from Func import * 
 
 
 if __name__ == '__main__':
@@ -202,23 +202,23 @@ if __name__ == '__main__':
            [0.11169243, 0.4186541 ]]) *100
     
     
-    figax = plt.subplots()
-    fig, ax = figax
+    # figax = plt.subplots()
+    # fig, ax = figax
     
     border_data_ = [34, 68, 37, 7, 41, 74, 42, 44, 18, 52, 54, 26, 62]
     
-    ax.set_aspect('equal')
-    mesh.plot(figax)
+    # ax.set_aspect('equal')
+    # mesh.plot(figax)
     pp = []
     projected_pp = []
     l = []
     for i in border_data_:
         pp.append(Point(Points[i][0], Points[i][1]))
-        ax.plot(Points[i][0] ,Points[i][1] ,'x', color = 'blue')
+        # ax.plot(Points[i][0] ,Points[i][1] ,'x', color = 'blue')
         P = projection_on_boundary(mesh, pp[-1])
         projected_pp.append(P)
-        ax.plot(P.x, P.y, 'o', color = 'r')
-        mesh.find_triangle(pp[-1]).plot(figax)
+    #     ax.plot(P.x, P.y, 'o', color = 'r')
+    #     mesh.find_triangle(pp[-1]).plot(figax)
         # l.append(mesh.find_triangle(pp[i])[-1])
         
     # BM = Boundary_Mesh(mesh)
@@ -227,86 +227,86 @@ if __name__ == '__main__':
     # print(p1)
     # print(projection_on_boundary(mesh, p1))
     
-    data_deformation = np.array([[-3.41564832e-11,  2.57830424e-11],
-           [-1.85632055e-05,  1.60722770e-05],
-           [-1.68090776e-07,  5.46621101e-09],
-           [-5.90340877e-07,  3.30167871e-07],
-           [-1.73471728e-07,  2.98723199e-07],
-           [-4.26390578e-09, -9.02010577e-10],
-           [-9.10353676e-09, -9.09289866e-11],
-           [-2.84013588e-07, -1.65241980e-08],
-           [-2.36965031e-11,  3.13005177e-11],
-           [-6.91180390e-06, -5.22930459e-06],
-           [-1.28927169e-08,  1.10020130e-08],
-           [-6.86573853e-11, -1.23645538e-11],
-           [-5.31102186e-07,  2.64411533e-07],
-           [-3.66286779e-10,  2.19537888e-10],
-           [-2.27156699e-09,  1.03928866e-09],
-           [-3.07803054e-07, -1.78753714e-08],
-           [-3.24440611e-08,  7.07586515e-08],
-           [-9.96135235e-08,  1.06302033e-07],
-           [-3.16967317e-08,  7.67280417e-09],
-           [-2.96822678e-10,  7.40313366e-11],
-           [-7.33792120e-08, -1.67906928e-08],
-           [-2.56531951e-08, -5.14857504e-09],
-           [-1.39390521e-09, -5.69953196e-10],
-           [-6.19866936e-11,  2.11769491e-11],
-           [-1.19518179e-09, -2.75484635e-11],
-           [-8.76883123e-06,  6.45705240e-06],
-           [-1.68036509e-07,  1.26565855e-06],
-           [-9.82863652e-10,  1.02475806e-10],
-           [ 5.36953641e-11,  6.53346655e-10],
-           [-7.62802765e-10,  4.30283587e-11],
-           [-2.60321540e-06,  1.55478140e-06],
-           [-3.50276836e-06, -5.16977010e-06],
-           [ 1.24188888e-11,  3.70704689e-10],
-           [-1.48122060e-08,  1.07737762e-08],
-           [-1.57431613e-10,  1.62251879e-10],
-           [-4.01763789e-09, -7.25233096e-10],
-           [-2.97540446e-08,  2.03909694e-08],
-           [ 1.02407351e-06,  5.99424169e-06],
-           [-5.91996785e-10,  4.31133573e-10],
-           [-7.16648130e-08,  1.30981994e-07],
-           [ 9.35105804e-08,  3.66702893e-07],
-           [-1.22356978e-07,  1.91494036e-07],
-           [-1.64501331e-09,  3.08136194e-09],
-           [-1.88512149e-07,  4.05692886e-08],
-           [-1.62956887e-04, -4.23574112e-06],
-           [-1.65706386e-07,  1.12943992e-08],
-           [-4.65129630e-06, -3.46665979e-09],
-           [-5.04706887e-09,  3.51773632e-09],
-           [-1.06312720e-06, -1.68442299e-06],
-           [-8.58842049e-08,  5.73161460e-08],
-           [-1.04872465e-11,  6.68903821e-11],
-           [-3.36958308e-09,  4.00421735e-09],
-           [-3.26280235e-08,  1.49091369e-08],
-           [-4.18891494e-09, -1.01954631e-09],
-           [-9.01131036e-06, -3.64816986e-06],
-           [-1.22843236e-09,  4.79960827e-09],
-           [-3.69792557e-05, -6.81259045e-06],
-           [-7.61860042e-07,  1.62195023e-07],
-           [ 1.57917002e-09,  5.38664213e-09],
-           [ 1.41696419e-08,  6.18326643e-08],
-           [ 4.62336754e-07,  1.60572083e-06],
-           [-1.20418035e-07,  1.60805077e-07],
-           [-2.05413696e-06, -2.22421480e-06],
-           [-5.06905268e-10,  2.08218776e-10],
-           [-3.75964970e-09,  1.66969472e-09],
-           [-1.66255316e-09,  3.42459711e-09],
-           [-4.84872253e-10,  6.26695362e-11],
-           [-6.28926858e-08,  6.58440377e-08],
-           [-4.22673813e-09, -6.28026520e-11],
-           [-1.19261106e-08, -2.00837065e-09],
-           [-3.78260062e-09,  4.15184997e-10],
-           [-3.03252284e-10, -6.68750610e-11],
-           [-6.63710703e-08,  1.19405506e-07],
-           [-2.53531429e-08,  1.05397728e-08],
-           [-1.28482418e-06, -1.42335666e-06],
-           [-1.27142917e-08,  2.40307161e-08],
-           [-6.04920633e-07,  1.76406808e-07],
-           [-3.72702007e-07,  1.12824000e-06],
-           [-4.18852618e-07,  4.09280536e-06],
-           [ 5.95624799e-11,  2.86838220e-10]])
+    data_deformation = np.array([[-1.53832353e-02,  9.99081718e-03],
+           [-1.98750614e+00,  5.24696468e-01],
+           [-3.67360187e-01, -1.62272457e-01],
+           [-4.56454351e-01,  1.01593240e-01],
+           [-4.01721875e-01,  1.34832090e-01],
+           [-3.10920145e-02,  2.33269716e-02],
+           [-9.50867448e-02,  3.12158440e-03],
+           [-4.74415040e-01, -2.07533164e-02],
+           [-1.13585798e-02,  1.11292884e-02],
+           [-1.10875848e+00, -4.92713078e-01],
+           [-1.09994169e-01,  7.04703635e-02],
+           [-1.44304605e-02,  6.67030271e-03],
+           [-4.48186287e-01,  1.11803515e-01],
+           [-4.17153393e-02,  5.80839051e-03],
+           [-3.64337759e-02,  3.13544105e-02],
+           [-4.67963660e-01, -8.39650320e-02],
+           [-1.83969841e-01,  8.87730282e-02],
+           [-2.81826996e-01,  7.74679287e-02],
+           [-4.07890194e-02,  4.42572908e-02],
+           [-2.12169835e-02,  1.52004908e-02],
+           [-3.49313558e-01, -6.24852489e-02],
+           [-1.67714809e-01, -3.18901304e-02],
+           [-5.15984703e-02,  1.72399155e-03],
+           [-1.96043628e-02,  1.08876373e-02],
+           [-6.13726553e-02,  1.15423421e-02],
+           [-1.73495720e+00,  1.30203924e-01],
+           [-4.42051428e-02,  1.38892933e-01],
+           [-2.74428554e-02,  8.72233877e-03],
+           [-2.26203663e-02,  3.03893565e-02],
+           [-2.80809124e-02,  1.10995699e-02],
+           [-8.00844244e-01,  9.43391638e-03],
+           [-1.04667502e+00, -3.85416888e-01],
+           [-2.13672675e-02,  2.31889493e-02],
+           [-8.63557981e-02,  6.27845807e-02],
+           [-1.47494914e-02,  1.47338618e-02],
+           [-3.28058454e-02,  2.18953729e-02],
+           [-5.81529739e-02,  6.20041209e-02],
+           [-1.54054111e-02,  1.80842040e-01],
+           [-3.73061808e-02,  2.80475571e-02],
+           [-4.00782988e-02,  1.11845306e-01],
+           [-1.98901688e-02,  1.20727131e-01],
+           [-4.41124420e-02,  1.23983073e-01],
+           [-4.45049174e-02,  4.34870305e-02],
+           [-3.81449792e-01, -1.42254663e-01],
+           [-5.66061544e+00,  4.08592874e-01],
+           [-2.57121543e-01, -5.62805212e-02],
+           [-1.28928762e+00,  2.19243213e-01],
+           [-3.86231099e-02,  4.39568913e-02],
+           [-7.80147683e-01, -3.83156176e-01],
+           [-2.12218872e-01,  5.52330261e-02],
+           [-1.07319626e-02,  1.64397821e-02],
+           [-9.35205671e-02,  4.50174446e-02],
+           [-2.55331570e-01,  1.39948357e-02],
+           [-1.09481848e-01, -1.52735247e-02],
+           [-1.52715990e+00,  1.26000524e+00],
+           [-2.81091620e-02,  5.22783931e-02],
+           [-2.38713950e+00, -1.18019438e-01],
+           [-4.77768896e-01, -1.54069566e-01],
+           [-2.49275165e-02,  5.07251085e-02],
+           [-2.64424874e-02,  9.92386301e-02],
+           [-1.19484521e-01,  1.11537669e-01],
+           [-3.93738342e-02,  1.24082433e-01],
+           [-8.24077043e-01,  5.06108375e-02],
+           [-2.16933270e-02,  1.08133189e-02],
+           [-8.28831919e-02,  3.16307157e-02],
+           [-6.55763327e-02,  4.35646083e-02],
+           [-2.78736760e-02,  3.49562952e-02],
+           [-5.58387915e-02,  1.03053399e-01],
+           [-3.17178883e-02,  7.60831719e-03],
+           [-2.28613388e-01, -5.45467241e-03],
+           [-7.69715961e-02,  2.89974168e-02],
+           [-3.50464812e-02,  7.88956729e-03],
+           [-1.24999348e-01,  1.23738316e-01],
+           [-1.62006036e-01,  5.94973139e-03],
+           [-5.50461532e-01, -5.62905263e-01],
+           [-1.13996526e-01,  7.64117598e-02],
+           [-4.47419810e-01,  1.53165748e-02],
+           [-3.31808457e-02,  1.34484158e-01],
+           [-8.25013814e-01,  8.84844258e-02],
+           [-2.64316484e-02,  1.85501969e-02]])*100
     
     
     Points[border_data_], data_deformation[border_data_] # Point d'interpolation et donnees
@@ -315,10 +315,12 @@ if __name__ == '__main__':
     # Sample data points (replace with your own data)
     # Extract coordinates and values
     
-    x = Points[border_data_][:,0] 
-    # x = np.array([projected_pp[i].x for i in range(len(border_data_))])
-    y = Points[border_data_][:,1] 
-    # y = np.array([projected_pp[i].y for i in range(len(border_data_))])
+    # x = Points[border_data_][:,0] 
+    # y = Points[border_data_][:,1] 
+    
+    
+    x = np.array([projected_pp[i].x for i in range(len(border_data_))])
+    y = np.array([projected_pp[i].y for i in range(len(border_data_))])
     values_directionx = data_deformation[border_data_][:,0]
     values_directiony = data_deformation[border_data_][:,1]
     
@@ -333,22 +335,80 @@ if __name__ == '__main__':
         # return rbf_x(x_eval, y_eval)
         return interp_function_y(x_eval, y_eval)
     
-    plt.figure()
+    def Dirichlet_function(x_eval, y_eval):
+        return np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)])
+    
+    
+    # plt.figure()
     grid_x, grid_y = np.meshgrid(np.linspace(0, 100, num=100),
-                             np.linspace(0, 100, num=100))
+                              np.linspace(0, 100, num=100))
     grid_values_x = f_x(grid_x, grid_y)
 
     # Plot the interpolated values
-    plt.imshow(grid_values_x, origin='lower', aspect='auto')
-    plt.colorbar()
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.title('Interpolated Function using Rbf')
-    plt.show()
+    # plt.imshow(grid_values_x, origin='lower', aspect='auto')
+    # plt.colorbar()
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.title('Interpolated Function using LinearNDInterpolator')
+    #plt.show()
 
-    # Evaluate the interpolated function at specific points
-    result = f_x(0.5, 0.5)
-    print(result)
+
+    # plt.figure()
+    # grid_values_y = f_y(grid_x, grid_y)
+    # plt.imshow(grid_values_y, origin='lower', aspect='auto')
+    # plt.colorbar()
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.title('Interpolated Function using LinearNDInterpolator')
+    # plt.show()
+    
+    ### plot the boundary dirichlet function
+    
+    # plt.figure()
+    # u_vals, v_vals = Dirichlet_function(grid_x, grid_y)
+    # plt.quiver(grid_x, grid_y, u_vals, v_vals)
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.title('Vector Field Visualization')
+    # plt.show()
+    
+    # Taking into account the Dirichlet condition 
+    
+    
+    logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)
+    logger.log_description(mesh_file=mesh,args=None)
+    log_queue = logger._log_queue
+    
+    T = problem_data.lame_tensor_ice #Lame tensor
+    
+    XY_data = np.stack((x,y), axis = -1) 
+
+    boundary_data = np.hstack( (XY_data, data_deformation[border_data_]) )
+    
+    
+    boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = boundary_data)
+    # boundary_displacement = problem_data.Constant_Displacement_On_Y(traction_coefficient= -100.)
+    
+        
+    physical_data = problem_data.Physical_Data(T, 1., boundary_displacement, initial_fracture=None)
+    
+    
+    ### Solution without fracture
+    classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+    print(classical_solution.energy)
+    classical_solution.plot_displacement()
+    classical_solution.plot_energy()
+    
+    ### Solution with fracture 
+    boundary_point = [float(20), float(0)]
+    time_discretization = None
+    fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
+    discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+    
+    solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+    # solution.plot_displacement()
+    # solution.plot_energy()
+    
     
     
     

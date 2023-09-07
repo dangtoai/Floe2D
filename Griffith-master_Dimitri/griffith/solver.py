@@ -552,7 +552,7 @@ class Solver_With_Time_Discretization(Solver):
     fracture_iterator = self._get_fracture_iterator(old_solution)
     solution = self.evaluator(fracture_iterator, time)[0]
     old_solution.change_time(time)
-    if old_solution.energy < solution.energy:
+    if old_solution.energy < solution.energy: #comparaison des energies. 
       return old_solution
     else:
       return solution
@@ -591,7 +591,7 @@ class Smart_Time_Solver(Solver):
     solution = self.classical_solution
     while time < 1 and not solution.fracture.is_traversant:
       fracture_iterator = self._get_fracture_iterator(solution)
-      time_, solution_ = self._next_fracture(time, solution, fracture_iterator)
+      time_, solution_ = self._next_fracture(time, solution, fracture_iterator) ##### TODO
       if time_ == 1:
         break
       else:
@@ -605,7 +605,7 @@ class Smart_Time_Solver(Solver):
   def _next_fracture(self, old_time, old_solution, fracture_iterator):
     if old_time == 0:
       old_time = 1
-      list_computations = self.evaluator(fracture_iterator, time=old_time)
+      list_computations = self.evaluator(fracture_iterator, time=old_time) ### TODO
     else:
       list_computations = self.evaluator(fracture_iterator, time=old_time)
       # Check if infinite-speed propagation (no physical sence, but happens with that algorithm)

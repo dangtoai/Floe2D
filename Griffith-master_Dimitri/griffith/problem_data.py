@@ -3,9 +3,13 @@ import sys
 import os
 import numpy as np
 from math import pi, exp, sqrt
+from scipy.interpolate import LinearNDInterpolator
+from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
 from .geometry import Point, Circle, rotation, dist
 sys.path.append(os.path.abspath('..'))
+
+
 
 
 #####################
@@ -52,6 +56,7 @@ class Fracture_Discretization:
             self.interior_start_angle = 1.57079632679  # pi/2
         self.boundary_step = boundary_step
         if boundary_point:
+            print((boundary_point))
             self.boundary_point = Point(*boundary_point)
             assert not boundary_step
         else:
@@ -84,14 +89,13 @@ class Constant_Displacement_On_Y(Linear_Displacement):
     r"""
     | | -> |     |
     """
-
     def __init__(self, traction_coefficient=1, abscissa_mid=0.9):
         super().__init__(traction_coefficient)
         self._abscissa_mid = abscissa_mid
 
     def _func(self, p):
         if p.x > self._abscissa_mid: #and p.y > 40 and p.y < 50:
-            return np.array([np.sin(p.y), 0.])
+            return np.array([1, 0.])
         # if p.x < 0.1 and p.y > 90 and p.y < 95: return np.array([-1, 0]) 
         return np.array([0., 0.]) 
         # if p.x < 0.1 and p.y > 40 and p.y < 60:
@@ -99,32 +103,62 @@ class Constant_Displacement_On_Y(Linear_Displacement):
             # return np.array([-1, 0])  # a supprimer si Neumann
 
 
-class Boundary_Displacement_by_percussion(Boundary_Displacement):
-    def __init__(self, some_threshold, some_function):
-        self.some_threshold = some_threshold
-        self.some_function = some_function
+class Boundary_Displacement_by_percussion(Linear_Displacement):
+    """
+    The boundary displacement is computed thanks to a mass-spring deformation data
+    Boundary data contains -(xi,yi) the nodes of the mass-spring system and the deformation field u1(x,y),u2(x,y)
+    We compute the P1 approximation on the boundary by projecting the data on the boundary
+    
+    """
+    def __init__(self, traction_coefficient =1. , boundary_data = None):
+        #self.some_threshold = some_threshold
+        super().__init__(traction_coefficient = 1)
+        self.boundary_data = boundary_data 
 
-    def __call__(self, p):
-        if self.is_inside_specific_region(p):
-            # Calculate the displacement using a specific function for this region
-            displacement = self.calculate_displacement(p)
-        else:
-            # Return a default displacement value for points outside the region
-            displacement = np.array([0., 0.])
-        return displacement
+    # def __call__(self, p):
+    #     if self.check_dirichlet(p): 
+    #         # Calculate the displacement using a specific function for this region
+    #         displacement = self._func(p)
+    #     else:
+    #         # Return a default displacement value for points outside the region
+    #         displacement = np.array([0., 0.])
+    #     return displacement
 
-    def check_Dirichlet(self, p, Contact_region):
+    def check_Dirichlet(self, p):
         # Implement the logic to check if point p is inside the specific region
         # Return True if it is inside; otherwise, return False
         # Example: check if the x-coordinate of p is greater than some threshold
-        return dist(p, Contact_region) < self.some_threshold
+        return dist(p, Contact_region = np.array([98,23])) < 5
 
-    def calculate_displacement(self, p):
+    def _func(self, p):
         # Implement the logic to calculate the displacement vector at point p
         # based on a specific function for this region
         # Return the displacement vector as a numpy array
         # Example: return the displacement as [0, f(p.y)], where f is some function
-        return np.array([0., self.some_function(p.y)])    
+        Dirichlet = self.boundary_data
+        
+        #extract the data of interpolation points and data
+        xdata, ydata = Dirichlet[:,0], Dirichlet[:,1]
+        val_directionx, val_directiony = Dirichlet[:,2], Dirichlet[:,3]
+        
+        #interpolate 
+        interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), val_directionx)
+        interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), val_directiony)
+        
+        def f_x(x_eval, y_eval):
+            # return rbf_x(x_eval, y_eval)
+            return interp_function_x(x_eval, y_eval)
+        
+        def f_y(x_eval, y_eval):
+            # return rbf_x(x_eval, y_eval)
+            return interp_function_y(x_eval, y_eval)
+        
+        def Dirichlet_function(x_eval, y_eval):
+            return np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)])
+        
+        
+        if dist(p, Point(98,23)) < 5: return Dirichlet_function(p.x, p.y)
+        return np.array([0. ,0.])
 
 
 

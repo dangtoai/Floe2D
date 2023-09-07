@@ -10,19 +10,24 @@ import signal
 # cl2 = 'python3 griffith_solver.py -sm traction2.pdf -bp 50 0 -ls 1000 -cd 1000 -st'
 
 cl1 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd 1 -st -pm -pd' 
-cl2 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd -1000 -st -pm -pd'
+cl2 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd -100 -st -pm -pd'
 
-# cl3 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary1.pdf -ls 1000 -as 1 -cd 1000 -bs 70 -st'
-# cl4 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary2.pdf -ls 1000 -as 1 -cd 1000 -bs 5 -np 4 -st'
-# cl5 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm angular1.pdf -ls 1000 -bp 49.973520189271696 28.307566540355406 -cd 1000 -as 1 -st'
-# cl6 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm angular2.pdf -ls 1000 -bp 49.973520189271696 28.307566540355406 -cd 1000 -as 0.01 -np 4 -st'
-# cl7 = 'python3 breaking_point.py -m mesh/rectangle.msh -bp 4.8 0 -ls 10 -cd 10'
-# cl8 = 'python3 breaking_point.py -m mesh/square.msh -bp 50 0 -ls 10 -cd 10'
+cl3 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary1.pdf -ls 1000 -as 1 -cd 1000 -bs 70 -st'
+cl4 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary2.pdf -ls 1000 -as 1 -cd 1000 -bs 5 -np 4 -st'
+cl5 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm angular1.pdf -ls 1000 -bp 49.973520189271696 28.307566540355406 -cd 1000 -as 1 -st'
+cl6 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm angular2.pdf -ls 1000 -bp 49.973520189271696 28.307566540355406 -cd 1000 -as 0.01 -np 4 -st'
+cl7 = 'python3 breaking_point.py -m mesh/rectangle.msh -bp 4.8 0 -ls 10 -cd 10'
+cl8 = 'python3 breaking_point.py -m mesh/square.msh -bp 50 0 -ls 10 -cd 10'
 
-#not working
-
+# not working
+# multiprocessing doesn't work for python > 3.3 !!!
 # cl9 = 'python3 griffith_solver.py -m mesh/square.msh -sm cl9.png -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -np 4 -ci 500' 
 # cl10 = 'python3 griffith_solver.py -m mesh/square-tight.msh -sm cl10.png -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -np 4 -ci 500' 
+
+
+cl9 = 'python3 griffith_solver.py -m mesh/square.msh -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -ci 500' 
+cl10 = 'python3 griffith_solver.py -m mesh/square-tight.msh -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -ci 500' 
+
 
 def call(cmd):
   try:

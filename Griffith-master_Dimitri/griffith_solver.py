@@ -10,6 +10,9 @@ from griffith.geometry import Point, Segment
 
 def run(raw_args=None):
   parser = argparse.ArgumentParser(description='Simulates the fracturation of an elastic material')
+  
+  parser.add_argument('-pc', '--percussion-data', help = "taking into real data from collision") ###Toai
+  
   parser.add_argument('-f', '--fracture', type=str, help="Initial fracture in material")
   parser.add_argument('-np', '--number-processes', type=int, help="Number processes")
   parser.add_argument('-m', '--mesh-file', default='mesh/square.msh', help="Name of the mesh file")

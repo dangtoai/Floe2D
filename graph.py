@@ -209,14 +209,14 @@ if __name__ == '__main__':
 	for v1, v2 in combinations(range(2), 2):
 		g.AddEdge(v1, v2)
 	
-	"""
-	ABOVE IS A COMPLETE GRAPH WITH 4 VERTICES AS FOLLOWING
-	0----1
-	|\  /|
-	| \/ |
-	| /\ |
-	|/  \|
-	3----2
-	"""
+#  	"""
+# 	ABOVE IS A COMPLETE GRAPH WITH 4 VERTICES AS FOLLOWING
+# 	0----1
+# 	|\  /|
+# 	| \/ |
+# 	| /\ |
+# 	|/  \|
+# 	3----2
+# 	"""
 
 	print(g.RouteInspection())
