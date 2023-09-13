@@ -6,10 +6,10 @@ from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
 from graph import *
 from math import acos, sin
 from scipy.sparse import coo_matrix
-import networkx as nx
+# import networkx as nx
 from itertools import combinations
 # from collections import Counter
-import matplotlib.animation as animation
+# import matplotlib.animation as animation
 
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
@@ -20,18 +20,21 @@ class Node:
 
     def __init__(self, position, velocity: np.array([0, 0]), id_number=None):
         self.x, self.y = position
-        self.x0, self.y0 = position  # Initial position needed for plots
+        # self.x0, self.y0 = position  # Initial position needed for plots
         self.vx, self.vy = velocity
         self.id = id_number
         self.parent_ice_floe = None  # Ice floe to which this node belongs
 
     def position(self):
+        """position of the node"""
         return np.array([self.x, self.y])
 
     def velocity(self):
+        """ velocity of the node """
         return np.array([self.vx, self.vy])
 
     def get_details(self):
+        """ information of the node """
         return self.position(), self.velocity()
 
 
@@ -50,9 +53,11 @@ class Spring:
         self.parent_ice_floe = None  # Ice floe to which this spring belongs
 
     def get_nodes(self):
+        """ Positions of 2 nodes in this spring """
         return [self.node1.position(), self.node2.position()]
 
     def get_details(self):
+        """ information of the node: positions and length """
         return [self.node1.position(), self.node2.position(), self.L0]
 
 
@@ -79,7 +84,7 @@ class Floe:
         self.mu = viscosity
         self.L = tenacity
         self.id = id_number
-        if springs==None: 
+        if springs is None: 
             possible = []
             for triangle in self.simplices():
                 for index1 in triangle:
@@ -89,12 +94,14 @@ class Floe:
             self.springs = set(possible)
 
     def generate_springs(self):
+        """ generates springs if the set of springs is already constructed """
         l = []
         for s in self.springs:
             l.append(Spring(self.nodes[s[0]], self.nodes[s[1]], None))
         return l
 
     def center(self):
+        """ center of gravitation of the floe """
         center = sum(self.get_nodes())/self.n
         return np.array([center[0], center[1]])
 
@@ -122,7 +129,7 @@ class Floe:
         G = nx.Graph()
         Border_edges = self.border_edges_index()
         Border_nodes = self.border_nodes_index()
-        l = [i for i in range(self.n)]
+        l = list( range(self.n) )
         triangle_list = [list(e) for e in self.simplices()]
         G.add_nodes_from(l)
         G.add_edges_from(self.springs)
@@ -567,7 +574,7 @@ class Percussion_Wall:
                              Length_Mat, Torsion_Mat, Angle_Mat)
         Positions = Sol.y
 
-        Ix = [j for j in range(0, self.floe.n*4, 4)]
+        Ix = list(range(0, self.floe.n*4, 4))
         All_x_positions = []
         # save all positions of all nodes
         All_positions_velocities = [[]]*self.floe.n*4
@@ -687,7 +694,7 @@ class Percussion_Wall:
         Positions of each nodes at time_step of simulation
         """
         All_positions_velocities = self.simulation()
-        I = [j for j in range(0, self.floe.n*4, 4)]
+        I = list( range(0, self.floe.n*4, 4) )
 
         Pos = [np.array([All_positions_velocities[I[i]][time_step],
                          All_positions_velocities[I[i]+1][time_step]]) for i in range(self.floe.n)]
@@ -869,8 +876,7 @@ def node_to_floe(node: Node, floe: Floe):
 def Unit_vect(vect1, vect2):
     if (vect1[0] == vect2[0] and vect1[1] == vect2[1]):
         return 0.
-    else:
-        return (vect2-vect1)/norm(vect2-vect1)
+    return (vect2-vect1)/norm(vect2-vect1)
 
 
 
@@ -1030,7 +1036,7 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Traction_
     Neighbor_contact = [np.any(Triangle_list[i] == contact_node)
                         for i in range(len(Triangle_list))]
     Neighbor_contact = [i for i, val in enumerate(
-        Neighbor_contact) if val == True]
+        Neighbor_contact) if val is True]
     Neighbor_contact = Triangle_list[Neighbor_contact]
 
     for i in range(nb_nodes):
@@ -1095,7 +1101,7 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_Mat, Length_Mat, m, mu, Tr
     Neighbor_contact = [np.any(Triangle_list[i] == contact_node)
                         for i in range(len(Triangle_list))]
     Neighbor_contact = [i for i, val in enumerate(
-        Neighbor_contact) if val == True]
+        Neighbor_contact) if val is True]
     Neighbor_contact = Triangle_list[Neighbor_contact].tolist()
     list_contact = []
     for i in range(len(Neighbor_contact)):

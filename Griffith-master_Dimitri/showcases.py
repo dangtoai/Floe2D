@@ -10,7 +10,7 @@ import signal
 # cl2 = 'python3 griffith_solver.py -sm traction2.pdf -bp 50 0 -ls 1000 -cd 1000 -st'
 
 cl1 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd 1 -st -pm -pd' 
-cl2 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd -100 -st -pm -pd'
+cl2 = 'python3 griffith_solver.py -bp 50 0 -ls 1000 -cd 100 -st -pm -pd'
 
 cl3 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary1.pdf -ls 1000 -as 1 -cd 1000 -bs 70 -st'
 cl4 = 'python3 griffith_solver.py -m mesh/butterfly.msh -sm boundary2.pdf -ls 1000 -as 1 -cd 1000 -bs 5 -np 4 -st'

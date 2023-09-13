@@ -6,6 +6,9 @@ Created on Thu May  4 16:15:23 2023
 @author: phandangtoai
 """
 
+import os, sys
+sys.path.append("/Users/phandangtoai/Documents/Floe2D/")
+
 from Func import *
 from graph import *
 import numpy as np
@@ -13,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import transforms
 import time
-
+from matplotlib import animation
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -576,7 +579,7 @@ if __name__ == '__main__':
     
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=True,
-                          xlim=(-.2, 1.2), ylim=(-.75, 1.51))
+                          xlim=(-0.2, 101.2), ylim=(-0.75, 101.51))
     ax.set_aspect('equal')
     ax.grid()
     line1, = ax.plot([], [], '.-', lw=1.95)
@@ -610,7 +613,7 @@ if __name__ == '__main__':
 
     ani = animation.FuncAnimation(fig, animate_spring,
                                   np.arange(0, len(t)), interval=200, blit=False)
-
+    plt.show()
 
 
     # floe.plot_displacements_1free(1.,Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node)

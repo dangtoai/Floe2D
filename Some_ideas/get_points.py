@@ -1,41 +1,49 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Created on Thu May  4 16:15:23 2023
+
+@author: phandangtoai
+"""
+
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
-from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
-from Func import *
-from graph import *
+# from scipy.spatial import Voronoi, voronoi_plot_2d, Delaunay
 import scipy
-from scipy import stats
+from Func import *
+
+
+sys.path.append("/Users/phandangtoai/Documents/Floe2D/")
+
+# from scipy import stats
 
 
 np.random.seed(5)
 
 
 # # unit square poisson point process
-xMin = 0
-xMax = 1
-yMin = 0
-yMax = 1
-xDelta = xMax-xMin
-yDelta = yMax-yMin  # rectangle dimensions
-areaTotal = xDelta*yDelta
+XMIN = 0
+XMAX = 1
+YMIN = 0
+YMAX = 1
+XDELTA = XMAX-XMIN
+YDELTA = YMAX-YMIN  # rectangle dimensions
+TOTAL_AREA = XDELTA*YDELTA
 
 # Point process parameters
-lambda0 = 88
-  # intensity
+LAMBDA = 88  # intensity
 
-# Simulate Poisson point process
-numbPoints = scipy.stats.poisson(
-    lambda0*areaTotal).rvs()  # Poisson number of points
+# Simulate Poisson point process:
+numbPoints = scipy.stats.poisson( LAMBDA*TOTAL_AREA).rvs()  # Poisson number of points
 # x coordinates of Poisson points
-xx = xDelta*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + xMin
+xx = XDELTA*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + XMIN
 # y coordinates of Poisson points
-yy = yDelta*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + yMin
+yy = YDELTA*scipy.stats.uniform.rvs(0, 1, ((numbPoints, 1))) + YMIN
 
 Points = []  # points coordinates
 
-for i in range(len(xx)):
+for i in range(numbPoints):
     Points.append([xx[i][0], yy[i][0]])
 np.array(Points)
 # vor = Voronoi(Points)
@@ -58,34 +66,13 @@ Points = tri.points
 
 Nodes = []
 V0 = np.array([0.55, 0.])
-for i in range(len(Points)):
+for i in range(numbPoints):
     Nodes.append(Node(Points[i], V0, i))
 
 k = 100.
 floe = Floe(nodes=Nodes, springs=Springs,
             stiffness=k, viscosity=k/10., id_number=1)
 floe.plot_init()
-
+plt.show()
 # print(floe.fractures_admissible())
-
 # nx.draw(G, with_labels=True, font_weight='bold')
-
-
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        

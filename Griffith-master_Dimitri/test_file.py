@@ -15,7 +15,7 @@ from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
 from griffith.mesh import *
 from griffith.geometry import Point, Segment
-from scipy.interpolate import Rbf
+
 from scipy.interpolate import LinearNDInterpolator
 import numpy as np
 # from griffith.mesh import 
