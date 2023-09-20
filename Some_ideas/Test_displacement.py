@@ -471,7 +471,7 @@ if __name__ == '__main__':
     Angle_Mat = floe.angle_init()
     
     T_end = 0.1
-    dt = 1./N_t
+    dt = 1./N_T
     # All_positions_velocities = floe.Move_stable_1(1., Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat, contact_node).y
     All_positions_velocities = floe.Move(
         T_end, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
@@ -481,7 +481,7 @@ if __name__ == '__main__':
     #finding time T* when energy elastic is max
     M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
     
-    t = np.linspace(0, T_end, N_t)
+    t = np.linspace(0, T_end, N_T)
     
     # plt.figure()
     # plt.plot(t, Energy[0], label = "traction")

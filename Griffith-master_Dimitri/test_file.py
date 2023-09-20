@@ -5,17 +5,17 @@ Created on Mon Jul 17 10:52:55 2023
 
 @author: phandangtoai
 """
-import time
+# import time
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from math import pi
-import plotrc
+# import plotrc
 from griffith import solver, log, problem_data
 from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
 from griffith.mesh import *
-from griffith.geometry import Point, Segment
-
+from griffith.geometry import Point
+# from scipy.interpolate import Rbf
 from scipy.interpolate import LinearNDInterpolator
 import numpy as np
 # from griffith.mesh import 
@@ -389,18 +389,18 @@ if __name__ == '__main__':
     boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = boundary_data)
     # boundary_displacement = problem_data.Constant_Displacement_On_Y(traction_coefficient= -100.)
     
-        
+
     physical_data = problem_data.Physical_Data(T, 1., boundary_displacement, initial_fracture=None)
-    
-    
+
+   
     ### Solution without fracture
-    classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
-    print(classical_solution.energy)
-    classical_solution.plot_displacement()
-    classical_solution.plot_energy()
+    # classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+    # print(classical_solution.energy)
+    # classical_solution.plot_displacement()
+    # classical_solution.plot_energy()
     
     ### Solution with fracture 
-    boundary_point = [float(20), float(0)]
+    boundary_point = [20., 0.]
     time_discretization = None
     fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
     discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
@@ -408,9 +408,3 @@ if __name__ == '__main__':
     solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
     # solution.plot_displacement()
     # solution.plot_energy()
-    
-    
-    
-    
-    
-    
