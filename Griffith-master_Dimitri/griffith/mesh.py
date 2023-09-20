@@ -310,7 +310,11 @@ class Boundary_Mesh(geo.Polygon): # Should not inherit from Polygon : mesh might
         edge = next_edge
       
       if len(parts) > 0 and temp_part[-1].point_2 is parts[0][0].point_1:
-          parts[0] = temp_part + parts[0]
+          print(type(temp_part))
+          if type(temp_part) is not tuple:
+              parts[0] = tuple(temp_part) + parts[0]
+          else: 
+              parts[0] = temp_part + parts[0]
       else:
         parts.append(temp_part)
     

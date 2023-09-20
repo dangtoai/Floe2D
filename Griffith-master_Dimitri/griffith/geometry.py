@@ -49,7 +49,7 @@ def intersection(line_1, line_2):
   WARNING: NOT SYMETRIC !
   """
   A = np.vstack((line_1.normal_vector, line_2.normal_vector))
-  
+
   if fabs(np.linalg.det (A)) < PRECISION:
     direction_vector = line_1.direction_vector
     normal_vector = line_1.normal_vector
@@ -99,7 +99,7 @@ def intersection(line_1, line_2):
           raise OnBoundary(intersection=set((line_2.point_1, line_1.point_2)), boundary_of=set((line_1, line_2)))
       else:
         raise OverlapError
-    
+
     # One segment and one half-line
     if isinstance(line_1, Segment) and type(line_2) is Half_Line:
       line_1, line_2 = line_2, line_1
@@ -113,7 +113,7 @@ def intersection(line_1, line_2):
         raise OnBoundary(intersection=set((line_1.point, line_2.point_2)), boundary_of=set((line_1, line_2)))
     else: # We never know ...
       raise RuntimeError("Could not determine intersection")
-  
+
   intersection = Point(*np.linalg.solve (A, np.array ([np.dot(line_1.point_1.array, line_1.normal_vector), np.dot(line_2.point_2.array, line_2.normal_vector)])))
 
   err_intersection, boundary_of = set(), set()
@@ -151,16 +151,13 @@ def angle_to_ux(vector):
 def rotation(base, point, angle):
   reduced = point - base
   rotation_matrix = np.array([[cos(angle), -sin(angle)], [sin(angle), cos(angle)]])
-  
+
   return base + rotation_matrix.dot(reduced.array)
 
 def are_vectors_colinear(vector_1, vector_2):
   A = np.vstack((vector_1, vector_2))
-  
-  if np.abs(np.linalg.det (A)) < PRECISION:
-    return True
-  else:
-    return False
+  return np.abs(np.linalg.det (A)) < PRECISION
+
 
 
 class Cone:
@@ -171,7 +168,7 @@ class Cone:
       raise ConeError()
     elif self.angle < 0:
       self.angle += 2*pi
-  
+
   @classmethod
   def acute(cls, vector_1, vector_2):
     obj = cls(vector_1, vector_2)
@@ -179,7 +176,7 @@ class Cone:
       obj.angle = 2*pi - obj.angle
       obj.vector_1, obj.vector_2 = obj.vector_2, obj.vector_1
     return obj
-  
+
   def has_vector(self, vector, BoundaryException=False, with_boundary=True):
     angle_int = angle(self.vector_1, vector)
     if fabs(angle_int) < PRECISION:
@@ -190,7 +187,7 @@ class Cone:
 
     if angle_int < -PRECISION:
       angle_int += 2*pi
-    
+
     if fabs(angle_int-self.angle) < PRECISION:
       if BoundaryException:
         raise OnBoundary(boundary_of=set(self.vector_1))
@@ -240,10 +237,10 @@ class Line:
     norm = sqrt((self.direction_vector[0])**2 + (self.direction_vector[1])**2) # math.sqrt faster than numpy.linalg.norm
     self.direction_vector *= 1/norm
     self.normal_vector *= 1/norm
-    
+
   def swap_orientation(self):
     return Line(self.point_2, self.point_1)
-  
+
   def has_point(self, point, *args, **kwargs):
     """
     *args, **kwargs here to have same signature as Segments
@@ -251,7 +248,7 @@ class Line:
     if np.abs(np.dot(self.normal_vector, np.array([point.x - self.point_1.x, point.y - self.point_1.y]))) <  PRECISION:
       return True
     return False
- 
+
   def side(self, point):
     """
     On which side of the half plan is this point ?
@@ -280,7 +277,7 @@ class Segment(Line):
     point_1 = base_point
     point_2 = point_1 + (r*cos(theta), r*sin(theta))
     return cls(point_1, point_2)
- 
+
   @property
   def mid_point(self):
     try:
@@ -293,7 +290,7 @@ class Segment(Line):
 
   def swap_orientation(self):
     return Segment(self.point_2, self.point_1)
-  
+
   def has_point(self, point, BoundaryException=False, with_boundary=True):
     dist_1 = dist(self.point_1, point)
     dist_2 = dist(self.point_2, point)
@@ -311,12 +308,12 @@ class Segment(Line):
       return True
     else:
       return False
-  
+
   def _change_orientation(self):
     self.point_1, self.point_2 = self.point_2, self.point_1
     self.direction_vector = -self.direction_vector
     self.normal_vector = -self.normal_vector
-  
+
   @property
   def lengh(self):
     try:
@@ -328,7 +325,7 @@ class Segment(Line):
 
   def __repr__(self):
     return "Segment between {} and {}".format(self.point_1, self.point_2)
-    
+
   def plot(self, figax=None, **kwargs):
     if not figax:
       figax = plt.subplots()
@@ -344,7 +341,7 @@ class Half_Line(Line):
     super().__init__(point, point+vector)
     self.point = point
     self.vector = vector
-    
+
   def has_point(self, point, BoundaryException=False, with_boundary=True):
     dist_1 = dist(point, self.point)
     if dist_1 < PRECISION:
@@ -359,7 +356,7 @@ class Half_Line(Line):
 
   def __repr__(self):
     return "Half_Line starts from {} in direction {}".format(self.point, self.vector)
-  
+
   def swap_orientation(self):
     raise NotImplementedError
 
@@ -367,7 +364,7 @@ class Half_Line(Line):
 class Polyline:
   def __init__ (self, segments):
     self.segments = segments
-      
+
   @property
   def lengh(self):
     try:
@@ -378,15 +375,15 @@ class Polyline:
         self._lengh += s.lengh
     finally:
       return self._lengh
-  
+
   @property
   def last_segment(self):
     return self.segments[-1]
-  
+
   @last_segment.setter
   def last_segment(self, last_segment):
     self.segments[-1] = last_segment
-  
+
   @property
   def end_point(self):
     return self.last_segment.point_2
@@ -402,7 +399,7 @@ class Polyline:
   @first_segment.setter
   def first_segment(self, first_segment):
     self.segments[0] = first_segment
-  
+
   def has_point(self, point, BoundaryException=False, with_boundary=True):
     if point.is_eq(self.first_segment.point_1):
       if BoundaryException:
@@ -420,23 +417,23 @@ class Polyline:
         if value:
           return True
       return False
-  
+
   def next_segment(self, s):
     return self.segments[(self.segments.index(s) + 1)]
-  
+
   def __repr__ (self):
     str = "Polyline made of following segments :"
     for s in self.segments:
       str += s.__repr__()
     return str
-  
+
   def plot(self, figax=None, **kwargs):
     if not figax:
       figax = plt.subplots()
     for s in self.segments:
       s.plot(figax, **kwargs)
     return figax
-        
+
   def curvilinear_abscissa(self, x):
     assert 0 <= x <= self.lengh
     now = 0
@@ -469,11 +466,11 @@ class Point:
       return Point(self.x - vector.x, self.y - vector.y)
     else:
       raise NotImplementedError
-  
+
   @property
   def array(self):
     return np.array([self.x, self.y])
-  
+
   def is_eq(self, other):
     if fabs(self.x-other.x) < PRECISION and fabs(self.y-other.y) < PRECISION:
       return True
@@ -481,7 +478,7 @@ class Point:
 
   def __repr__ (self):
     return "Point at : (x, y) = {}".format((self.x, self.y))
-  
+
   def plot(self, figax=None, **kwargs):
     if not figax:
       figax = plt.subplots()
@@ -494,10 +491,10 @@ class Triangle:
   def __init__(self, point_1, point_2, point_3):
     self.points = (point_1, point_2, point_3)
     self.edges = (Segment(point_1, point_2), Segment(point_2, point_3), Segment(point_3, point_1))
-    
+
   def __repr__(self):
     return "Triangle on points {}".format(self.points)
-  
+
   def next_edge(self, e):
     index = self.edges.index(e)
     try:
@@ -508,7 +505,7 @@ class Triangle:
 
   def previous_edge(self, e):
     return self.edges[self.edges.index(e) - 1]
-  
+
   def oriented_area(self):
       """
       return the oriented area of the triangle ABC
@@ -518,8 +515,7 @@ class Triangle:
       vector1 = p2.array - p1.array
       vector2 = p3.array - p1.array
       return 0.5 * det([vector1, vector2])
-  
-    
+
   def all_oriented_area(self):
       res = []
       p = 2*self.points
@@ -528,7 +524,7 @@ class Triangle:
           vector2 = p[i+2].array - p[i].array
           res.append(0.5 * det([vector1, vector2]))
       return res
-      
+
   @property
   def mid_point(self):
     try:
@@ -546,7 +542,7 @@ class Triangle:
     ps1 = np.dot(s1.normal_vector, (point - p1).array)
     ps2 = np.dot(s2.normal_vector, (point - p2).array)
     ps3 = np.dot(s3.normal_vector, (point - p3).array)
-    
+
     for ss, ps in ((s1, ps1), (s2, ps2), (s3, ps3)):
       if fabs(ps) < PRECISION and ss.has_point(point):
         if BoundaryException:
@@ -566,7 +562,7 @@ class Triangle:
       return True
     else:
       return False
-  
+
   def other_points(self, p):
     if p in self.points:
       return set(self.points).difference((p,))
@@ -574,7 +570,7 @@ class Triangle:
       if pp.is_eq(p):
         return set(self.points).difference((pp,))
     raise RuntimeError("Point {} not vertex of triangle {}".format(p, self))
-  
+
   @property
   def area(self):
     try:
@@ -584,7 +580,7 @@ class Triangle:
       self._area = np.abs(np.linalg.det (np.array ([[p1.x, p1.y, 1],[p2.x, p2.y, 1],[p3.x, p3.y, 1]])))
     finally:
       return self._area
-  
+
   def plot(self, figax=None, fill=False, color='k', **kwargs):
     if not figax:
       figax = plt.subplots()
@@ -596,7 +592,7 @@ class Triangle:
 
     ax.plot(x, y, color=color, **kwargs)
     return figax
-    
+
 
 class Circle:
   def __init__(self, center, radius):
@@ -613,11 +609,11 @@ class Circle:
         return with_boundary
     else:
       return False
-    
+
   def plot(self, figax=None, **kwargs):
     if not figax:
       figax = plt.subplots()
-    fig, ax = figax  
+    fig, ax = figax
     ax.add_artist(plt.Circle((self.center.x, self.center.y), self.radius, **kwargs))
     return figax
 
@@ -629,7 +625,7 @@ class Polygon:
     if self.lengh < 3:
       raise ValueError("Not a polygon")
     self.edges = [Segment(points[i], points[(i+1) % self.lengh]) for i in range(self.lengh)]
-  
+
   def next_edge(self, e):
     index = self.edges.index(e)
     try:
@@ -663,7 +659,7 @@ class Polygon:
       for edge in self.edges:
         if edge.has_point(point):
           return False
-    
+
     # Interior
     intersection_points = []
     for edge in self.edges:
@@ -675,7 +671,7 @@ class Polygon:
         pass
       else:
         intersection_points.append(inter)
-    
+
     intersection_points_short = []
     for p1 in intersection_points:
       if not any(p1.is_eq(p2) for p2 in intersection_points_short):
@@ -688,7 +684,7 @@ class Polygon:
 
   def __repr__ (self):
     return "Polygon on points {}".format(self.points)
-  
+
   def plot(self, figax=None, color='k', **kwargs):
     if not figax:
       figax = plt.subplots()
@@ -698,26 +694,39 @@ class Polygon:
 
     return figax
 
-  def triangularize(self):
-    if self.lengh == 3:
-      return set([Triangle(*[p for p in self.points])])
-    elif len(set(self.points)) < self.lengh:
-      for p in points:
-        if points.count(p) > 1:
-          break
-      index_1, index_2 = self.points.index(p), self.points.index(p, index_1+1)
-      points_1 = self.points[index_1:index_2]
-      points_2 = self.points[index_2:] + self.points[:index_1]
-      polygon_1, polygon_2 = Polygon(points_1), Polygon(points_2)
-      return polygon_1.triangularize().union(polygon_2.triangularize())
-    else:
-      for i in range(self.lengh):
-        p1, p2, p3 = [self.points[j % self.lengh] for j in range(i, i+3)]
-        if self.has_point(Segment(p1, p3).mid_point):
-          return set([Triangle(p1, p2, p3)]).union(self._remove_point(p2).triangularize())
-      return set()
-  
+  # def triangularize(self):
+  #   if self.lengh == 3:
+  #     return set([Triangle(*[p for p in self.points])])
+  #   elif len(set(self.points)) < self.lengh:
+  #     for p in points:
+  #       if points.count(p) > 1:
+  #         break
+  #     index_1, index_2 = self.points.index(p), self.points.index(p, index_1+1)
+  #     points_1 = self.points[index_1:index_2]
+  #     points_2 = self.points[index_2:] + self.points[:index_1]
+  #     polygon_1, polygon_2 = Polygon(points_1), Polygon(points_2)
+  #     return polygon_1.triangularize().union(polygon_2.triangularize())
+  #   else:
+  #     for i in range(self.lengh):
+  #       p1, p2, p3 = [self.points[j % self.lengh] for j in range(i, i+3)]
+  #       if self.has_point(Segment(p1, p3).mid_point):
+  #         return set([Triangle(p1, p2, p3)]).union(self._remove_point(p2).triangularize())
+  #     return set()
+
   def _remove_point(self, point):
     new_points = self.points.copy()
     new_points.remove(point)
     return Polygon(new_points)
+
+  def area(self):
+    n = self.lengh
+    points = self.points
+    area = 0.
+
+    for i in range(n):
+      j = (i + 1) % n
+      area += points[i].x * points[j].y
+      area -= points[i].y * points[j].x
+    area = np.abs(area) / 2.
+
+    return area
