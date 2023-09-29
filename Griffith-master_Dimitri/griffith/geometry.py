@@ -262,6 +262,8 @@ class Line:
   def __repr__(self):
     return "Line goes through {} and {}".format(self.point_1, self.point_2)
 
+  def project_point(self, point):
+      """Project a point onto line"""
 
 class Segment(Line):
   """

@@ -617,9 +617,9 @@ class Mesh:
     """
     n = len(self.triangles)
     try:
-        triangle_test = self.triangles[randint(0, n)] #Somehow, in this algorithm, sometimes the "triangle_test" returns None, to debug!!!
+        triangle_test = self.triangles[randint(0, n)] 
         res = [False, False, False]
-        l = [] #stock the path of triangles that lead to the one contains the point P
+        l = []
         while not all(res):
             p = triangle_test.points
             t1 = Triangle(p[0], p[1], point, None)

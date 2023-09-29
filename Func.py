@@ -182,19 +182,6 @@ class Floe:
 
         return Fractures_admissible, fractures_length(Fractures_admissible)
 
-    def first_radius(self):
-        """
-        Returns the radius of the first circle circumscribed of the floe.
-
-        """
-        center = np.array(self.center())
-        all_radius = [norm(center-node.position()) for node in self.nodes]
-        return max(all_radius)
-
-    def center_velocity(self):
-        all_velocity = self.get_velocity()
-        return sum(all_velocity/self.n)
-
     def Route(self):
         g = UndirectedGraph(self.n)
         for v1, v2 in self.springs:
@@ -228,11 +215,7 @@ class Floe:
         """
         return np.array([node.velocity() for node in self.nodes])
 
-    def get_springs(self):  # not necessary yet ?
-        return [(self.get_nodes()[i], self.get_nodes()[j]) for (i, j) in self.springs]
-
     def connexe_mat(self):
-        # k = max(max(self.springs))+1
         mat = np.zeros((self.n, self.n))
         for (i, j) in self.springs:
             mat[i, j] = 1

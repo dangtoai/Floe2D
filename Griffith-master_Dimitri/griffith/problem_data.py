@@ -1,15 +1,17 @@
-import plotrc as plot_options
 import sys
 import os
+from math import exp
+import plotrc as plot_options
 import numpy as np
-from math import pi, exp, sqrt
+import matplotlib.pyplot as plt
 from scipy.interpolate import LinearNDInterpolator
-from griffith.mesh import Mesh, Boundary_Mesh, Triangle
+from scipy.spatial import ConvexHull
+import shapely.geometry as sg 
+from Func import Unit_vect
+# from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
 from .geometry import Point, Circle, rotation, dist
 sys.path.append(os.path.abspath('..'))
-
-
 
 
 #####################
@@ -45,7 +47,7 @@ class Fracture_Discretization:
         self.angular_step = angular_step
         self.lengh_step = lengh_step
         self.min_lengh = lengh_step  # FIXME
-        self.max_lengh = 2*lengh_step #np.inf  # FIXME
+        self.max_lengh = 2*lengh_step  # np.inf  # FIXME
 
         self.interior_step = interior_step
         self.interior_fast_step = interior_fast_step
@@ -84,23 +86,23 @@ class Linear_Displacement(Boundary_Displacement):
         return self._traction_coefficient*time*self._func(p)
 
 
-
 class Constant_Displacement_On_Y(Linear_Displacement):
     r"""
     | | -> |     |
     """
+
     def __init__(self, traction_coefficient=1, abscissa_mid=0.9):
         super().__init__(traction_coefficient)
         self._abscissa_mid = abscissa_mid
 
     def _func(self, p):
-        if p.x > self._abscissa_mid: #and p.y > 40 and p.y < 50:
+        if p.x > self._abscissa_mid:  # and p.y > 40 and p.y < 50:
             return np.array([1, 0.])
-        # if p.x < 0.1 and p.y > 90 and p.y < 95: return np.array([-1, 0]) 
-        return np.array([0., 0.]) 
+        # if p.x < 0.1 and p.y > 90 and p.y < 95: return np.array([-1, 0])
+        return np.array([0., 0.])
         # if p.x < 0.1 and p.y > 40 and p.y < 60:
-                # return np.array([1, 0])
-            # return np.array([-1, 0])  # a supprimer si Neumann
+        # return np.array([1, 0])
+        # return np.array([-1, 0])  # a supprimer si Neumann
 
 
 class Boundary_Displacement_by_percussion(Linear_Displacement):
@@ -108,58 +110,108 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
     The boundary displacement is computed thanks to a mass-spring deformation data
     Boundary data contains -(xi,yi) the nodes of the mass-spring system and the deformation field u1(x,y),u2(x,y)
     We compute the P1 approximation on the boundary by projecting the data on the boundary
-    
     """
-    def __init__(self, traction_coefficient =1. , boundary_data = None):
-        #self.some_threshold = some_threshold
-        super().__init__(traction_coefficient = 1)
-        self.boundary_data = boundary_data 
 
-    # def __call__(self, p):
-    #     if self.check_dirichlet(p): 
-    #         # Calculate the displacement using a specific function for this region
-    #         displacement = self._func(p)
-    #     else:
-    #         # Return a default displacement value for points outside the region
-    #         displacement = np.array([0., 0.])
-    #     return displacement
+    def __init__(self, traction_coefficient=1., boundary_data=None):
+        #self.some_threshold = some_threshold
+        super().__init__(traction_coefficient=1)
+        self.boundary_data = boundary_data
 
     def check_Dirichlet(self, p):
         # Implement the logic to check if point p is inside the specific region
         # Return True if it is inside; otherwise, return False
         # Example: check if the x-coordinate of p is greater than some threshold
-        return dist(p, Contact_region = np.array([98,23])) < 5
+        return dist(p, Contact_region=np.array([98, 23])) < 5
 
     def _func(self, p):
         # Implement the logic to calculate the displacement vector at point p
         # based on a specific function for this region
         # Return the displacement vector as a numpy array
         # Example: return the displacement as [0, f(p.y)], where f is some function
-        Dirichlet = self.boundary_data
-        
-        #extract the data of interpolation points and data
-        xdata, ydata = Dirichlet[:,0], Dirichlet[:,1]
-        val_directionx, val_directiony = Dirichlet[:,2], Dirichlet[:,3]
-        
-        #interpolate 
-        interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), val_directionx)
-        interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), val_directiony)
-        
-        def f_x(x_eval, y_eval):
-            # return rbf_x(x_eval, y_eval)
-            return interp_function_x(x_eval, y_eval)
-        
-        def f_y(x_eval, y_eval):
-            # return rbf_x(x_eval, y_eval)
-            return interp_function_y(x_eval, y_eval)
-        
-        def Dirichlet_function(x_eval, y_eval):
-            return np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)])
-        
-        
-        if dist(p, Point(98,23)) < 5: return Dirichlet_function(p.x, p.y)
-        return np.array([0. ,0.])
+        data = self.boundary_data
 
+        # extract the data of interpolation points and data
+
+        # Function to calculate the angle of a point with respect to the centroid
+        def angle_with_centroid(point, centroid):
+            x, y = point
+            cx, cy = centroid
+            return np.arctan2(y - cy, x - cx)
+
+        # Function to rearrange points to form a proper polygon
+        def rearrange_polygon_points(xdata, ydata):
+            # Calculate the centroid
+            centroid = (np.mean(xdata), np.mean(ydata))
+            # Create a list of points and calculate angles with respect to the centroid
+            points = list(zip(xdata, ydata))
+            angles = [angle_with_centroid(point, centroid) for point in points]
+            # Sort the points based on the angles
+            sorted_points = [point for _, point in sorted(zip(angles, points))]
+            return zip(*sorted_points)
+
+        def rearrange_polygon_data(xdata, ydata, z1data, z2data):
+            x_reordered, y_reordered = rearrange_polygon_points(xdata, ydata)
+            # Rearrange z1data based on the new order of x and y
+            z1_reordered = np.array([z1data[np.where((xdata == x) & (ydata == y))[0][0]] for x, y in zip(x_reordered, y_reordered)])
+            # Rearrange z2data based on the new order of x and y
+            z2_reordered = np.array([z2data[np.where((xdata == x) & (ydata == y))[0][0]] for x, y in zip(x_reordered, y_reordered)])
+
+            return x_reordered, y_reordered, z1_reordered, z2_reordered
+
+        xdata, ydata = data[:, 0], data[:, 1]
+
+        x_reordered, y_reordered, z1_reordered, z2_reordered = rearrange_polygon_data(xdata, ydata, data[:,2], data[:,3])
+
+        xdata = np.array(x_reordered)
+        ydata = np.array(y_reordered)
+        z1data = np.array(z1_reordered)
+        z2data = np.array(z2_reordered)
+
+        polygon = sg.Polygon(np.column_stack((xdata, ydata)))
+
+        interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
+        interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
+        
+        def project_on_polygon(point, polygon):
+            if polygon.contains(sg.Point(point)):
+                return point
+            nearest_point = polygon.exterior.interpolate(polygon.exterior.project(sg.Point(point)))
+            return np.array([nearest_point.x, nearest_point.y])
+
+        def f_x(x_eval, y_eval):
+            interpolated_value = interp_function_x(x_eval, y_eval)
+            nan_mask = np.isnan(interpolated_value)
+            center = np.array([np.mean(xdata), np.mean(ydata)])
+            if np.any(nan_mask):
+                projected_point = project_on_polygon(sg.Point(x_eval,y_eval), polygon)
+                projected_point += Unit_vect(projected_point, center) /10000.
+                interpolated_value = interp_function_x(projected_point[0], projected_point[1])
+                # if np.isnan(interpolated_value): 
+                #     print(nan_mask)
+                #     print(x_eval, y_eval)
+                #     print(projected_point)
+                #     print('value = ', interpolated_value)
+            
+            return interpolated_value
+            # return np.interp(x_eval, xdata, z1data) + np.interp(y_eval, ydata, z1data)
+
+        def f_y(x_eval,y_eval):
+            interpolated_value = interp_function_y(x_eval, y_eval)
+            nan_mask = np.isnan(interpolated_value)
+            center = np.array([np.mean(xdata), np.mean(ydata)])
+            if np.any(nan_mask):
+                projected_point = project_on_polygon(sg.Point(x_eval,y_eval), polygon)
+                projected_point += Unit_vect(projected_point, center) /10000.
+                interpolated_value = interp_function_y(projected_point[0], projected_point[1])
+            return interpolated_value
+            # return np.interp(x_eval, xdata, z2data) + np.interp(y_eval, ydata, z2data)
+
+        def Dirichlet_function(x,y):
+            return np.array([f_x(x,y), f_y(x,y)])
+        
+        # if dist(p, Point(98, 23)) < 5:
+        #     return Dirichlet_function(p.x, p.y)
+        return Dirichlet_function(p.x, p.y)
 
 
 class Linear_Displacement_On_Y(Linear_Displacement):
@@ -178,8 +230,7 @@ class Linear_Displacement_On_Y(Linear_Displacement):
             (self.y_max - self.y_min)*p.y
         if p.x > self._abscissa_mid:
             return np.array([c_y, 0])
-        else:
-            return np.array([-c_y, 0])
+        return np.array([-c_y, 0])
 
 
 class Picewise_Linear_Displacement_On_Y(Linear_Displacement):
@@ -200,8 +251,7 @@ class Picewise_Linear_Displacement_On_Y(Linear_Displacement):
             return np.array([0, 0])
         if p.x > self._abscissa_mid:
             return np.array([(self._y_max - p.y)/self._amplitude, 0])
-        else:
-            return np.array([-(self._y_max - p.y)/self._amplitude, 0])
+        return np.array([-(self._y_max - p.y)/self._amplitude, 0])
 
 
 class Rotation_Displacement_On_Y(Boundary_Displacement):
@@ -220,8 +270,7 @@ class Rotation_Displacement_On_Y(Boundary_Displacement):
     def __call__(self, time, p):
         if p.x > self._abscissa_mid:
             return (rotation(self._point_right, p, self._angle*time) - p).array
-        else:
-            return (rotation(self._point_left, p, -self._angle*time) - p).array
+        return (rotation(self._point_left, p, -self._angle*time) - p).array
 
 
 ##############
@@ -275,8 +324,7 @@ class Japan_Toughness:
     def __call__(self, p):
         if self.circle.has_point(p):
             return self.k2
-        else:
-            return self.k1
+        return self.k1
 
     def plot(self, figax=None):
         self.circle.plot(figax, **plot_options.circle_inclusion)
@@ -293,8 +341,7 @@ class Smooth_Japan_Toughness(Japan_Toughness):
         if d < self.circle.radius:
             # /(self.sigma*sqrt(2*pi))
             return self.k1 + (self.k2 - self.k1)*exp(-(self.circle.radius - d)**2/2*self.sigma**2)
-        else:
-            return self.k1
+        return self.k1
 
 
 ##############
