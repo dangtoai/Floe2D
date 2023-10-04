@@ -47,7 +47,7 @@ class Fracture_Discretization:
         self.angular_step = angular_step
         self.lengh_step = lengh_step
         self.min_lengh = lengh_step  # FIXME
-        self.max_lengh = 2*lengh_step  # np.inf  # FIXME
+        self.max_lengh = np.inf #2*lengh_step  # np.inf  # FIXME
 
         self.interior_step = interior_step
         self.interior_fast_step = interior_fast_step
