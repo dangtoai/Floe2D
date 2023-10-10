@@ -186,12 +186,7 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
                 projected_point = project_on_polygon(sg.Point(x_eval,y_eval), polygon)
                 projected_point += Unit_vect(projected_point, center) /10000.
                 interpolated_value = interp_function_x(projected_point[0], projected_point[1])
-                # if np.isnan(interpolated_value): 
-                #     print(nan_mask)
-                #     print(x_eval, y_eval)
-                #     print(projected_point)
-                #     print('value = ', interpolated_value)
-            
+
             return interpolated_value
             # return np.interp(x_eval, xdata, z1data) + np.interp(y_eval, ydata, z1data)
 

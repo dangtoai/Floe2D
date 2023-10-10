@@ -81,7 +81,7 @@ class Solution:
     self.elastic_energy = self.stiff_matrix.dot(self.u_int).dot(self.u_int) \
                   + 2*self.boundary_matrix.dot(self.u_bound).dot(self.u_int) \
                   + self.boundary_stiff.dot(self.u_bound).dot(self.u_bound)
-    
+
     if np.max(np.abs(self.stiff_matrix.dot(self.u_int) + self.boundary_matrix.dot(self.u_bound))) > ENERGY_PRECISION:
       raise NumericalError
     elif self.elastic_energy <= -ENERGY_TOLERENCE:
