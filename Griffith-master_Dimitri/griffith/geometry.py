@@ -696,24 +696,26 @@ class Polygon:
 
     return figax
 
-  # def triangularize(self):
-  #   if self.lengh == 3:
-  #     return set([Triangle(*[p for p in self.points])])
-  #   elif len(set(self.points)) < self.lengh:
-  #     for p in points:
-  #       if points.count(p) > 1:
-  #         break
-  #     index_1, index_2 = self.points.index(p), self.points.index(p, index_1+1)
-  #     points_1 = self.points[index_1:index_2]
-  #     points_2 = self.points[index_2:] + self.points[:index_1]
-  #     polygon_1, polygon_2 = Polygon(points_1), Polygon(points_2)
-  #     return polygon_1.triangularize().union(polygon_2.triangularize())
-  #   else:
-  #     for i in range(self.lengh):
-  #       p1, p2, p3 = [self.points[j % self.lengh] for j in range(i, i+3)]
-  #       if self.has_point(Segment(p1, p3).mid_point):
-  #         return set([Triangle(p1, p2, p3)]).union(self._remove_point(p2).triangularize())
-  #     return set()
+  def triangularize(self):
+    if self.lengh == 3:
+      return set([Triangle(*[p for p in self.points])])
+    elif len(set(self.points)) < self.lengh:
+      points = self.points
+      for p in points:
+        if points.count(p) > 1:
+          break
+      index_1 = self.points.index(p)
+      index_2 = self.points.index(p, index_1+1)
+      points_1 = self.points[index_1:index_2]
+      points_2 = self.points[index_2:] + self.points[:index_1]
+      polygon_1, polygon_2 = Polygon(points_1), Polygon(points_2)
+      return polygon_1.triangularize().union(polygon_2.triangularize())
+    else:
+      for i in range(self.lengh):
+        p1, p2, p3 = [self.points[j % self.lengh] for j in range(i, i+3)]
+        if self.has_point(Segment(p1, p3).mid_point):
+          return set([Triangle(p1, p2, p3)]).union(self._remove_point(p2).triangularize())
+      return set()
 
   def _remove_point(self, point):
     new_points = self.points.copy()
