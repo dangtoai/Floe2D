@@ -22,9 +22,11 @@ if __name__ == '__main__':
 
     with open('masses-springs.csv', mode='r') as csv_file:
         csv_reader = csv.reader(csv_file)
+        i = 0
         for row in csv_reader:
             row = np.array(row, dtype=float)
-            Nodes.append(Node(row))
+            Nodes.append(Node(row,id_number = i))
+            i += 1
             Points.append(Point(row[0], row[1]))
 
     floe = Floe(nodes=Nodes, springs=None,
@@ -124,18 +126,40 @@ if __name__ == '__main__':
     # write csv file to save the displacement field
     # only data on the boundary is needed
     index_boundary = floe.border_nodes_index()
-    X, Y = X[index_boundary], Y[index_boundary]
+    Xboundary, Yboundary = X[index_boundary], Y[index_boundary]
     data_x, data_y = data_deformation[index_boundary][:,0], data_deformation[index_boundary][:,1]
 
-    PRECISION = 5 # precision of the data: 5 decimal places.
-    X, Y, data_x, data_y = np.around((X, Y, data_x, data_y), decimals= PRECISION)
+    PRECISION = 5 # precision of the data: 5 decimals.
+    Xboundary, Yboundary, data_x, data_y = np.around((Xboundary, Yboundary, data_x, data_y), decimals= PRECISION)
 
-    data = zip(X, Y, data_x, data_y)
+    data = zip(Xboundary, Yboundary, data_x, data_y)
 
     with open('boundary_data.csv', mode = 'w', newline = '', encoding='utf-8') as csv_file:
+        # write the contact node at the boundary of the network
         csv_writer = csv.writer(csv_file, delimiter=' ')
-        csv_writer.writerow(['X', 'Y', 'Data_X', 'Data_Y'])
-        csv_writer.writerows(data)
-        # write also the contact node at the boundary of the network
         csv_writer.writerow( "Contact region in coninuum domain:" )
         csv_writer.writerow((Points[index_contact].x, Points[index_contact].y))
+
+        csv_writer.writerow(['X', 'Y', 'Data_X', 'Data_Y'])
+        csv_writer.writerows(data)
+
+    #new ice floe without the boundary
+    for i in sorted(index_boundary, reverse = True):
+        Nodes.remove(Nodes[i])
+        np.delete(X, i)
+        np.delete(Y, i)
+        np.delete(data_deformation, i)
+
+    floe1 = Floe(nodes=Nodes, springs=None,
+                stiffness=1, viscosity=1., id_number=0)
+
+    index_boundary = floe1.border_nodes_index()
+    Xboundary, Yboundary = X[index_boundary], Y[index_boundary]
+    data_x, data_y = data_deformation[index_boundary][:,0], data_deformation[index_boundary][:,1]
+    PRECISION = 5 # precision of the data: 5 decimals.
+    Xboundary, Yboundary, data_x, data_y = np.around((Xboundary, Yboundary, data_x, data_y), decimals= PRECISION)
+    data = zip(Xboundary, Yboundary, data_x, data_y)
+
+    with open('boundary_data.csv', mode = 'a', newline = '', encoding='utf-8') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=' ')
+        csv_writer.writerows(data)

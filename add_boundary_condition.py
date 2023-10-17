@@ -31,7 +31,7 @@ T = problem_data.lame_tensor_ice #Lame tensor
 data = []
 with open('boundary_data.csv', 'r', encoding='utf-8') as csv_file:
     lines = csv_file.readlines()
-    lines_to_read = lines[1:-2]
+    lines_to_read = lines[3:]
     csv_reader = csv.reader(csv_file)
     csv_reader = csv.reader(lines_to_read)
     for row in csv_reader:
@@ -140,7 +140,7 @@ p_init = None #[1036.5, 94.0]
 # time_discretization = None
 
 # # look at fracture_iterators 
-fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/10., boundary_point= p_init, lengh_step = 100 )
+fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/20., boundary_point= p_init, lengh_step = 10 )
 
 
 # discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
@@ -156,7 +156,7 @@ fracture_discretization = problem_data.Fracture_Discretization(angular_step = np
 # plt.show()
 
 # plot fracture admissible from a point on boundary 
-f = fracture_iterators.Admissible_Fractures_From_Fixed_Boundary_Point(fracture_discretization, mesh, geo.Point(1015.0, 99.69999694824219))
+f = fracture_iterators.Admissible_Fractures_From_Fixed_Boundary_Point(fracture_discretization, mesh, geo.Point(1011.299987792969, 104.0))
 
 def tuple_to_string(tple):
   result = "{}".format(tple[0])

@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from graph import *
-# import networkx as nx
 
 # import matplotlib.animation as animation
 
@@ -36,6 +35,7 @@ class Node:
     def get_details(self):
         """ information of the node """
         return self.position(), self.velocity()
+    
     def change_velocity(self, new_velocity: np.array):
         self.velocity = new_velocity
 
@@ -102,7 +102,7 @@ class Floe:
         for s in self.springs:
             l.append(Spring(self.nodes[s[0]], self.nodes[s[1]], None))
         return l
-
+        
     def center(self):
         """ center of gravitation of the floe """
         center = sum(self.get_nodes())/self.n

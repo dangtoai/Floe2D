@@ -17,7 +17,7 @@ Input = input("Select a geometry to run the random process: ")
 Input = int(Input)
 print(f"the geometry number {Input}")
 mat = sp.io.loadmat("Biblio_Floes.mat")['G'][Input][0] # 100 geometries of ice floes
-lc = 10.
+lc = 30.
 GEO_SCRIPT = "/* the geometry file\n */ \n\n"
 GEO_SCRIPT += f"lc = {lc}; // mesh precision \n"
 Points = []

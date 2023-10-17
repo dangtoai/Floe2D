@@ -4,9 +4,9 @@ from math import exp
 import plotrc as plot_options
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.spatial import Delaunay
+from numpy.linalg import norm
 from scipy.interpolate import LinearNDInterpolator
-from scipy.spatial import ConvexHull
-import shapely.geometry as sg 
 from Func import Unit_vect
 # from griffith.mesh import Mesh, Boundary_Mesh, Triangle
 
@@ -132,82 +132,161 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
 
         # extract the data of interpolation points and data
 
-        # Function to calculate the angle of a point with respect to the centroid
-        def angle_with_centroid(point, centroid):
-            x, y = point
-            cx, cy = centroid
-            return np.arctan2(y - cy, x - cx)
+        def line_coefficient(point1, point2):
+            """
+            compute the coefficient of line contains P1, P2
+            return A,B,C of Ax+By=C
+            """
+            x1, y1 = point1
+            x2, y2 = point2
+            A = (y2-y1)/(x2-x1)
+            B = y1 - A*x1
+            return np.array([A,B])
+            
+        def test_line(t, A, B):
+            """
+            return the line of equation y = At+B
+            """
+            return A*t + B
 
-        # Function to rearrange points to form a proper polygon
-        def rearrange_polygon_points(xdata, ydata):
-            # Calculate the centroid
-            centroid = (np.mean(xdata), np.mean(ydata))
-            # Create a list of points and calculate angles with respect to the centroid
-            points = list(zip(xdata, ydata))
-            angles = [angle_with_centroid(point, centroid) for point in points]
-            # Sort the points based on the angles
-            sorted_points = [point for _, point in sorted(zip(angles, points))]
-            return zip(*sorted_points)
+        def intersection_line(A1, B1, A2, B2):
+            """
+            find the intersection of 2 line 
+            y = A1*t +B1 and y = A2*t+B2"""
+            M = np.array([[-A1, 1.], [-A2, 1.]])
+            B = np.array([B1, B2])
+            return np.linalg.solve(M, B) 
 
-        def rearrange_polygon_data(xdata, ydata, z1data, z2data):
-            x_reordered, y_reordered = rearrange_polygon_points(xdata, ydata)
-            # Rearrange z1data based on the new order of x and y
-            z1_reordered = np.array([z1data[np.where((xdata == x) & (ydata == y))[0][0]] for x, y in zip(x_reordered, y_reordered)])
-            # Rearrange z2data based on the new order of x and y
-            z2_reordered = np.array([z2data[np.where((xdata == x) & (ydata == y))[0][0]] for x, y in zip(x_reordered, y_reordered)])
+        def boundary_edges_index(tri: Delaunay):
+            """
+            return the (i,j) index of all edges at the boundary 
+            """
+            All_edges = []
+            for triangles in tri.simplices:
+                for i in range(3):
+                    for j in range(i+1, 3):
+                        All_edges.append(
+                            (min(triangles[i], triangles[j]), max(triangles[i], triangles[j])))
+            S = set(All_edges)
+            Border = ([e for e in S if All_edges.count(e) == 1])
+            return Border
 
-            return x_reordered, y_reordered, z1_reordered, z2_reordered
+        def boundary_triangles_index(tri: Delaunay):
+            """
+            return the (i,j,k) index of all triangles at the boundary 
+            """
+            boundary_edges = boundary_edges_index(tri)
+            boundary_triangles = []
+            for edge in boundary_edges:
+                for triangle in tri.simplices:
+                    if set(edge).issubset(triangle):
+                        boundary_triangles.append(triangle)
+            return boundary_triangles
 
+        def boundary_nodes_index(tri: Delaunay):
+            """
+            return the (i) index of all nodes at the boundary 
+            """
+            boundary_nodes = []
+            boundary_edges = boundary_edges_index
+            for i,j in boundary_edges:
+                boundary_nodes.append(i)
+                boundary_nodes.append(j)
+            return list(set(boundary_nodes))
+
+        def cones_list(tri: Delaunay):
+            """
+            return the (i,j,k) index of all triangles at the boundary 
+            the node k is in the interior of the mesh Delaunay
+            such that ki and kj are 2 lines of the cone
+            k is the head of the cone
+            """
+            boundary_edges = boundary_edges_index(tri)
+            boundary_triangles = boundary_triangles_index(tri)
+            triangles_out = []
+            for triangle in boundary_triangles:
+                for edge in boundary_edges:
+                    if set(edge).issubset(triangle):
+                        common_el = np.intersect1d(triangle, edge)
+                        not_common = np.setdiff1d(triangle, common_el)
+                        # print(common_el, not_common)
+                        triangle = np.append(not_common, common_el)
+                        triangles_out.append(triangle)
+            return triangles_out
+
+        def inside_cone(head, base1, base2, point):
+            """
+            Verify if point is inside of the cone 
+            
+            """
+            direction1 = base1 - head
+            direction2 = base2 - head
+            vector_point = point - head
+            
+            direction1 = direction1/norm(direction1)
+            direction2 = direction2/norm(direction2)
+            vector_point = vector_point/norm(vector_point)
+            
+            angle1 = np.arccos(np.dot(direction1, vector_point))
+            angle2 = np.arccos(np.dot(direction2, vector_point))
+            cone_angle = np.arccos(np.dot(direction1, direction2))
+            
+            return angle1<cone_angle and angle2<cone_angle
+
+        def P1_coefficient(Points, data):
+            """
+            if datas contains the value at points,
+            return the affine function f that
+            f(point[i]) = datas[i]
+            f (x,y) = Ax+By+C
+            """
+            
+            Matrix = np.array([[Points[0][0], Points[0][1], 1],
+                              [Points[1][0], Points[1][1], 1],
+                              [Points[2][0], Points[2][1], 1]])
+            B_ = np.array(data)
+            A, B, C = np.linalg.solve(Matrix, B_)
+
+            return A,B,C
+        
+        
+        
         xdata, ydata = data[:, 0], data[:, 1]
-
-        x_reordered, y_reordered, z1_reordered, z2_reordered = rearrange_polygon_data(xdata, ydata, data[:,2], data[:,3])
-
-        xdata = np.array(x_reordered)
-        ydata = np.array(y_reordered)
-        z1data = np.array(z1_reordered)
-        z2data = np.array(z2_reordered)
-
-        polygon = sg.Polygon(np.column_stack((xdata, ydata)))
-
+        z1data, z2data = data[:, 2], data[:, 3]
+        Points = np.array(list(zip(xdata, ydata)))
+        tri = Delaunay(Points)
         interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
         interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
-        
-        def project_on_polygon(point, polygon):
-            if polygon.contains(sg.Point(point)):
-                return point
-            nearest_point = polygon.exterior.interpolate(polygon.exterior.project(sg.Point(point)))
-            return np.array([nearest_point.x, nearest_point.y])
-
         def f_x(x_eval, y_eval):
             interpolated_value = interp_function_x(x_eval, y_eval)
-            nan_mask = np.isnan(interpolated_value)
-            center = np.array([np.mean(xdata), np.mean(ydata)])
-            if np.any(nan_mask):
-                projected_point = project_on_polygon(sg.Point(x_eval,y_eval), polygon)
-                projected_point += Unit_vect(projected_point, center) /10000.
-                interpolated_value = interp_function_x(projected_point[0], projected_point[1])
-
+            Cones = cones_list(tri) 
+            if np.isnan(interpolated_value):
+                for i,j,k in Cones:
+                    if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
+                        # print(i,j,k)
+                        P_ = np.array([Points[i], Points[j], Points[k]])
+                        data_ = np.array([z1data[i], z1data[j], z1data[k]])
+                        A, B, C = P1_coefficient(P_, data_)
+                        interpolated_value = A*x_eval + B*y_eval + C
             return interpolated_value
-            # return np.interp(x_eval, xdata, z1data) + np.interp(y_eval, ydata, z1data)
 
-        def f_y(x_eval,y_eval):
+        def f_y(x_eval, y_eval):
             interpolated_value = interp_function_y(x_eval, y_eval)
-            nan_mask = np.isnan(interpolated_value)
-            center = np.array([np.mean(xdata), np.mean(ydata)])
-            if np.any(nan_mask):
-                projected_point = project_on_polygon(sg.Point(x_eval,y_eval), polygon)
-                projected_point += Unit_vect(projected_point, center) /10000.
-                interpolated_value = interp_function_y(projected_point[0], projected_point[1])
+            Cones = cones_list(tri) 
+            if np.isnan(interpolated_value):
+                for i,j,k in Cones:
+                    if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
+                        # print(i,j,k)
+                        P_ = np.array([Points[i], Points[j], Points[k]])
+                        data_ = np.array([z1data[i], z1data[j], z1data[k]])
+                        A, B, C = P1_coefficient(P_, data_)
+                        interpolated_value = A*x_eval + B*y_eval + C
             return interpolated_value
-            # return np.interp(x_eval, xdata, z2data) + np.interp(y_eval, ydata, z2data)
-
+        
         def Dirichlet_function(x,y):
             return np.array([f_x(x,y), f_y(x,y)])
         
-        # if dist(p, Point(98, 23)) < 5:
-        #     return Dirichlet_function(p.x, p.y)
         return Dirichlet_function(p.x, p.y)
-
 
 class Linear_Displacement_On_Y(Linear_Displacement):
     r"""
