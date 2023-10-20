@@ -117,21 +117,30 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
         super().__init__(traction_coefficient=1)
         self.boundary_data = boundary_data
 
+    def collision_point(self):
+        data = self.boundary_data[:]
+        norm_data = [norm(data[:,2:][i]) for i in range(len(data))]
+        Collision_index = norm_data.index(max(norm_data))
+        # print(Collision_index)
+        # print(data[:,0][Collision_index], data[:,1][Collision_index])
+        Collision_point = Point(data[:,0][Collision_index], data[:,1][Collision_index])
+        return Collision_point
+        
     def check_Dirichlet(self, p):
         # Implement the logic to check if point p is inside the specific region
         # Return True if it is inside; otherwise, return False
         # Example: check if the x-coordinate of p is greater than some threshold
-        return dist(p, Contact_region=np.array([98, 23])) < 5
+        Collision_point = self.collision_point()
+        return dist(p, Collision_point) < 10.
 
     def _func(self, p):
+        # print(p)
         # Implement the logic to calculate the displacement vector at point p
         # based on a specific function for this region
         # Return the displacement vector as a numpy array
         # Example: return the displacement as [0, f(p.y)], where f is some function
         data = self.boundary_data
-
         # extract the data of interpolation points and data
-
         def line_coefficient(point1, point2):
             """
             compute the coefficient of line contains P1, P2
@@ -249,10 +258,9 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
 
             return A,B,C
         
-        
-        
         xdata, ydata = data[:, 0], data[:, 1]
         z1data, z2data = data[:, 2], data[:, 3]
+        # print(xdata, ydata)
         Points = np.array(list(zip(xdata, ydata)))
         tri = Delaunay(Points)
         interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
@@ -286,6 +294,12 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
         def Dirichlet_function(x,y):
             return np.array([f_x(x,y), f_y(x,y)])
         
+        # print(p)
+        # print(self.check_Dirichlet(p))
+        # print(Dirichlet_function(p.x, p.y))
+        # if self.check_Dirichlet(p): 
+            # return Dirichlet_function(p.x, p.y)
+        # return np.array([0., 0.])
         return Dirichlet_function(p.x, p.y)
 
 class Linear_Displacement_On_Y(Linear_Displacement):

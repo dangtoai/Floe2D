@@ -42,7 +42,7 @@ with open('boundary_data.csv', mode = 'r') as csv_file:
 numbers = [float(num) for num in row[0].split()]
 contact_point = np.array(numbers)
 
-THRESHOLD = 2.   ### TODO: depend on floe size
+THRESHOLD = 2.   ### TODO: Support of Dirichlet boundary depends on floe size
 
 index_dirichlet_points = np.array([dist(Point(contact_point[0], contact_point[1]), p) for p in Points]) < THRESHOLD
 index_dirichlet_points = np.where(index_dirichlet_points)[0]

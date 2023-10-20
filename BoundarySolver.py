@@ -104,20 +104,19 @@ def cones_list(tri: Delaunay):
 def inside_cone(head, base1, base2, point):
     """
     Verify if point is inside of the cone 
-    
     """
     direction1 = base1 - head
     direction2 = base2 - head
     vector_point = point - head
-    
+
     direction1 = direction1/norm(direction1)
     direction2 = direction2/norm(direction2)
     vector_point = vector_point/norm(vector_point)
-    
+
     angle1 = np.arccos(np.dot(direction1, vector_point))
     angle2 = np.arccos(np.dot(direction2, vector_point))
     cone_angle = np.arccos(np.dot(direction1, direction2))
-    
+
     return angle1<cone_angle and angle2<cone_angle
 
 def P1_coefficient(Points, data):
@@ -127,7 +126,6 @@ def P1_coefficient(Points, data):
     f(point[i]) = datas[i]
     f (x,y) = Ax+By+C
     """
-    
     Matrix = np.array([[Points[0][0], Points[0][1], 1],
                       [Points[1][0], Points[1][1], 1],
                       [Points[2][0], Points[2][1], 1]])
@@ -135,7 +133,7 @@ def P1_coefficient(Points, data):
     A, B, C = np.linalg.solve(Matrix, B_)
 
     return A,B,C
-    
+
 
 mesh = Mesh("file.msh")
 data = []
@@ -159,14 +157,14 @@ tri = Delaunay(Points)
 # print(cones_list(tri))
 # print(boundary_edge_index(tri))
 # print(boundary_triangles_index(tri))
-plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
-for i in range(27):
-    plt.plot(Points[i][0], Points[i][1])
-    plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
+# plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
+# for i in range(27):
+#     plt.plot(Points[i][0], Points[i][1])
+#     plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
 # plt.plot(1009,123,'o')
 # print(inside_cone(Points[14], Points[3], Points[7], np.array([1011,120])))
-plt.plot(Points[:,0], Points[:,1], 'o')
-plt.show()
+# plt.plot(Points[:,0], Points[:,1], 'o')
+# plt.show()
 
 
 interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
@@ -192,28 +190,56 @@ def f_y(x_eval, y_eval):
     if np.isnan(interpolated_value):
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                # print(i,j,k)
                 P_ = np.array([Points[i], Points[j], Points[k]])
                 data_ = np.array([z1data[i], z1data[j], z1data[k]])
                 A, B, C = P1_coefficient(P_, data_)
                 interpolated_value = A*x_eval + B*y_eval + C
     return interpolated_value
 
-grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num=10),
-                            np.linspace(min(ydata)-1, max(ydata)+2, num=10))
+def normfxy(x_eval, y_eval):
+    return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
+
+grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num=50),
+                            np.linspace(min(ydata)-1, max(ydata)+2, num=50))
 
 grid_values_x = np.vectorize(f_x)(grid_x, grid_y)
+grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
+grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
+
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+for i in range(27):
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
 
 figax = plt.subplots()
 fig, ax = figax
 # ax.plot(x_reordered, y_reordered, 'x')
 mesh.boundary_mesh.plot(figax)
 for i in range(27):
-    ax.plot(Points[i][0], Points[i][1])
-    ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
 contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
-# ax.set_xlim(min(xdata)-1, max(xdata)+1)
-# ax.set_ylim(min(ydata)-1, max(ydata)+2)
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
+
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+for i in range(27):
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
 cbar = plt.colorbar(contour_plot)
 cbar.set_label('Data Value')
 
@@ -223,10 +249,28 @@ log_queue = logger._log_queue
 
 T = problem_data.lame_tensor_ice #Lame tensor
 boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
-physical_data = problem_data.Physical_Data(T, 1., boundary_displacement, initial_fracture=None)
-classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
-print(classical_solution.energy)
-classical_solution.plot_displacement()
-classical_solution.plot_energy()
+# print(boundary_displacement.collision_point())
+physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
 
+# print('start computation of classical energy')
+# classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+# classical_solution.field.boundary_elements
+# solution = solver.smart_time_solver(discretization_data, physical_data, log_queue, args.number_processes)
+# Test = solver.Imposed_Fracture_Solution(mesh=mesh, physical_data=physical_data, fracture = None)
 
+# print(classical_solution.energy)
+# classical_solution.plot_displacement()
+# classical_solution.plot_energy()
+
+print('start computation of fractures')
+boundary_point = [1011.299987792969, 104.0]
+time_discretization = None
+fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
+discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+solution.plot_displacement()
+solution.plot()
+# solution = solver.solver_with_time_discretization(discretization_data, physical_data, log_queue, number_processes = None)
+
+# solution.plot_displacement()
+# solution.plot_energy()

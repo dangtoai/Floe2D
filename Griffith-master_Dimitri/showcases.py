@@ -27,7 +27,7 @@ cl8 = 'python3 breaking_point.py -m mesh/square.msh -bp 50 0 -ls 10 -cd 10'
 
 cl9 = 'python3 griffith_solver.py -m mesh/square.msh -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -ci 500' 
 cl10 = 'python3 griffith_solver.py -m mesh/square-tight.msh -bp 50 0 -k 12 -ld 30 0 2 100 0.5 -fts 0.1 0.1 -ls 10 -as 1 -ci 500' 
-
+# python3 griffith_solver.py -m mesh/square.msh -bp 50 0 -cd -15 -fts 0.1 0.1 -ls 10 -ci 500 -pm
 
 def call(cmd):
   try:

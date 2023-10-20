@@ -90,11 +90,14 @@ class Solution:
       self.elastic_energy = 0
     try:
       # Integration of non continuous function, might be wrong
+      ### TODO: computing fracture energy wrong? 
       self.fracture_energy, _ = scipy.integrate.quad(lambda x: self.physical_data.toughness_field(self.fracture.curvilinear_abscissa(x)), 0, self.fracture.lengh)
+      print(self.fracture_energy)
     except AttributeError:
       self.fracture_energy = 0
     self.energy = self.elastic_energy + self.fracture_energy
-
+    print(self.energy)
+    
   def change_time(self, time):
     self.u_bound = np.array(list(map(lambda p: self.physical_data.boundary_displacement(time, p), [e.base_node for e, e_ in zip(*[iter(self.field.boundary_elements)]*2)]))).flatten()
     if isinstance(self.physical_data.boundary_displacement, problem_data.Linear_Displacement):
