@@ -107,7 +107,7 @@ class Admissible_Boundary_Point:
   
   def __next__(self):
     while True:
-      d = 15. 
+      d = 10. 
       # d = self.boundary_step
       while True:
         h = geo.dist(self.point, self.segment.point_2)

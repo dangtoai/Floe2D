@@ -92,11 +92,11 @@ class Solution:
       # Integration of non continuous function, might be wrong
       ### TODO: computing fracture energy wrong? 
       self.fracture_energy, _ = scipy.integrate.quad(lambda x: self.physical_data.toughness_field(self.fracture.curvilinear_abscissa(x)), 0, self.fracture.lengh)
-      print(self.fracture_energy)
+      print(" fracture energy = ", self.fracture_energy)
     except AttributeError:
       self.fracture_energy = 0
     self.energy = self.elastic_energy + self.fracture_energy
-    print(self.energy)
+    print("total energy associated to this fracture = ", self.energy)
     
   def change_time(self, time):
     self.u_bound = np.array(list(map(lambda p: self.physical_data.boundary_displacement(time, p), [e.base_node for e, e_ in zip(*[iter(self.field.boundary_elements)]*2)]))).flatten()
@@ -329,12 +329,17 @@ class Evaluator:
         self.log_queue.put(('ERROR', 'Unexpected error {} while computing next fracture'.format(e)))
       else:
         fractures.append(fracture)
-    
+
+    # print(fractures)
+    print("comparing of fractures")
     for fracture in fractures:
+      print(fracture)
       solution_ = self._solve_fixed_fracture(fracture, time)
+      print(solution_.energy)
       if solution_.energy < np.inf:
         list_computations.append(Lazy_Solution(solution_))
     list_computations.sort(key=lambda x: x.energy)
+    print([list_computations[i].energy for i in range(len(list_computations))])
     return list_computations
 
   def _solve_fixed_fracture(self, fracture, time):
@@ -360,7 +365,6 @@ class Evaluator:
       solution = Infinite_Energy
     else:
       self.log_queue.put(('FULLDEBUG', 'Fracture {} OK !'.format(fracture)))
-    
     return solution
 
 

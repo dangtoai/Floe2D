@@ -137,26 +137,24 @@ z2data = np.array(z2_reordered)
 # classical_solution.plot_energy()
 
 p_init = None #[1036.5, 94.0]
-# time_discretization = None
+time_discretization = None
 
 # # look at fracture_iterators 
 fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/20., boundary_point= p_init, lengh_step = 10 )
-
-
-# discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
-# f = fracture_iterators.Admissible_Boundary_Point(fracture_discretization, mesh.boundary_mesh)
+discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+f = fracture_iterators.Admissible_Boundary_Point(fracture_discretization, mesh.boundary_mesh)
 
 # plot points admissibles on boundary 
-# fig, ax = mesh.plot()
-# for pointsegment in f:
-#     point, segment = pointsegment
-#     print(point)
-#     point.plot((fig, ax), marker='+', color='red')
+fig, ax = mesh.plot()
+for pointsegment in f:
+    point, segment = pointsegment
+    print(point)
+    point.plot((fig, ax), marker='+', color='red')
 
-# plt.show()
+plt.show()
 
 # plot fracture admissible from a point on boundary 
-f = fracture_iterators.Admissible_Fractures_From_Fixed_Boundary_Point(fracture_discretization, mesh, geo.Point(1011.299987792969, 104.0))
+# f = fracture_iterators.Admissible_Fractures_From_Fixed_Boundary_Point(fracture_discretization, mesh, geo.Point(1011.299987792969, 104.0))
 
 def tuple_to_string(tple):
   result = "{}".format(tple[0])
@@ -188,16 +186,16 @@ def compute_fracture(ind, fracture):
       print(0)
     # log_queue.put(('INFO', '{} : {}\n'.format(strind, fracture)))
 
-do_fracture = compute_fracture
+# do_fracture = compute_fracture
 
-fig, ax = mesh.plot()
-for i, fracture in enumerate(f):
-    do_fracture([i], fracture)
-    print(fracture)
-    fracture.plot((fig,ax))
-    p1, p2 = fracture.start_point, fracture.end_point
-    p1.plot((fig, ax), marker='+', color='red')
-    p2.plot((fig, ax), marker='+', color='red')
+# fig, ax = mesh.plot()
+# for i, fracture in enumerate(f):
+#     do_fracture([i], fracture)
+#     print(fracture)
+#     fracture.plot((fig,ax))
+#     p1, p2 = fracture.start_point, fracture.end_point
+#     p1.plot((fig, ax), marker='+', color='red')
+#     p2.plot((fig, ax), marker='+', color='red')
 
     
 # logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)

@@ -383,21 +383,18 @@ if __name__ == '__main__':
     
     XY_data = np.stack((x,y), axis = -1) 
 
-    boundary_data = np.hstack( (XY_data, data_deformation[border_data_]) )
+    boundary_data = np.hstack( (XY_data, data_deformation[border_data_]))
     
     
-    boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = boundary_data)
-    # boundary_displacement = problem_data.Constant_Displacement_On_Y(traction_coefficient= -100.)
-    
-
+    # boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = boundary_data)
+    boundary_displacement = problem_data.Constant_Displacement_On_Y(traction_coefficient= -100.)
     physical_data = problem_data.Physical_Data(T, 1., boundary_displacement, initial_fracture=None)
 
-   
     ### Solution without fracture
-    # classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
-    # print(classical_solution.energy)
-    # classical_solution.plot_displacement()
-    # classical_solution.plot_energy()
+    classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+    print(classical_solution.energy)
+    classical_solution.plot_displacement()
+    classical_solution.plot_energy()
     
     ### Solution with fracture 
     boundary_point = [20., 0.]
@@ -406,5 +403,5 @@ if __name__ == '__main__':
     discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
     
     solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
-    # solution.plot_displacement()
-    # solution.plot_energy()
+    solution.plot_displacement()
+    solution.plot_energy()

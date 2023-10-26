@@ -27,3 +27,10 @@ to generate a mesh from GMSH to solve the griffith energy
 python3 generated_geofile.py 
 ```
 then enter: 3
+
+to run a fracture computation on the geometry above: 
+```
+python3 BoundarySolver.py 
+```
+
+

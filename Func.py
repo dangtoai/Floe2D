@@ -2,11 +2,11 @@ from math import acos, sin
 from scipy.sparse import coo_matrix
 from scipy.integrate import solve_ivp
 from scipy.spatial import Delaunay
-from itertools import combinations
+# from itertools import combinations
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
-from graph import *
+# from graph import *
 
 # import matplotlib.animation as animation
 
@@ -122,77 +122,109 @@ class Floe:
 
     def border_nodes_index(self):
         BV = self.border_edges_index()
-        l = []
-        for i, j in BV:
-            l.append(i)
-            l.append(j)
-        return list(set(l))
+        
+        def find_cycle(edges):
+            # Create a dictionary to represent the graph
+            graph = {}
+            for edge in edges:
+                u, v = edge
+                if u not in graph:
+                    graph[u] = []
+                if v not in graph:
+                    graph[v] = []
+                graph[u].append(v)
+                graph[v].append(u)
 
-    def fractures_admissible(self):
-        G = nx.Graph()
-        Border_edges = self.border_edges_index()
-        Border_nodes = self.border_nodes_index()
-        l = list( range(self.n) )
-        triangle_list = [list(e) for e in self.simplices()]
-        G.add_nodes_from(l)
-        G.add_edges_from(self.springs)
+            def dfs(node, visited, path):
+                visited[node] = True
+                path.append(node)
+                for neighbor in graph[node]:
+                    if not visited[neighbor]:
+                        dfs(neighbor, visited, path)
 
-        Fractures_admissible = []
-        for i, j in combinations(self.border_nodes_index(), 2):
-            for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)):
-                if len(path) in range(3, int(self.n)):
-                    if (tuple(sorted((path[0]))) in Border_edges) and (tuple(sorted(path[-1])) in Border_edges):
-                        l = path[0]
-                        for k in range(1, len(path)):
-                            l += path[k]
-                        l = list(l)
-                        # print(l)
-                        if all(element not in Border_nodes for element in l[3:-3]):
-                            l = [sorted((l[i], l[i+2], l[i+3]))
-                                 for i in range(0, len(l)-2, 2)]
-                            # print(l)
-                            if all([l[i] in self.simplices() for i in range(len(l))]):
-                                # print(l)
-                                l = [
-                                    l[i] in triangle_list for i in range(len(l))]
-                                # print(l, all(l))
-                                if all(l):
-                                    Fractures_admissible.append(path)
+            start_node = edges[0][0]
+            visited = {node: False for node in graph}
+            cycle = []
 
-        def Thales_edge(t1, t2):
-            """
-            Parameters
-            ----------
-            t1, t2: first and second edge of a triangle 
-            Returns
-            -------
-            the third edge of triangle
-            """
-            return (t1[0], t2[1])
+            dfs(start_node, visited, cycle)
 
-        def fractures_length(Fractures_admissible):
-            length = np.zeros(len(Fractures_admissible))
-            for j in range(len(Fractures_admissible)):
-                l = [Thales_edge(Fractures_admissible[j][i], Fractures_admissible[j][i+1])
-                     for i in range(len(Fractures_admissible[j])-1)]
-                l = [0.5 * Spring(self.nodes[l[i][0]], self.nodes[l[i]
-                                  [1]], None).L0 for i in range(len(l))]
-                length[j] += sum(l)
-            return length
+            # To close the cycle, add the start_node at the end
+            cycle.append(start_node)
 
-        return Fractures_admissible, fractures_length(Fractures_admissible)
+            return cycle
+        
+        # l = []
+        # for i, j in BV:
+        #     l.append(i)
+        #     l.append(j)
+        # return list(set(l))
+        return find_cycle(BV)
 
-    def Route(self):
-        g = UndirectedGraph(self.n)
-        for v1, v2 in self.springs:
-            g.AddEdge(v1, v2)
-        while True:
-            try:
-                Route = g.RouteInspection()
-                break
-            except:
-                continue
-        return Route
+    # def fractures_admissible(self):
+    #     G = nx.Graph()
+    #     Border_edges = self.border_edges_index()
+    #     Border_nodes = self.border_nodes_index()
+    #     l = list( range(self.n) )
+    #     triangle_list = [list(e) for e in self.simplices()]
+    #     G.add_nodes_from(l)
+    #     G.add_edges_from(self.springs)
+
+    #     Fractures_admissible = []
+    #     for i, j in combinations(self.border_nodes_index(), 2):
+    #         for path in nx.all_simple_edge_paths(G, i, j, cutoff=(self.n-1)):
+    #             if len(path) in range(3, int(self.n)):
+    #                 if (tuple(sorted((path[0]))) in Border_edges) and (tuple(sorted(path[-1])) in Border_edges):
+    #                     l = path[0]
+    #                     for k in range(1, len(path)):
+    #                         l += path[k]
+    #                     l = list(l)
+    #                     # print(l)
+    #                     if all(element not in Border_nodes for element in l[3:-3]):
+    #                         l = [sorted((l[i], l[i+2], l[i+3]))
+    #                              for i in range(0, len(l)-2, 2)]
+    #                         # print(l)
+    #                         if all([l[i] in self.simplices() for i in range(len(l))]):
+    #                             # print(l)
+    #                             l = [
+    #                                 l[i] in triangle_list for i in range(len(l))]
+    #                             # print(l, all(l))
+    #                             if all(l):
+    #                                 Fractures_admissible.append(path)
+
+        # def Thales_edge(t1, t2):
+        #     """
+        #     Parameters
+        #     ----------
+        #     t1, t2: first and second edge of a triangle 
+        #     Returns
+        #     -------
+        #     the third edge of triangle
+        #     """
+        #     return (t1[0], t2[1])
+
+        # def fractures_length(Fractures_admissible):
+        #     length = np.zeros(len(Fractures_admissible))
+        #     for j in range(len(Fractures_admissible)):
+        #         l = [Thales_edge(Fractures_admissible[j][i], Fractures_admissible[j][i+1])
+        #              for i in range(len(Fractures_admissible[j])-1)]
+        #         l = [0.5 * Spring(self.nodes[l[i][0]], self.nodes[l[i]
+        #                           [1]], None).L0 for i in range(len(l))]
+        #         length[j] += sum(l)
+        #     return length
+
+        # return Fractures_admissible, fractures_length(Fractures_admissible)
+
+    # def Route(self):
+    #     g = UndirectedGraph(self.n)
+    #     for v1, v2 in self.springs:
+    #         g.AddEdge(v1, v2)
+    #     while True:
+    #         try:
+    #             Route = g.RouteInspection()
+    #             break
+    #         except:
+    #             continue
+    #     return Route
 
     def get_nodes(self):
         """return position of all nodes"""
@@ -291,8 +323,7 @@ class Floe:
         return Neighbor_contact
 
     def Move(self, time_end: float, Traction_mat, Length_mat, Torsion_mat, Angle_mat):
-        N = N_T
-        t = np.linspace(0, time_end, N)
+        t = np.linspace(0, time_end, N_T)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
@@ -301,15 +332,14 @@ class Floe:
             Y0_ = np.append(Y0_, All_pos[i])
             Y0_ = np.append(Y0_, All_vel[i])
 
-        Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
+        Sol = solve_ivp(System, [0, time_end], Y0_, method='RK23', t_eval=t,
                         args=(Y0_, self.n, CM, Length_mat, self.m,
                               self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()))
 
         return Sol
 
     def Move_stable_1(self, time_end: float, Traction_mat, Length_mat, Torsion_mat, Angle_mat, contact_node):
-        N = N_T
-        t = np.linspace(0, time_end, N)
+        t = np.linspace(0, time_end, N_T)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
@@ -324,8 +354,7 @@ class Floe:
         return Sol
 
     def Move_stable_neighbor(self, time_end: float, Traction_mat, Length_mat, Torsion_mat, Angle_mat, contact_node):
-        N = N_T
-        t = np.linspace(0, time_end, N)
+        t = np.linspace(0, time_end, N_T)
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
@@ -613,61 +642,61 @@ class Percussion_Wall:
 
         return All_positions_velocities
 
-    def simulation_with_fracture(self):
-        All_positions_velocities = self.simulation()
-        E_nofrac = Energy_studies(All_positions_velocities, self.floe)[-1]
-        E_allfrac = Energy_studies_fr(All_positions_velocities, self.floe)[-1]
-        frac_ind, last_step_bef_frac = Find_frac_index(
-            E_allfrac, E_nofrac)[-2:]
+    # def simulation_with_fracture(self):
+    #     All_positions_velocities = self.simulation()
+    #     E_nofrac = Energy_studies(All_positions_velocities, self.floe)[-1]
+    #     E_allfrac = Energy_studies_fr(All_positions_velocities, self.floe)[-1]
+    #     frac_ind, last_step_bef_frac = Find_frac_index(
+    #         E_allfrac, E_nofrac)[-2:]
 
-        for i in range(self.floe.n*4):
-            All_positions_velocities[i] = All_positions_velocities[i][:last_step_bef_frac+1]
+    #     for i in range(self.floe.n*4):
+    #         All_positions_velocities[i] = All_positions_velocities[i][:last_step_bef_frac+1]
 
-        frac = self.floe.fractures_admissible()[0][frac_ind]
-        frac = [tuple(set(frac[i])) for i in range(len(frac))]
-        Springs = [el for el in self.floe.springs if el not in frac]
+    #     frac = self.floe.fractures_admissible()[0][frac_ind]
+    #     frac = [tuple(set(frac[i])) for i in range(len(frac))]
+    #     Springs = [el for el in self.floe.springs if el not in frac]
 
-        G = nx.Graph()
-        G.add_edges_from(Springs)
-        Springs_new1, Springs_new2 = nx.biconnected_component_edges(G)
-        Springs_new1, Springs_new2 = set(Springs_new1), set(Springs_new2)
+    #     G = nx.Graph()
+    #     G.add_edges_from(Springs)
+    #     Springs_new1, Springs_new2 = nx.biconnected_component_edges(G)
+    #     Springs_new1, Springs_new2 = set(Springs_new1), set(Springs_new2)
 
-        # create 2 new floes in order to respect the fracture
-        IndexNewfloe1 = list([el for el in nx.connected_components(G)][0])
-        IndexNewfloe2 = list([el for el in nx.connected_components(G)][1])
+    #     # create 2 new floes in order to respect the fracture
+    #     IndexNewfloe1 = list([el for el in nx.connected_components(G)][0])
+    #     IndexNewfloe2 = list([el for el in nx.connected_components(G)][1])
 
-        Points_new = [np.array([All_positions_velocities[4*i][-1],
-                                All_positions_velocities[4*i+1][-1]]) for i in range(self.floe.n)]
-        Vel_new = [np.array([All_positions_velocities[4*i+2][-1],
-                             All_positions_velocities[4*i+3][-1]]) for i in range(self.floe.n)]
-        nodes = []
-        Springs1 = set()
-        for i, j in Springs_new1:
-            i = IndexNewfloe1.index(i)
-            j = IndexNewfloe1.index(j)
-            Springs1.add((i, j))
-        for i in range(len(IndexNewfloe1)):
-            nodes.append(
-                Node(Points_new[IndexNewfloe1[i]], Vel_new[IndexNewfloe1[i]], IndexNewfloe1[i]))
-        New_floe1 = Floe(nodes, Springs1, stiffness=self.floe.k,
-                         viscosity=self.floe.mu, id_number=1)
+    #     Points_new = [np.array([All_positions_velocities[4*i][-1],
+    #                             All_positions_velocities[4*i+1][-1]]) for i in range(self.floe.n)]
+    #     Vel_new = [np.array([All_positions_velocities[4*i+2][-1],
+    #                          All_positions_velocities[4*i+3][-1]]) for i in range(self.floe.n)]
+    #     nodes = []
+    #     Springs1 = set()
+    #     for i, j in Springs_new1:
+    #         i = IndexNewfloe1.index(i)
+    #         j = IndexNewfloe1.index(j)
+    #         Springs1.add((i, j))
+    #     for i in range(len(IndexNewfloe1)):
+    #         nodes.append(
+    #             Node(Points_new[IndexNewfloe1[i]], Vel_new[IndexNewfloe1[i]], IndexNewfloe1[i]))
+    #     New_floe1 = Floe(nodes, Springs1, stiffness=self.floe.k,
+    #                      viscosity=self.floe.mu, id_number=1)
 
-        nodes = []
-        Springs2 = set()
-        for i, j in Springs_new2:
-            i = IndexNewfloe2.index(i)
-            j = IndexNewfloe2.index(j)
-            Springs2.add((i, j))
-        for i in range(len(IndexNewfloe2)):
-            nodes.append(
-                Node(Points_new[IndexNewfloe2[i]], Vel_new[IndexNewfloe2[i]], IndexNewfloe2[i]))
-        New_floe2 = Floe(nodes, Springs2, stiffness=self.floe.k,
-                         viscosity=self.floe.mu, id_number=2)
+    #     nodes = []
+    #     Springs2 = set()
+    #     for i, j in Springs_new2:
+    #         i = IndexNewfloe2.index(i)
+    #         j = IndexNewfloe2.index(j)
+    #         Springs2.add((i, j))
+    #     for i in range(len(IndexNewfloe2)):
+    #         nodes.append(
+    #             Node(Points_new[IndexNewfloe2[i]], Vel_new[IndexNewfloe2[i]], IndexNewfloe2[i]))
+    #     New_floe2 = Floe(nodes, Springs2, stiffness=self.floe.k,
+    #                      viscosity=self.floe.mu, id_number=2)
 
-        Solution1 = Percussion_Wall(New_floe1).simulation()
-        Solution2 = Percussion_Wall(New_floe2).simulation()
+    #     Solution1 = Percussion_Wall(New_floe1).simulation()
+    #     Solution2 = Percussion_Wall(New_floe2).simulation()
 
-        return All_positions_velocities, New_floe1, New_floe2, Solution1, Solution2, last_step_bef_frac
+    #     return All_positions_velocities, New_floe1, New_floe2, Solution1, Solution2, last_step_bef_frac
 
     def position_at_time(self, time_step):
         """

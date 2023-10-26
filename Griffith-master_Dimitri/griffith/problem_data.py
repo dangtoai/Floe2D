@@ -294,12 +294,6 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
         def Dirichlet_function(x,y):
             return np.array([f_x(x,y), f_y(x,y)])
         
-        # print(p)
-        # print(self.check_Dirichlet(p))
-        # print(Dirichlet_function(p.x, p.y))
-        # if self.check_Dirichlet(p): 
-            # return Dirichlet_function(p.x, p.y)
-        # return np.array([0., 0.])
         return Dirichlet_function(p.x, p.y)
 
 class Linear_Displacement_On_Y(Linear_Displacement):
