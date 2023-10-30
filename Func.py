@@ -331,10 +331,11 @@ class Floe:
         for i in range(self.n):
             Y0_ = np.append(Y0_, All_pos[i])
             Y0_ = np.append(Y0_, All_vel[i])
-
-        Sol = solve_ivp(System, [0, time_end], Y0_, method='RK23', t_eval=t,
-                        args=(Y0_, self.n, CM, Length_mat, self.m,
-                              self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()))
+        
+        # Sol = explicit_euler(System(t, Y0_, Y0_, self.n, CM, Length_mat, self.m, self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()), Y0_, 0, time_end, 1./N_T)
+        Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
+                        args=(self.n, CM, Length_mat, self.m,
+                                self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()))
 
         return Sol
 
@@ -349,7 +350,7 @@ class Floe:
             Y0_ = np.append(Y0_, All_vel[i])
 
         Sol = solve_ivp(System_stable_1, [0, time_end], Y0_, t_eval=t,
-                        args=(Y0_, self.n, CM, Length_mat, self.m,
+                        args=(self.n, CM, Length_mat, self.m,
                               self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices(), contact_node))
         return Sol
 
@@ -948,7 +949,7 @@ Each node i depends on TRACTION's spring (i.e spring between node i and node j n
 and TORSION's spring ( formed by the triangle it belongs to)
 """
 
-def System(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list):
+def System(t, Y, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list):
     """
     Parameters
     ----------
@@ -1004,6 +1005,7 @@ def System(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Tors
 
     return np.reshape(Y_, (nb_nodes * 4))
 
+    
 
 def System_stable_1(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
     """

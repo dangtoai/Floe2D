@@ -11,12 +11,12 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
-# import griffith.geometry as geo
+import griffith.geometry as geo
 from griffith.mesh import Mesh
 # from griffith.geometry import Point, dist
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
-from griffith import solver, log, problem_data
+from griffith import solver, log, problem_data, fracture_iterators
 from numpy.linalg import norm
 
 def line_coefficient(point1, point2):
@@ -131,7 +131,6 @@ def P1_coefficient(Points, data):
                       [Points[2][0], Points[2][1], 1]])
     B_ = np.array(data)
     A, B, C = np.linalg.solve(Matrix, B_)
-
     return A,B,C
 
 
@@ -139,7 +138,7 @@ mesh = Mesh("file.msh")
 data = []
 with open('boundary_data.csv', 'r', encoding='utf-8') as csv_file:
     lines = csv_file.readlines()
-    lines_to_read = lines[4:]
+    lines_to_read = lines[3:]
     csv_reader = csv.reader(csv_file)
     csv_reader = csv.reader(lines_to_read)
     for row in csv_reader:
@@ -158,7 +157,7 @@ tri = Delaunay(Points)
 # print(boundary_edge_index(tri))
 # print(boundary_triangles_index(tri))
 # plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
-# for i in range(27):
+# for i in range(data.shape[0]):
 #     plt.plot(Points[i][0], Points[i][1])
 #     plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
 # plt.plot(1009,123,'o')
@@ -168,32 +167,39 @@ tri = Delaunay(Points)
 
 
 interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
-# interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data_new)
 
 interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
 def f_x(x_eval, y_eval):
     interpolated_value = interp_function_x(x_eval, y_eval)
     Cones = cones_list(tri) 
     if np.isnan(interpolated_value):
+        interpolated_value = 0.
+        l = 0 
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                # print(i,j,k)
+                print(Points[i], Points[j], Points[k] )
+                l+= 1
                 P_ = np.array([Points[i], Points[j], Points[k]])
                 data_ = np.array([z1data[i], z1data[j], z1data[k]])
                 A, B, C = P1_coefficient(P_, data_)
-                interpolated_value = A*x_eval + B*y_eval + C
+                interpolated_value += A*x_eval + B*y_eval + C
+        interpolated_value = interpolated_value/l
     return interpolated_value
 
 def f_y(x_eval, y_eval):
     interpolated_value = interp_function_y(x_eval, y_eval)
     Cones = cones_list(tri) 
     if np.isnan(interpolated_value):
+        interpolated_value = 0.
+        l = 0
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
+                l += 1
                 P_ = np.array([Points[i], Points[j], Points[k]])
                 data_ = np.array([z1data[i], z1data[j], z1data[k]])
                 A, B, C = P1_coefficient(P_, data_)
-                interpolated_value = A*x_eval + B*y_eval + C
+                interpolated_value += A*x_eval + B*y_eval + C
+        interpolated_value = interpolated_value/l
     return interpolated_value
 
 def normfxy(x_eval, y_eval):
@@ -203,26 +209,13 @@ grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num=50),
                             np.linspace(min(ydata)-1, max(ydata)+2, num=50))
 
 grid_values_x = np.vectorize(f_x)(grid_x, grid_y)
-grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
-grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
+# grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
+# grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
 
 figax = plt.subplots()
 fig, ax = figax
 mesh.boundary_mesh.plot(figax)
-for i in range(27):
-    ax.plot(Points[i][0], Points[i][1], 'x')
-    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
-ax.set_xlim(min(xdata)-1, max(xdata)+1)
-ax.set_ylim(min(ydata)-1, max(ydata)+2)
-cbar = plt.colorbar(contour_plot)
-cbar.set_label('Data Value')
-
-figax = plt.subplots()
-fig, ax = figax
-# ax.plot(x_reordered, y_reordered, 'x')
-mesh.boundary_mesh.plot(figax)
-for i in range(27):
+for i in range(data.shape[0]):
     ax.plot(Points[i][0], Points[i][1], 'x')
     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
 contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
@@ -231,26 +224,39 @@ ax.set_ylim(min(ydata)-1, max(ydata)+2)
 cbar = plt.colorbar(contour_plot)
 cbar.set_label('Data Value')
 
-figax = plt.subplots()
-fig, ax = figax
-mesh.boundary_mesh.plot(figax)
-for i in range(27):
-    ax.plot(Points[i][0], Points[i][1], 'x')
-    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
-ax.set_xlim(min(xdata)-1, max(xdata)+1)
-ax.set_ylim(min(ydata)-1, max(ydata)+2)
-cbar = plt.colorbar(contour_plot)
-cbar.set_label('Data Value')
+# figax = plt.subplots()
+# fig, ax = figax
+# # ax.plot(x_reordered, y_reordered, 'x')
+# mesh.boundary_mesh.plot(figax)
+# for i in range(data.shape[0]):
+#     ax.plot(Points[i][0], Points[i][1], 'x')
+#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+# contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
+# ax.set_xlim(min(xdata)-1, max(xdata)+1)
+# ax.set_ylim(min(ydata)-1, max(ydata)+2)
+# cbar = plt.colorbar(contour_plot)
+# cbar.set_label('Data Value')
 
-logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)
-logger.log_description(mesh_file=mesh,args=None)
-log_queue = logger._log_queue
+# figax = plt.subplots()
+# fig, ax = figax
+# mesh.boundary_mesh.plot(figax)
+# for i in range(data.shape[0]):
+#     ax.plot(Points[i][0], Points[i][1], 'x')
+#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+# contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
+# ax.set_xlim(min(xdata)-1, max(xdata)+1)
+# ax.set_ylim(min(ydata)-1, max(ydata)+2)
+# cbar = plt.colorbar(contour_plot)
+# cbar.set_label('Data Value')
 
-T = problem_data.lame_tensor_ice #Lame tensor
-boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
+# logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)
+# logger.log_description(mesh_file=mesh,args=None)
+# log_queue = logger._log_queue
+
+# T = problem_data.lame_tensor_ice #Lame tensor
+# boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
 # print(boundary_displacement.collision_point())
-physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
+# physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
 
 # print('start computation of classical energy')
 # classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
@@ -262,15 +268,35 @@ physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0
 # classical_solution.plot_displacement()
 # classical_solution.plot_energy()
 
-print('start computation of fractures')
-boundary_point = [1011.299987792969, 104.0]
-time_discretization = None
-fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
-discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
-solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
-solution.plot_displacement()
-solution.plot()
-# solution = solver.solver_with_time_discretization(discretization_data, physical_data, log_queue, number_processes = None)
+# print('start computation of fractures')
+# boundary_point = [1011.299987792969, 104.0]
+# time_discretization = None
+# fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/5., boundary_point= boundary_point, lengh_step = 100 )
+# discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
 
+# find fracture from every boundary admissible points. 
+# f = fracture_iterators.Admissible_Boundary_Point(fracture_discretization, mesh.boundary_mesh)
+# fig, ax = mesh.plot()
+# for pointsegment in f:
+#     point, segment = pointsegment
+#     boundary_point = [point.x, point.y]
+# # #     print(point)
+#     fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/5., boundary_point= boundary_point, lengh_step = 100)
+#     discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+#     solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+#     solution.plot()
+    # point.plot((fig, ax), marker='+', color='red')
+#     fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/20., boundary_point= [point.x, point.y], lengh_step = 100 )
+#     discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+#     solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+    # solution.plot_displacement()
+    # print(point, segment)
+
+# solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+# solution.plot_displacement()
+# solution.plot()
+
+
+# solution = solver.solver_with_time_discretization(discretization_data, physical_data, log_queue, number_processes = None)
 # solution.plot_displacement()
 # solution.plot_energy()
