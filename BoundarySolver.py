@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
 import griffith.geometry as geo
 from griffith.mesh import Mesh
-# from griffith.geometry import Point, dist
+from griffith.geometry import Point, dist
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
 from griffith import solver, log, problem_data, fracture_iterators
@@ -70,16 +70,6 @@ def boundary_triangles_index(tri: Delaunay):
                 boundary_triangles.append(triangle)
     return boundary_triangles
 
-def boundary_nodes_index(tri: Delaunay):
-    """
-    return the (i) index of all nodes at the boundary 
-    """
-    boundary_nodes = []
-    boundary_edges = boundary_edges_index
-    for i,j in boundary_edges:
-        boundary_nodes.append(i)
-        boundary_nodes.append(j)
-    return list(set(boundary_nodes))
 
 def cones_list(tri: Delaunay):
     """
@@ -91,33 +81,39 @@ def cones_list(tri: Delaunay):
     boundary_edges = boundary_edges_index(tri)
     boundary_triangles = boundary_triangles_index(tri)
     triangles_out = []
+    center = sum(tri.points)/tri.npoints
     for triangle in boundary_triangles:
         for edge in boundary_edges:
             if set(edge).issubset(triangle):
                 common_el = np.intersect1d(triangle, edge)
+                if np.cross(tri.points[common_el[0]] - center, tri.points[common_el[1]] - center)<0:
+                    common_el = common_el[::-1]
                 not_common = np.setdiff1d(triangle, common_el)
-                # print(common_el, not_common)
                 triangle = np.append(not_common, common_el)
                 triangles_out.append(triangle)
     return triangles_out
 
 def inside_cone(head, base1, base2, point):
-    """
-    Verify if point is inside of the cone 
-    """
-    direction1 = base1 - head
-    direction2 = base2 - head
-    vector_point = point - head
+    # Calculate vectors from the  head to the rays and the point
+    vector1 = base1 -  head
+    vector2 = base2 -  head
+    vector_point = point -  head
 
-    direction1 = direction1/norm(direction1)
-    direction2 = direction2/norm(direction2)
-    vector_point = vector_point/norm(vector_point)
+    # Calculate the angles between the vectors using the dot product
+    angle1 = np.arctan2(vector1[1], vector1[0])
+    angle2 = np.arctan2(vector2[1], vector2[0])
+    point_angle = np.arctan2(vector_point[1], vector_point[0])
 
-    angle1 = np.arccos(np.dot(direction1, vector_point))
-    angle2 = np.arccos(np.dot(direction2, vector_point))
-    cone_angle = np.arccos(np.dot(direction1, direction2))
+    # Normalize the angles to the range [0, 2*pi)
+    angle1 = (angle1 + 2 * np.pi) % (2 * np.pi)
+    angle2 = (angle2 + 2 * np.pi) % (2 * np.pi)
+    point_angle = (point_angle + 2 * np.pi) % (2 * np.pi)
 
-    return angle1<cone_angle and angle2<cone_angle
+    # Check if the point angle is between the ray angles
+    if angle1 <= angle2:
+        return angle1 <= point_angle <= angle2
+    else:
+        return angle1 <= point_angle or point_angle <= angle2
 
 def P1_coefficient(Points, data):
     """
@@ -154,12 +150,12 @@ Points = np.array(list(zip(xdata, ydata)))
 
 tri = Delaunay(Points)
 # print(cones_list(tri))
-# print(boundary_edge_index(tri))
+# print(boundary_edges_index(tri))
 # print(boundary_triangles_index(tri))
-# plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
-# for i in range(data.shape[0]):
-#     plt.plot(Points[i][0], Points[i][1])
-#     plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
+plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
+for i in range(data.shape[0]):
+    plt.plot(Points[i][0], Points[i][1])
+    plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
 # plt.plot(1009,123,'o')
 # print(inside_cone(Points[14], Points[3], Points[7], np.array([1011,120])))
 # plt.plot(Points[:,0], Points[:,1], 'o')
@@ -167,8 +163,8 @@ tri = Delaunay(Points)
 
 
 interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
-
 interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
+
 def f_x(x_eval, y_eval):
     interpolated_value = interp_function_x(x_eval, y_eval)
     Cones = cones_list(tri) 
@@ -177,12 +173,13 @@ def f_x(x_eval, y_eval):
         l = 0 
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                print(Points[i], Points[j], Points[k] )
+                # print(i,j,k)
                 l+= 1
                 P_ = np.array([Points[i], Points[j], Points[k]])
                 data_ = np.array([z1data[i], z1data[j], z1data[k]])
                 A, B, C = P1_coefficient(P_, data_)
                 interpolated_value += A*x_eval + B*y_eval + C
+        # print(l)
         interpolated_value = interpolated_value/l
     return interpolated_value
 
@@ -202,14 +199,17 @@ def f_y(x_eval, y_eval):
         interpolated_value = interpolated_value/l
     return interpolated_value
 
-def normfxy(x_eval, y_eval):
-    return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
+# def normfxy(x_eval, y_eval):
+#     return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
+
+def Dirichlet(x, y):
+    return np.array([f_x(x, y), f_y(x, y)])
 
 grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num=50),
                             np.linspace(min(ydata)-1, max(ydata)+2, num=50))
 
 grid_values_x = np.vectorize(f_x)(grid_x, grid_y)
-# grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
+grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
 # grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
 
 figax = plt.subplots()
@@ -224,25 +224,33 @@ ax.set_ylim(min(ydata)-1, max(ydata)+2)
 cbar = plt.colorbar(contour_plot)
 cbar.set_label('Data Value')
 
-# figax = plt.subplots()
-# fig, ax = figax
-# # ax.plot(x_reordered, y_reordered, 'x')
-# mesh.boundary_mesh.plot(figax)
-# for i in range(data.shape[0]):
-#     ax.plot(Points[i][0], Points[i][1], 'x')
-#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-# contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
-# ax.set_xlim(min(xdata)-1, max(xdata)+1)
-# ax.set_ylim(min(ydata)-1, max(ydata)+2)
-# cbar = plt.colorbar(contour_plot)
-# cbar.set_label('Data Value')
+figax = plt.subplots()
+fig, ax = figax
+# ax.plot(x_reordered, y_reordered, 'x')
+mesh.boundary_mesh.plot(figax)
+for i in range(data.shape[0]):
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
+
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+ax.quiver(grid_x, grid_y, grid_values_x, grid_values_y , scale = 1.)
+# ax.xlabel("x")
+# ax.ylabel("y")
+# ax.title("Quiver plot of Dirichlet")
 
 # figax = plt.subplots()
 # fig, ax = figax
 # mesh.boundary_mesh.plot(figax)
 # for i in range(data.shape[0]):
 #     ax.plot(Points[i][0], Points[i][1], 'x')
-#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
 # contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
 # ax.set_xlim(min(xdata)-1, max(xdata)+1)
 # ax.set_ylim(min(ydata)-1, max(ydata)+2)
@@ -253,19 +261,19 @@ cbar.set_label('Data Value')
 # logger.log_description(mesh_file=mesh,args=None)
 # log_queue = logger._log_queue
 
-# T = problem_data.lame_tensor_ice #Lame tensor
-# boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
-# print(boundary_displacement.collision_point())
-# physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
+T = problem_data.lame_tensor_ice #Lame tensor
+boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
+print(boundary_displacement.collision_point())
+physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
 
 # print('start computation of classical energy')
-# classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
 # classical_solution.field.boundary_elements
 # solution = solver.smart_time_solver(discretization_data, physical_data, log_queue, args.number_processes)
 # Test = solver.Imposed_Fracture_Solution(mesh=mesh, physical_data=physical_data, fracture = None)
 
 # print(classical_solution.energy)
-# classical_solution.plot_displacement()
+classical_solution.plot_displacement()
 # classical_solution.plot_energy()
 
 # print('start computation of fractures')

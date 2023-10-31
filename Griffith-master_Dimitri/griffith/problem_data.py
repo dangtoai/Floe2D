@@ -192,16 +192,6 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
                         boundary_triangles.append(triangle)
             return boundary_triangles
 
-        def boundary_nodes_index(tri: Delaunay):
-            """
-            return the (i) index of all nodes at the boundary 
-            """
-            boundary_nodes = []
-            boundary_edges = boundary_edges_index
-            for i,j in boundary_edges:
-                boundary_nodes.append(i)
-                boundary_nodes.append(j)
-            return list(set(boundary_nodes))
 
         def cones_list(tri: Delaunay):
             """
@@ -213,12 +203,14 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
             boundary_edges = boundary_edges_index(tri)
             boundary_triangles = boundary_triangles_index(tri)
             triangles_out = []
+            center = sum(tri.points)/tri.npoints
             for triangle in boundary_triangles:
                 for edge in boundary_edges:
                     if set(edge).issubset(triangle):
                         common_el = np.intersect1d(triangle, edge)
                         not_common = np.setdiff1d(triangle, common_el)
-                        # print(common_el, not_common)
+                        if np.cross(tri.points[common_el[0]] - center, tri.points[common_el[1]] - center)<0:
+                            common_el = common_el[::-1]
                         triangle = np.append(not_common, common_el)
                         triangles_out.append(triangle)
             return triangles_out
@@ -228,19 +220,26 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
             Verify if point is inside of the cone 
             
             """
-            direction1 = base1 - head
-            direction2 = base2 - head
-            vector_point = point - head
-            
-            direction1 = direction1/norm(direction1)
-            direction2 = direction2/norm(direction2)
-            vector_point = vector_point/norm(vector_point)
-            
-            angle1 = np.arccos(np.dot(direction1, vector_point))
-            angle2 = np.arccos(np.dot(direction2, vector_point))
-            cone_angle = np.arccos(np.dot(direction1, direction2))
-            
-            return angle1<cone_angle and angle2<cone_angle
+            # Calculate vectors from the  head to the rays and the point
+            vector1 = base1 -  head
+            vector2 = base2 -  head
+            vector_point = point -  head
+
+            # Calculate the angles between the vectors using the dot product
+            angle1 = np.arctan2(vector1[1], vector1[0])
+            angle2 = np.arctan2(vector2[1], vector2[0])
+            point_angle = np.arctan2(vector_point[1], vector_point[0])
+
+            # Normalize the angles to the range [0, 2*pi)
+            angle1 = (angle1 + 2 * np.pi) % (2 * np.pi)
+            angle2 = (angle2 + 2 * np.pi) % (2 * np.pi)
+            point_angle = (point_angle + 2 * np.pi) % (2 * np.pi)
+
+            # Check if the point angle is between the ray angles
+            if angle1 <= angle2:
+                return angle1 <= point_angle <= angle2
+            else:
+                return angle1 <= point_angle or point_angle <= angle2
 
         def P1_coefficient(Points, data):
             """
@@ -265,37 +264,50 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
         tri = Delaunay(Points)
         interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
         interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
+        
         def f_x(x_eval, y_eval):
             interpolated_value = interp_function_x(x_eval, y_eval)
             Cones = cones_list(tri) 
             if np.isnan(interpolated_value):
+                interpolated_value = 0.
+                l = 0 
                 for i,j,k in Cones:
                     if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                        # print(i,j,k)
+                        l+= 1
                         P_ = np.array([Points[i], Points[j], Points[k]])
                         data_ = np.array([z1data[i], z1data[j], z1data[k]])
                         A, B, C = P1_coefficient(P_, data_)
-                        interpolated_value = A*x_eval + B*y_eval + C
+                        interpolated_value += A*x_eval + B*y_eval + C
+                interpolated_value = interpolated_value/l
             return interpolated_value
 
         def f_y(x_eval, y_eval):
             interpolated_value = interp_function_y(x_eval, y_eval)
             Cones = cones_list(tri) 
             if np.isnan(interpolated_value):
+                interpolated_value = 0.
+                l = 0
                 for i,j,k in Cones:
                     if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                        # print(i,j,k)
+                        l += 1
                         P_ = np.array([Points[i], Points[j], Points[k]])
                         data_ = np.array([z1data[i], z1data[j], z1data[k]])
                         A, B, C = P1_coefficient(P_, data_)
-                        interpolated_value = A*x_eval + B*y_eval + C
+                        interpolated_value += A*x_eval + B*y_eval + C
+                interpolated_value = interpolated_value/l
             return interpolated_value
-        
+
         def Dirichlet_function(x,y):
             return np.array([f_x(x,y), f_y(x,y)])
         
+        
+        
+        if self.check_Dirichlet(p): 
+            print(p.x, p.y)
+            # return Dirichlet_function(p.x, p.y)
+        # return np.array([0. ,0.])
         return Dirichlet_function(p.x, p.y)
-
+        
 class Linear_Displacement_On_Y(Linear_Displacement):
     r"""
     | | -> / \
