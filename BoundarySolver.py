@@ -18,6 +18,7 @@ from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
 from griffith import solver, log, problem_data, fracture_iterators
 from numpy.linalg import norm
+from shapely.geometry import Polygon, LineString
 
 def line_coefficient(point1, point2):
     """
@@ -138,7 +139,6 @@ with open('boundary_data.csv', 'r', encoding='utf-8') as csv_file:
     csv_reader = csv.reader(csv_file)
     csv_reader = csv.reader(lines_to_read)
     for row in csv_reader:
-        # print(row)
         data.append([float(item) for item in row[0].split()])
 
 data = np.array(data)
@@ -149,17 +149,6 @@ z2data = data[:,3]
 Points = np.array(list(zip(xdata, ydata)))
 
 tri = Delaunay(Points)
-# print(cones_list(tri))
-# print(boundary_edges_index(tri))
-# print(boundary_triangles_index(tri))
-plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
-for i in range(data.shape[0]):
-    plt.plot(Points[i][0], Points[i][1])
-    plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
-# plt.plot(1009,123,'o')
-# print(inside_cone(Points[14], Points[3], Points[7], np.array([1011,120])))
-# plt.plot(Points[:,0], Points[:,1], 'o')
-# plt.show()
 
 
 interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
@@ -169,112 +158,246 @@ def f_x(x_eval, y_eval):
     interpolated_value = interp_function_x(x_eval, y_eval)
     Cones = cones_list(tri) 
     if np.isnan(interpolated_value):
+        # print(x_eval, y_eval)
         interpolated_value = 0.
-        l = 0 
+        l = 0                       # triangle count
+        L = []                      # stock the list of triangles 
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                # print(i,j,k)
-                l+= 1
-                P_ = np.array([Points[i], Points[j], Points[k]])
-                data_ = np.array([z1data[i], z1data[j], z1data[k]])
+                l += 1
+                L.append([i,j,k])
+        # print(L)
+        
+        if l == 1:
+            i0, j0, k0 = L[0]
+            P_ = np.array([Points[i0], Points[j0], Points[k0]])
+            data_ = np.array([z1data[i0], z1data[j0], z1data[k0]])
+            A, B, C = P1_coefficient(P_, data_)
+            interpolated_value += A*x_eval + B*y_eval + C
+            # print(interpolated_value)
+            return interpolated_value
+        
+        if l>=2: 
+            i = 0
+            while i < len(L):
+                j = i+1
+                while j < len(L):
+                    intersection = np.intersect1d(L[i], L[j])
+                    if len(intersection) == 0:
+                        del L[j]
+                    else: j += 1
+                i += 1
+
+            # create new data from the interpolation with the mesh's boundary
+            # find the intersection between the cone and the mesh's boundary 
+            if len(L) >= 2:
+                Origine1 = Points[L[0][0]]
+                # print(Points[L[0][0] )
+                # print(L[0][0], Origine1)
+                direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
+                data_coord1 = LineString([Origine1, Origine1 + direction1])
+                data_coord1 = polygon.intersection(data_coord1)
+                data_coord1 = np.array(list(data_coord1.coords)[-1])
+                
+                #compute the P1 approximation on the old network
+                i1, j1, k1 = L[0]
+                P1 = np.array([Points[i1], Points[j1], Points[k1]])
+                data_ = np.array([z1data[i1], z1data[j1], z1data[k1]])
+                A, B, C = P1_coefficient(P1, data_)
+                new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
+
+                Origine2 = Points[L[1][0]]
+                direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
+                data_coord2 = LineString([Origine2, Origine2 + direction2])
+                data_coord2 = polygon.intersection(data_coord2)
+                data_coord2 = np.array(list(data_coord2.coords)[-1])
+                
+                i_, j_, k_ = L[1]
+                P2 = np.array([Points[i_], Points[j_], Points[k_]])
+                data_ = np.array([z1data[i_], z1data[j_], z1data[k_]])
+                A, B, C = P1_coefficient(P2, data_)
+                new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
+                
+                common_el = np.intersect1d(L[0], L[1])[0]
+                P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
+                data_ = np.array([z1data[common_el], new_data1 , new_data2])
+                
+                # print(P_)
+                # print(data_)
                 A, B, C = P1_coefficient(P_, data_)
-                interpolated_value += A*x_eval + B*y_eval + C
-        # print(l)
-        interpolated_value = interpolated_value/l
+                # print(A,B,C)
+                interpolated_value = A*x_eval + B*y_eval + C
+
     return interpolated_value
+
+poly_coord = [p.array for p in mesh.boundary_mesh.points]
+polygon = Polygon(poly_coord)
 
 def f_y(x_eval, y_eval):
     interpolated_value = interp_function_y(x_eval, y_eval)
     Cones = cones_list(tri) 
     if np.isnan(interpolated_value):
+        # print(x_eval, y_eval)
         interpolated_value = 0.
-        l = 0
+        l = 0                       # triangle count
+        L = []                      # stock the list of triangles 
         for i,j,k in Cones:
             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
                 l += 1
-                P_ = np.array([Points[i], Points[j], Points[k]])
-                data_ = np.array([z1data[i], z1data[j], z1data[k]])
+                L.append([i,j,k])
+        # print(L)
+        
+        if l == 1:
+            i0, j0, k0 = L[0]
+            P_ = np.array([Points[i0], Points[j0], Points[k0]])
+            data_ = np.array([z2data[i0], z2data[j0], z2data[k0]])
+            A, B, C = P1_coefficient(P_, data_)
+            interpolated_value += A*x_eval + B*y_eval + C
+            # print(interpolated_value)
+            return interpolated_value
+        
+        if l>=2: 
+            i = 0
+            while i < len(L):
+                j = i+1
+                while j < len(L):
+                    intersection = np.intersect1d(L[i], L[j])
+                    if len(intersection) == 0:
+                        del L[j]
+                    else: j += 1
+                i += 1
+
+            # create new data from the interpolation with the mesh's boundary
+            # find the intersection between the cone and the mesh's boundary 
+            if len(L) >= 2:
+                Origine1 = Points[L[0][0]]
+                # print(Points[L[0][0] )
+                # print(L[0][0], Origine1)
+                direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
+                data_coord1 = LineString([Origine1, Origine1 + direction1])
+                data_coord1 = polygon.intersection(data_coord1)
+                data_coord1 = np.array(list(data_coord1.coords)[-1])
+                
+                #compute the P1 approximation on the old network
+                i1, j1, k1 = L[0]
+                P1 = np.array([Points[i1], Points[j1], Points[k1]])
+                data_ = np.array([z2data[i1], z2data[j1], z2data[k1]])
+                A, B, C = P1_coefficient(P1, data_)
+                new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
+
+                Origine2 = Points[L[1][0]]
+                direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
+                data_coord2 = LineString([Origine2, Origine2 + direction2])
+                data_coord2 = polygon.intersection(data_coord2)
+                data_coord2 = np.array(list(data_coord2.coords)[-1])
+                
+                i_, j_, k_ = L[1]
+                P2 = np.array([Points[i_], Points[j_], Points[k_]])
+                data_ = np.array([z2data[i_], z2data[j_], z2data[k_]])
+                A, B, C = P1_coefficient(P2, data_)
+                new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
+                
+                common_el = np.intersect1d(L[0], L[1])[0]
+                P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
+                data_ = np.array([z2data[common_el], new_data1 , new_data2])
+                
+                # print(P_)
+                # print(data_)
                 A, B, C = P1_coefficient(P_, data_)
-                interpolated_value += A*x_eval + B*y_eval + C
-        interpolated_value = interpolated_value/l
+                # print(A,B,C)
+                interpolated_value = A*x_eval + B*y_eval + C
+
+    # print(interpolated_value)
     return interpolated_value
 
-# def normfxy(x_eval, y_eval):
-#     return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
+
+# Define the polygon vertices as a list of NumPy arrays
+
+
+
+# f_y(1040, 128)
+# mesh.boundary_mesh.plot()
+# plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
+# for i in range(data.shape[0]):
+#     plt.plot(Points[i][0], Points[i][1])
+#     plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
+
+
+def normfxy(x_eval, y_eval):
+    return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
 
 def Dirichlet(x, y):
     return np.array([f_x(x, y), f_y(x, y)])
 
-grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num=50),
-                            np.linspace(min(ydata)-1, max(ydata)+2, num=50))
+grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num = 50),
+                            np.linspace(min(ydata)-1, max(ydata)+2, num =50))
 
 grid_values_x = np.vectorize(f_x)(grid_x, grid_y)
 grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
-# grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
-
-figax = plt.subplots()
-fig, ax = figax
-mesh.boundary_mesh.plot(figax)
-for i in range(data.shape[0]):
-    ax.plot(Points[i][0], Points[i][1], 'x')
-    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
-ax.set_xlim(min(xdata)-1, max(xdata)+1)
-ax.set_ylim(min(ydata)-1, max(ydata)+2)
-cbar = plt.colorbar(contour_plot)
-cbar.set_label('Data Value')
-
-figax = plt.subplots()
-fig, ax = figax
-# ax.plot(x_reordered, y_reordered, 'x')
-mesh.boundary_mesh.plot(figax)
-for i in range(data.shape[0]):
-    ax.plot(Points[i][0], Points[i][1], 'x')
-    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
-ax.set_xlim(min(xdata)-1, max(xdata)+1)
-ax.set_ylim(min(ydata)-1, max(ydata)+2)
-cbar = plt.colorbar(contour_plot)
-cbar.set_label('Data Value')
-
-figax = plt.subplots()
-fig, ax = figax
-mesh.boundary_mesh.plot(figax)
-ax.quiver(grid_x, grid_y, grid_values_x, grid_values_y , scale = 1.)
-# ax.xlabel("x")
-# ax.ylabel("y")
-# ax.title("Quiver plot of Dirichlet")
+grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
 
 # figax = plt.subplots()
 # fig, ax = figax
 # mesh.boundary_mesh.plot(figax)
 # for i in range(data.shape[0]):
 #     ax.plot(Points[i][0], Points[i][1], 'x')
-    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-# contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
+#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+# contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
 # ax.set_xlim(min(xdata)-1, max(xdata)+1)
 # ax.set_ylim(min(ydata)-1, max(ydata)+2)
 # cbar = plt.colorbar(contour_plot)
 # cbar.set_label('Data Value')
+
+# figax = plt.subplots()
+# fig, ax = figax
+# # ax.plot(x_reordered, y_reordered, 'x')
+# mesh.boundary_mesh.plot(figax)
+# for i in range(data.shape[0]):
+#     ax.plot(Points[i][0], Points[i][1], 'x')
+#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+# contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
+# ax.set_xlim(min(xdata)-1, max(xdata)+1)
+# ax.set_ylim(min(ydata)-1, max(ydata)+2)
+# cbar = plt.colorbar(contour_plot)
+# cbar.set_label('Data Value')
+
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+ax.quiver(grid_x, grid_y, grid_values_x, grid_values_y , scale = 1.)
+
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+# for i in range(data.shape[0]):
+    # ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
 
 # logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)
 # logger.log_description(mesh_file=mesh,args=None)
 # log_queue = logger._log_queue
 
 T = problem_data.lame_tensor_ice #Lame tensor
-boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data)
-print(boundary_displacement.collision_point())
-physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(.0001), boundary_displacement, initial_fracture=None)
 
-# print('start computation of classical energy')
+# boundary_displacement = problem_data.Constant_Displacement_On_Y(abscissa_mid= 1005.)
+boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data, Dirichlet_func = Dirichlet)
+# print(boundary_displacement.collision_point())
+physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(10.), boundary_displacement, initial_fracture=None)
+
+print('start computation of classical energy')
 classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
 # classical_solution.field.boundary_elements
 # solution = solver.smart_time_solver(discretization_data, physical_data, log_queue, args.number_processes)
 # Test = solver.Imposed_Fracture_Solution(mesh=mesh, physical_data=physical_data, fracture = None)
 
-# print(classical_solution.energy)
+print(classical_solution.energy)
 classical_solution.plot_displacement()
-# classical_solution.plot_energy()
+classical_solution.plot_energy()
 
 # print('start computation of fractures')
 # boundary_point = [1011.299987792969, 104.0]

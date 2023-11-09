@@ -90,7 +90,6 @@ class Solution:
       self.elastic_energy = 0
     try:
       # Integration of non continuous function, might be wrong
-      ### TODO: computing fracture energy wrong? 
       self.fracture_energy, _ = scipy.integrate.quad(lambda x: self.physical_data.toughness_field(self.fracture.curvilinear_abscissa(x)), 0, self.fracture.lengh)
       print(" fracture energy = ", self.fracture_energy)
     except AttributeError:

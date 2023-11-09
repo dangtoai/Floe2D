@@ -112,201 +112,28 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
     We compute the P1 approximation on the boundary by projecting the data on the boundary
     """
 
-    def __init__(self, traction_coefficient=1., boundary_data=None):
+    def __init__(self, traction_coefficient=1.,boundary_data = None, Dirichlet_func = None):
         #self.some_threshold = some_threshold
         super().__init__(traction_coefficient=1)
+        self.Dirichlet = Dirichlet_func
         self.boundary_data = boundary_data
-
+        
     def collision_point(self):
         data = self.boundary_data[:]
         norm_data = [norm(data[:,2:][i]) for i in range(len(data))]
         Collision_index = norm_data.index(max(norm_data))
-        # print(Collision_index)
-        # print(data[:,0][Collision_index], data[:,1][Collision_index])
         Collision_point = Point(data[:,0][Collision_index], data[:,1][Collision_index])
         return Collision_point
         
     def check_Dirichlet(self, p):
         # Implement the logic to check if point p is inside the specific region
         # Return True if it is inside; otherwise, return False
-        # Example: check if the x-coordinate of p is greater than some threshold
         Collision_point = self.collision_point()
         return dist(p, Collision_point) < 10.
 
     def _func(self, p):
-        # print(p)
-        # Implement the logic to calculate the displacement vector at point p
-        # based on a specific function for this region
-        # Return the displacement vector as a numpy array
-        # Example: return the displacement as [0, f(p.y)], where f is some function
-        data = self.boundary_data
-        # extract the data of interpolation points and data
-        def line_coefficient(point1, point2):
-            """
-            compute the coefficient of line contains P1, P2
-            return A,B,C of Ax+By=C
-            """
-            x1, y1 = point1
-            x2, y2 = point2
-            A = (y2-y1)/(x2-x1)
-            B = y1 - A*x1
-            return np.array([A,B])
-            
-        def test_line(t, A, B):
-            """
-            return the line of equation y = At+B
-            """
-            return A*t + B
-
-        def intersection_line(A1, B1, A2, B2):
-            """
-            find the intersection of 2 line 
-            y = A1*t +B1 and y = A2*t+B2"""
-            M = np.array([[-A1, 1.], [-A2, 1.]])
-            B = np.array([B1, B2])
-            return np.linalg.solve(M, B) 
-
-        def boundary_edges_index(tri: Delaunay):
-            """
-            return the (i,j) index of all edges at the boundary 
-            """
-            All_edges = []
-            for triangles in tri.simplices:
-                for i in range(3):
-                    for j in range(i+1, 3):
-                        All_edges.append(
-                            (min(triangles[i], triangles[j]), max(triangles[i], triangles[j])))
-            S = set(All_edges)
-            Border = ([e for e in S if All_edges.count(e) == 1])
-            return Border
-
-        def boundary_triangles_index(tri: Delaunay):
-            """
-            return the (i,j,k) index of all triangles at the boundary 
-            """
-            boundary_edges = boundary_edges_index(tri)
-            boundary_triangles = []
-            for edge in boundary_edges:
-                for triangle in tri.simplices:
-                    if set(edge).issubset(triangle):
-                        boundary_triangles.append(triangle)
-            return boundary_triangles
-
-
-        def cones_list(tri: Delaunay):
-            """
-            return the (i,j,k) index of all triangles at the boundary 
-            the node k is in the interior of the mesh Delaunay
-            such that ki and kj are 2 lines of the cone
-            k is the head of the cone
-            """
-            boundary_edges = boundary_edges_index(tri)
-            boundary_triangles = boundary_triangles_index(tri)
-            triangles_out = []
-            center = sum(tri.points)/tri.npoints
-            for triangle in boundary_triangles:
-                for edge in boundary_edges:
-                    if set(edge).issubset(triangle):
-                        common_el = np.intersect1d(triangle, edge)
-                        not_common = np.setdiff1d(triangle, common_el)
-                        if np.cross(tri.points[common_el[0]] - center, tri.points[common_el[1]] - center)<0:
-                            common_el = common_el[::-1]
-                        triangle = np.append(not_common, common_el)
-                        triangles_out.append(triangle)
-            return triangles_out
-
-        def inside_cone(head, base1, base2, point):
-            """
-            Verify if point is inside of the cone 
-            
-            """
-            # Calculate vectors from the  head to the rays and the point
-            vector1 = base1 -  head
-            vector2 = base2 -  head
-            vector_point = point -  head
-
-            # Calculate the angles between the vectors using the dot product
-            angle1 = np.arctan2(vector1[1], vector1[0])
-            angle2 = np.arctan2(vector2[1], vector2[0])
-            point_angle = np.arctan2(vector_point[1], vector_point[0])
-
-            # Normalize the angles to the range [0, 2*pi)
-            angle1 = (angle1 + 2 * np.pi) % (2 * np.pi)
-            angle2 = (angle2 + 2 * np.pi) % (2 * np.pi)
-            point_angle = (point_angle + 2 * np.pi) % (2 * np.pi)
-
-            # Check if the point angle is between the ray angles
-            if angle1 <= angle2:
-                return angle1 <= point_angle <= angle2
-            else:
-                return angle1 <= point_angle or point_angle <= angle2
-
-        def P1_coefficient(Points, data):
-            """
-            if datas contains the value at points,
-            return the affine function f that
-            f(point[i]) = datas[i]
-            f (x,y) = Ax+By+C
-            """
-            
-            Matrix = np.array([[Points[0][0], Points[0][1], 1],
-                              [Points[1][0], Points[1][1], 1],
-                              [Points[2][0], Points[2][1], 1]])
-            B_ = np.array(data)
-            A, B, C = np.linalg.solve(Matrix, B_)
-
-            return A,B,C
-        
-        xdata, ydata = data[:, 0], data[:, 1]
-        z1data, z2data = data[:, 2], data[:, 3]
-        # print(xdata, ydata)
-        Points = np.array(list(zip(xdata, ydata)))
-        tri = Delaunay(Points)
-        interp_function_x = LinearNDInterpolator(list(zip(xdata, ydata)), z1data)
-        interp_function_y = LinearNDInterpolator(list(zip(xdata, ydata)), z2data)
-        
-        def f_x(x_eval, y_eval):
-            interpolated_value = interp_function_x(x_eval, y_eval)
-            Cones = cones_list(tri) 
-            if np.isnan(interpolated_value):
-                interpolated_value = 0.
-                l = 0 
-                for i,j,k in Cones:
-                    if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                        l+= 1
-                        P_ = np.array([Points[i], Points[j], Points[k]])
-                        data_ = np.array([z1data[i], z1data[j], z1data[k]])
-                        A, B, C = P1_coefficient(P_, data_)
-                        interpolated_value += A*x_eval + B*y_eval + C
-                interpolated_value = interpolated_value/l
-            return interpolated_value
-
-        def f_y(x_eval, y_eval):
-            interpolated_value = interp_function_y(x_eval, y_eval)
-            Cones = cones_list(tri) 
-            if np.isnan(interpolated_value):
-                interpolated_value = 0.
-                l = 0
-                for i,j,k in Cones:
-                    if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                        l += 1
-                        P_ = np.array([Points[i], Points[j], Points[k]])
-                        data_ = np.array([z1data[i], z1data[j], z1data[k]])
-                        A, B, C = P1_coefficient(P_, data_)
-                        interpolated_value += A*x_eval + B*y_eval + C
-                interpolated_value = interpolated_value/l
-            return interpolated_value
-
-        def Dirichlet_function(x,y):
-            return np.array([f_x(x,y), f_y(x,y)])
-        
-        
-        
-        if self.check_Dirichlet(p): 
-            print(p.x, p.y)
-            # return Dirichlet_function(p.x, p.y)
-        # return np.array([0. ,0.])
-        return Dirichlet_function(p.x, p.y)
+        if self.check_Dirichlet(p): return self.Dirichlet(p.x, p.y)
+        return np.array([0., 0.])
         
 class Linear_Displacement_On_Y(Linear_Displacement):
     r"""

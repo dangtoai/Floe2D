@@ -397,11 +397,11 @@ if __name__ == '__main__':
     classical_solution.plot_energy()
     
     ### Solution with fracture 
-    boundary_point = [20., 0.]
-    time_discretization = None
-    fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
-    discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
+    # boundary_point = [20., 0.]
+    # time_discretization = None
+    # fracture_discretization = problem_data.Fracture_Discretization(angular_step = np.pi/4., boundary_point= boundary_point, lengh_step = 100 )
+    # discretization_data =  problem_data.Discretization_Data(mesh, time_discretization, fracture_discretization, tip_enrichement=False)
     
-    solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
-    solution.plot_displacement()
-    solution.plot_energy()
+    # solution = solver.smart_time_solver(discretization_data, physical_data, log_queue)
+    # solution.plot_displacement()
+    # solution.plot_energy()
