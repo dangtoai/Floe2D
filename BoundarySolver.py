@@ -144,8 +144,8 @@ with open('boundary_data.csv', 'r', encoding='utf-8') as csv_file:
 data = np.array(data)
 
 xdata, ydata = data[:, 0], data[:, 1]
-z1data = data[:,2]
-z2data = data[:,3]
+z1data = data[:,2] 
+z2data = data[:,3] 
 Points = np.array(list(zip(xdata, ydata)))
 
 tri = Delaunay(Points)
@@ -307,15 +307,10 @@ def f_y(x_eval, y_eval):
                 # print(A,B,C)
                 interpolated_value = A*x_eval + B*y_eval + C
 
-    # print(interpolated_value)
     return interpolated_value
-
 
 # Define the polygon vertices as a list of NumPy arrays
 
-
-
-# f_y(1040, 128)
 # mesh.boundary_mesh.plot()
 # plt.triplot(Points[:,0], Points[:,1], cones_list(tri))
 # for i in range(data.shape[0]):
@@ -323,60 +318,59 @@ def f_y(x_eval, y_eval):
 #     plt.text(Points[i][0], Points[i][1], str(i), color = 'red')
 
 
-def normfxy(x_eval, y_eval):
-    return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
+# def normfxy(x_eval, y_eval):
+#     return norm(np.array([f_x(x_eval, y_eval), f_y(x_eval, y_eval)]))
 
 def Dirichlet(x, y):
     return np.array([f_x(x, y), f_y(x, y)])
 
-grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num = 50),
-                            np.linspace(min(ydata)-1, max(ydata)+2, num =50))
+grid_x, grid_y = np.meshgrid(np.linspace(min(xdata)-1, max(xdata)+1, num = 100),
+                            np.linspace(min(ydata)-1, max(ydata)+2, num = 100))
 
 grid_values_x = np.vectorize(f_x)(grid_x, grid_y)
 grid_values_y = np.vectorize(f_y)(grid_x, grid_y)
-grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
+# grid_values_f = np.vectorize(normfxy)(grid_x, grid_y)
 
-# figax = plt.subplots()
-# fig, ax = figax
-# mesh.boundary_mesh.plot(figax)
-# for i in range(data.shape[0]):
-#     ax.plot(Points[i][0], Points[i][1], 'x')
-#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-# contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
-# ax.set_xlim(min(xdata)-1, max(xdata)+1)
-# ax.set_ylim(min(ydata)-1, max(ydata)+2)
-# cbar = plt.colorbar(contour_plot)
-# cbar.set_label('Data Value')
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+for i in range(data.shape[0]):
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_x, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
 
-# figax = plt.subplots()
-# fig, ax = figax
-# # ax.plot(x_reordered, y_reordered, 'x')
-# mesh.boundary_mesh.plot(figax)
-# for i in range(data.shape[0]):
-#     ax.plot(Points[i][0], Points[i][1], 'x')
-#     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-# contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
-# ax.set_xlim(min(xdata)-1, max(xdata)+1)
-# ax.set_ylim(min(ydata)-1, max(ydata)+2)
-# cbar = plt.colorbar(contour_plot)
-# cbar.set_label('Data Value')
+figax = plt.subplots()
+fig, ax = figax
+mesh.boundary_mesh.plot(figax)
+for i in range(data.shape[0]):
+    ax.plot(Points[i][0], Points[i][1], 'x')
+    # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
+contour_plot = ax.contourf(grid_x, grid_y, grid_values_y, cmap = 'viridis')
+ax.set_xlim(min(xdata)-1, max(xdata)+1)
+ax.set_ylim(min(ydata)-1, max(ydata)+2)
+cbar = plt.colorbar(contour_plot)
+cbar.set_label('Data Value')
 
 figax = plt.subplots()
 fig, ax = figax
 mesh.boundary_mesh.plot(figax)
 ax.quiver(grid_x, grid_y, grid_values_x, grid_values_y , scale = 1.)
 
-figax = plt.subplots()
-fig, ax = figax
-mesh.boundary_mesh.plot(figax)
+# figax = plt.subplots()
+# fig, ax = figax
+# mesh.boundary_mesh.plot(figax)
 # for i in range(data.shape[0]):
     # ax.plot(Points[i][0], Points[i][1], 'x')
     # ax.text(Points[i][0], Points[i][1], str(i), color = 'red')
-contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
-ax.set_xlim(min(xdata)-1, max(xdata)+1)
-ax.set_ylim(min(ydata)-1, max(ydata)+2)
-cbar = plt.colorbar(contour_plot)
-cbar.set_label('Data Value')
+# contour_plot = ax.contourf(grid_x, grid_y, grid_values_f, cmap = 'viridis')
+# ax.set_xlim(min(xdata)-1, max(xdata)+1)
+# ax.set_ylim(min(ydata)-1, max(ydata)+2)
+# cbar = plt.colorbar(contour_plot)
+# cbar.set_label('Data Value')
 
 # logger = log.Log('griffith_solver.log', level=log.INFO, console_output=True)
 # logger.log_description(mesh_file=mesh,args=None)
@@ -384,20 +378,20 @@ cbar.set_label('Data Value')
 
 T = problem_data.lame_tensor_ice #Lame tensor
 
-# boundary_displacement = problem_data.Constant_Displacement_On_Y(abscissa_mid= 1005.)
+# # boundary_displacement = problem_data.Constant_Displacement_On_Y(abscissa_mid= 1005.)
 boundary_displacement = problem_data.Boundary_Displacement_by_percussion(boundary_data = data, Dirichlet_func = Dirichlet)
-# print(boundary_displacement.collision_point())
+# # print(boundary_displacement.collision_point())
 physical_data = problem_data.Physical_Data(T, problem_data.Constant_Toughness(10.), boundary_displacement, initial_fracture=None)
 
-print('start computation of classical energy')
-classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
-# classical_solution.field.boundary_elements
-# solution = solver.smart_time_solver(discretization_data, physical_data, log_queue, args.number_processes)
-# Test = solver.Imposed_Fracture_Solution(mesh=mesh, physical_data=physical_data, fracture = None)
+# print('start computation of classical energy')
+# classical_solution = solver.Classical_Solution(mesh=mesh, physical_data=physical_data)
+# # classical_solution.field.boundary_elements
+# # solution = solver.smart_time_solver(discretization_data, physical_data, log_queue, args.number_processes)
+# # Test = solver.Imposed_Fracture_Solution(mesh=mesh, physical_data=physical_data, fracture = None)
 
-print(classical_solution.energy)
-classical_solution.plot_displacement()
-classical_solution.plot_energy()
+# # print(classical_solution.energy)
+# classical_solution.plot_displacement()
+# classical_solution.plot_energy()
 
 # print('start computation of fractures')
 # boundary_point = [1011.299987792969, 104.0]

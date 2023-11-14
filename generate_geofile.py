@@ -42,9 +42,9 @@ with open('boundary_data.csv', mode = 'r') as csv_file:
 numbers = [float(num) for num in row[0].split()]
 contact_point = np.array(numbers)
 
-THRESHOLD = 5.   ### TODO: Support of Dirichlet boundary depends on floe size
+THRESHOLD = 4.   ### TODO: Support of Dirichlet boundary depends on floe size
 
-index_dirichlet_points = np.array([dist(Point(contact_point[0], contact_point[1]), p) for p in Points]) < THRESHOLD
+index_dirichlet_points = np.array([dist( Point(contact_point[0], contact_point[1]), p) for p in Points]) < THRESHOLD
 index_dirichlet_points = np.where(index_dirichlet_points)[0]
 index_dirichlet_lines = range( min(index_dirichlet_points) - 1, max(index_dirichlet_points) + 1 )
 index_neumann_lines = [i for i in range(1,len(mat)) if i not in index_dirichlet_lines]
@@ -65,5 +65,5 @@ GEO_SCRIPT += 'Physical Surface("S") = {1};\n'
 with open('file.geo', 'w', encoding='utf-8') as geo_file:
     geo_file.write(GEO_SCRIPT)
 
-run('gmsh -2 file.geo -o file.msh -format msh2', shell=True)
-run('gmsh file.msh', shell = True)
+# run('gmsh -2 file.geo -o file.msh -format msh2', shell=True)
+# run('gmsh file.msh', shell = True)

@@ -129,7 +129,7 @@ class Boundary_Displacement_by_percussion(Linear_Displacement):
         # Implement the logic to check if point p is inside the specific region
         # Return True if it is inside; otherwise, return False
         Collision_point = self.collision_point()
-        return dist(p, Collision_point) < 10.
+        return dist(p, Collision_point) < 5.
 
     def _func(self, p):
         if self.check_Dirichlet(p): return self.Dirichlet(p.x, p.y)

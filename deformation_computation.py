@@ -58,9 +58,8 @@ if __name__ == '__main__':
     Nodes[index_contact] = Node(Nodes[index_contact].position(), V0, id_number = index_contact)
     
     floe = Floe(nodes=Nodes, springs=None,
-                stiffness=1000, viscosity=200., id_number=1)
+                stiffness=800, viscosity=200., id_number=1)
     
-    floe.plot_border()
     # Simulation of masses-springs network
     Traction_Mat = floe.traction_mat()
     Length_Mat = floe.length_mat()
@@ -83,7 +82,8 @@ if __name__ == '__main__':
     M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
 
     t = np.linspace(0, T_END, N_T)
-
+    
+    # cutting the data after T*
     All_pos_vel = All_positions_velocities[:, :M]
     
     # # animation of mass-spring network boundary
@@ -98,34 +98,40 @@ if __name__ == '__main__':
     time_template = 'time = % 10fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
+    # plot the boundary before and after applying the displacement
+    plt.figure()
+    pos_init = All_pos_vel[:,0].reshape(floe.n, 4)
+    pos_after = All_pos_vel[:,-1].reshape(floe.n, 4)
+    plt.plot(pos_init[:,0][Route], pos_init[:,1][Route])
+    plt.plot(pos_after[:,0][Route], pos_after[:,1][Route])
     
-    # def init():
-    #     line1.set_data([], [])
-    #     time_text.set_text(' ')
-    #     return line1, time_text
+    def init():
+        line1.set_data([], [])
+        time_text.set_text(' ')
+        return line1, time_text
 
-    # def animate_spring(i):
-    #     Ix = [j for j in range(0, floe.n*4, 4)]
-    #     Iy = [j for j in range(1, floe.n*4, 4)]
-    #     thisx = []
-    #     thisy = []
-    #     for j in Ix:
-    #         thisx = np.append(thisx, All_positions_velocities[j][i])
-    #     for j in Iy:
-    #         thisy = np.append(thisy, All_positions_velocities[j][i])
-    #     for k in Route:
-    #         thisx = np.append(thisx, thisx[k])
-    #         thisy = np.append(thisy, thisy[k])
+    def animate_spring(i):
+        Ix = [j for j in range(0, floe.n*4, 4)]
+        Iy = [j for j in range(1, floe.n*4, 4)]
+        thisx = []
+        thisy = []
+        for j in Ix:
+            thisx = np.append(thisx, All_positions_velocities[j][i])
+        for j in Iy:
+            thisy = np.append(thisy, All_positions_velocities[j][i])
+        for k in Route:
+            thisx = np.append(thisx, thisx[k])
+            thisy = np.append(thisy, thisy[k])
 
-    #     line1.set_data(thisx[floe.n:],
-    #                     thisy[floe.n:])
+        line1.set_data(thisx[floe.n:],
+                        thisy[floe.n:])
 
-    #     time_text.set_text(time_template % (i*dt))
-    #     return line1, time_text
+        time_text.set_text(time_template % (i*dt))
+        return line1, time_text
 
-    # ani = animation.FuncAnimation(fig, animate_spring,
-    #                               np.arange(0, len(t)), interval=200, blit=False)
-    # plt.show()
+    ani = animation.FuncAnimation(fig, animate_spring,
+                                  np.arange(0, len(t)), interval=200, blit=False)
+    plt.show()
     # computing displacement field
     deformation_field = np.zeros((floe.n * 2, M))
 
@@ -140,26 +146,26 @@ if __name__ == '__main__':
     Y = np.array([p.y for p in Points])
 
     # plotting the displacement field
-    # plt.figure()
-    # for i in range(len(Points)):
-    #     plt.quiver(X[i], Y[i], deformation_field[2*i]
-    #                 [M-1], deformation_field[2*i+1][M-1])
+    plt.figure()
+    for i in range(len(Points)):
+        plt.quiver(X[i], Y[i], deformation_field[2*i]
+                    [M-1], deformation_field[2*i+1][M-1])
 
     data_deformation = deformation_field[:, -1].reshape(floe.n, 2)
 
     # plot displacement field in the 1st-direction
-    # plt.figure()
-    # ax = plt.axes(projection='3d')
-    # ax.plot_trisurf(X, Y, data_deformation[:, 0],
-    #                 cmap='RdYlBu', edgecolor='none')
-    # plt.title("$u_1$")
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_trisurf(X, Y, data_deformation[:, 0],
+                    cmap='RdYlBu', edgecolor='none')
+    plt.title("$u_1$")
 
     # plotting displacement field in the 2nd-direction
 
-    # plt.figure()
-    # ax = plt.axes(projection='3d')
-    # ax.plot_trisurf(X, Y, data_deformation[:, 1], cmap='bwr', edgecolor='none')
-    # plt.title("$u_2$")
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_trisurf(X, Y, data_deformation[:, 1], cmap='bwr', edgecolor='none')
+    plt.title("$u_2$")
 
     # Localisation of the deformation
     deformation_norm = norm(data_deformation, axis=1)
@@ -204,7 +210,6 @@ if __name__ == '__main__':
 
     floe1 = Floe(nodes=New_Nodes, springs=None,
                 stiffness=1, viscosity=1., id_number=0)
-    floe1.plot_border()
 
     index_boundary = floe1.border_nodes_index()[:-1]
     Xboundary, Yboundary = X[index_boundary], Y[index_boundary]
