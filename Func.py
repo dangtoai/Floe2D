@@ -1,4 +1,4 @@
-from math import acos, sin
+from math import acos, sin, cos, pi
 from scipy.sparse import coo_matrix
 from scipy.integrate import solve_ivp
 from scipy.spatial import Delaunay
@@ -13,7 +13,9 @@ from numpy.linalg import norm
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
-N_T = 20 #time's discretization
+G = 20.  # stiffness of torsion's spring
+
+N_T = 1000 #time's discretization
 class Node:
     """A class representing one node of an ice floe"""
 
@@ -248,6 +250,8 @@ class Floe:
         return np.array([node.velocity() for node in self.nodes])
 
     def connexe_mat(self):
+        """ Connectivity matrix """
+        
         mat = np.zeros((self.n, self.n))
         for (i, j) in self.springs:
             mat[i, j] = 1
@@ -256,6 +260,7 @@ class Floe:
         return mat.todok()
 
     def length_mat(self):
+        """ initial length of traction spring """
         mat = np.zeros((self.n, self.n))
         for (i, j) in self.springs:
             mat[i, j] = Spring(self.nodes[i], self.nodes[j], None).L0
@@ -264,6 +269,8 @@ class Floe:
         return mat.todok()
 
     def angle_init(self):
+        """ Initial angle of torsion spring """
+        
         mat = np.zeros((self.n, self.n, self.n))
         Nodes_positions = self.get_nodes()
         for i, j, k in self.simplices():
@@ -283,8 +290,7 @@ class Floe:
 
     def torsion_mat(self):
         """ stiffness constant of every torsion spring """
-        # k = max(max(self.springs))+1
-        # mat = np.zeros((k, k, k))
+
         mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
             mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j,
@@ -298,9 +304,11 @@ class Floe:
             mat[j, i, k] = G * self.length_mat()[i, j] * self.length_mat()[i,
                                                                            k] / sin(self.angle_init()[j, i, k])
             mat[k, i, j] = mat[j, i, k]
+
         return mat
 
     def traction_mat(self):
+        """ stiffness constant of traction spring """
         mat = np.zeros((self.n, self.n))
         for i, j, k in self.simplices():
             mat[i, j] += self.k / sin(self.angle_init()[i, k, j])
@@ -472,7 +480,7 @@ class Floe:
 
         """
         assert 0 <= time <= time_end, "time must be inside the time discretisation"
-        time = int(time*800/time_end)-1
+        time = int(time*20/time_end)-1
         Res = self.Move(time_end, Traction_mat, Length_mat,
                         Torsion_mat, Angle_mat).y
         New_Nodes_positions = []
@@ -729,18 +737,21 @@ def Energy_studies(All_positions_velocities, floe):
     -------
     Traction_energy 
     Torsion_energy 
+    
     E_tot : elastic energy of a floe. 
+    E_c: kinematic energy of network.
 
     """
     Length_mat = floe.length_mat()
     Torsion_mat = floe.torsion_mat()
     Angle_mat = floe.angle_init()
+    K = floe.k
     Traction_energy = np.zeros(len(All_positions_velocities[0]))
     Torsion_energy = np.zeros(len(All_positions_velocities[0]))
 
     for index in range(len(All_positions_velocities[0])):
-        Sum1 = 0.
-        Sum2 = 0.
+        Traction_en = 0.
+        Torsion_en  = 0.
         for i, j, k in floe.simplices():
             Qi = np.array([All_positions_velocities[4*i][index],
                           All_positions_velocities[4*i+1][index]])
@@ -748,22 +759,84 @@ def Energy_studies(All_positions_velocities, floe):
                           All_positions_velocities[4*j+1][index]])
             Qk = np.array([All_positions_velocities[4*k][index],
                           All_positions_velocities[4*k+1][index]])
+            l_ij = norm(Qi-Qj)
+            l_ik = norm(Qi-Qk)
+            l_jk = norm(Qj-Qk)
+            
+            Traction_en += 0.5 * ((K/sin(Angle_mat[i, k, j])) * (l_ij - Length_mat[i, j])**2
+                           + (K/sin(Angle_mat[i, j, k])) * (l_ik - Length_mat[i, k])**2
+                           + (K/sin(Angle_mat[j, i, k])) * (l_jk - Length_mat[j, k])**2)
 
-            Sum1 += 0.5 * ((floe.k/sin(Angle_mat[i, k, j])) * (norm(Qi-Qj) - Length_mat[i, j])**2
-                           + (floe.k/sin(Angle_mat[i, j, k])) *
-                           (norm(Qi-Qk) - Length_mat[i, k])**2
-                           + (floe.k/sin(Angle_mat[j, i, k])) * (norm(Qj-Qk) - Length_mat[j, k])**2)
-
-            Sum2 += 0.5 * (Torsion_mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_mat[i, j, k])**2
-                           + Torsion_mat[i, k, j] *
-                           (Angle(Qi, Qk, Qj) - Angle_mat[i, k, j])**2
+            Torsion_en += 0.5 * (Torsion_mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_mat[i, j, k])**2
+                           + Torsion_mat[i, k, j] * (Angle(Qi, Qk, Qj) - Angle_mat[i, k, j])**2
                            + Torsion_mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_mat[j, i, k])**2)
 
-        Traction_energy[index] = Sum1
-        Torsion_energy[index] = Sum2
+        Traction_energy[index] = Traction_en
+        Torsion_energy[index] = Torsion_en
+    
 
     E_tot = Traction_energy + Torsion_energy
     return Traction_energy, Torsion_energy, E_tot
+
+def Energy_elastic_analysis(All_positions_velocities, floe):
+    """
+    Parameters
+    ----------
+    All_positions_velocities : Evolution of all nodes and velocities
+    floe : result of simulation, vector contains positions and velocity of all node.
+
+    Returns
+    -------
+    Traction_energy 
+    Torsion_energy 
+    E_tot : elastic energy of a floe. 
+
+    """
+    Traction_energy, Torsion_energy, E_el =  Energy_studies(All_positions_velocities, floe)
+    velocities_norm = Energy_kinematic_analysis(All_positions_velocities, floe)
+    
+    total = velocities_norm + Traction_energy + Torsion_energy
+    
+    t = np.arange(N_T)
+    
+    plt.figure()
+    plt.plot(t, Traction_energy, label = "traction")
+    plt.plot(t, Torsion_energy, label = "torsion")
+    # plt.plot(t, E_el, label = "elastic")
+    plt.plot(t, velocities_norm, label = "kinematic")
+    plt.plot(t, total, label = 'total energy')
+    plt.legend()
+    
+    return 0
+
+def Energy_kinematic_analysis(All_positions_velocities, floe):
+    """
+    Parameters
+    ----------
+    All_positions_velocities : Evolution of all nodes and velocities
+    floe : result of simulation, vector contains positions and velocity of all node.
+
+    Returns
+    -------
+    velocities_norm: kinematic energy at each time t_i
+    E_tot : elastic energy of a floe. 
+
+    """
+    # t = np.arange(N_T)
+    m = floe.m
+    n = floe.n
+
+    velocities_norm = np.zeros(N_T)
+    
+    for index in range(N_T):
+        for i in range(n):
+            velocities = np.array([All_positions_velocities[4*i+2][index],
+                      All_positions_velocities[4*i+3][index]])
+            # print(velocities)
+            velocities = norm(velocities)**2
+            velocities_norm[index] += 0.5 * m * velocities
+
+    return velocities_norm
 
 def Energy_studies_fr(All_positions_velocities, floe):
     """
@@ -830,8 +903,6 @@ def Find_frac_index(E_tot_frac, E_tot):
 
     """
 
-    # to complete
-
     ar = np.zeros(len(E_tot_frac)) + len(E_tot)
     for i in range(len(E_tot_frac)):
         if len(np.where(E_tot_frac[i] < E_tot)[0]) != 0:
@@ -888,6 +959,8 @@ def Unit_vect(vect1, vect2):
     if (vect1[0] == vect2[0] and vect1[1] == vect2[1]):
         return 0.
     return (vect2-vect1)/norm(vect2-vect1)
+
+from math import degrees
 
 def Angle(A, B, C):
     """
@@ -974,9 +1047,9 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_
     u = np.zeros((nb_nodes, nb_nodes, 2))
     Q = np.reshape(Y, (nb_nodes*2, 2))
     Y_ = np.zeros_like(Q)
-    k = Traction_mat
+    K = Traction_mat
     G = Torsion_mat
-    Theta0 = Angle_init
+    Theta0 = Angle_init 
     inv_m = 1./m
 
     for i in range(0, nb_nodes):
@@ -984,24 +1057,72 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_
         for j in range(i+1, i+nb_nodes):
             j = j % nb_nodes
             u[i, j] = Unit_vect(Q[2*i], Q[2*j])
-            Y_[2*i+1] += inv_m * Connex_mat[i, j] * (k[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_mat[i, j]) * u[i, j]
+            Y_[2*i+1] += inv_m * Connex_mat[i, j] * (K[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_mat[i, j]) * u[i, j]
                                                       + mu * (Q[2*j+1] - Q[2*i+1]) @ u[i, j] * u[i, j])
+            
+    # to verify this part of calculation, 
+    # using 1 floe of 3 nodes 
+    # try different initial speed of each node
 
     for i, j, k in Triangle_list:
+        # unit vector
         u[i, j] = Unit_vect(Q[2*i], Q[2*j])
         u[j, i] = -u[i, j]
         u[i, k] = Unit_vect(Q[2*i], Q[2*k])
         u[k, i] = -u[i, k]
         u[j, k] = Unit_vect(Q[2*j], Q[2*k])
         u[k, j] = -u[j, k]
-        Y_[2*i+1] += inv_m * (G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/(norm(Q[2*i] - Q[2*j])) * u[i, k]
-                               + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[i, k, j])/norm(Q[2*i] - Q[2*k]) * u[i, j])
+        
+        # length 
+        # l_ij = Length_mat[i,j]
+        # l_ik = Length_mat[i,k]
+        # l_kj = Length_mat[k,j]
+        
+        l_ij = norm(Q[2*j]-Q[2*i])
+        l_ik = norm(Q[2*k]-Q[2*i])
+        l_kj = norm(Q[2*j]-Q[2*k])
 
-        Y_[2*j+1] += inv_m * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*j]) * u[j, k]
-                               + G[i, k, j] * (Angle(Q[2*i], Q[2*k], Q[2*j]) - Theta0[j, k, i])/norm(Q[2*i] - Q[2*k]) * u[j, i])
+        Theta_j = Angle(Q[2*i], Q[2*j], Q[2*k])
+        Theta_i = Angle(Q[2*j], Q[2*i], Q[2*k])
+        Theta_k = Angle(Q[2*i], Q[2*k], Q[2*j])
 
-        Y_[2*k+1] += inv_m * (G[j, i, k] * (Angle(Q[2*j], Q[2*i], Q[2*k]) - Theta0[j, i, k])/norm(Q[2*i] - Q[2*k]) * u[k, j]
-                               + G[i, j, k] * (Angle(Q[2*i], Q[2*j], Q[2*k]) - Theta0[i, j, k])/norm(Q[2*i] - Q[2*j]) * u[k, i])
+        G_i, G_j, G_k = G[j, i, k], G[i, j, k], G[i, k, j] 
+
+        # print(Theta_ijk, Theta0[i, j, k], Theta_ijk - Theta0[i, j, k])
+        # print(Theta_jik, Theta0[j, i, k], Theta_jik - Theta0[j, i, k])
+        # print(Theta_ikj, Theta0[i, k, j], Theta_ikj - Theta0[i, k, j])
+        # print("-------------------------------")
+        
+        # Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin( Theta_i) / l_ij
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i) / l_ik )
+
+        # Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j) / l_ij
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j) / l_kj ) 
+        
+        # Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k) / l_ik
+        #                         + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k) / l_kj )
+
+        ### Force independant of traction's length
+        Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin(Theta_i)
+                                + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i)) 
+
+        Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j)
+                                + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j))
+        
+        Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k)
+                                + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k))
+
+        
+        ### Force depends on traction's length
+        # Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin(Theta_i) / l_ij
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i) / l_ik )
+
+        # Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j) / l_ij
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j) / l_kj ) 
+        
+        # Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k) / l_ik
+        #                         + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k) / l_kj )
+
 
     return np.reshape(Y_, (nb_nodes * 4))
 
@@ -1123,4 +1244,3 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
 
     return np.reshape(Y_, (nb_nodes*4))
 
-G = 1000.  # stiffness of torsion's spring
