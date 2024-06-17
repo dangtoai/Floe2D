@@ -19,11 +19,11 @@ N_T = 1000 #time's discretization
 class Node:
     """A class representing one node of an ice floe"""
 
-    def __init__(self, position, velocity = np.array([0, 0]), id_number=None):
+    def __init__(self, position, velocity = np.array([0, 0]), id_number =None):
         self.x, self.y = position
         # self.x0, self.y0 = position  # Initial position needed for plots
         self.vx, self.vy = velocity
-        self.id = id_number
+        self.id = id 
         self.parent_ice_floe = None  # Ice floe to which this node belongs
 
     def position(self):
@@ -960,7 +960,8 @@ def Unit_vect(vect1, vect2):
         return 0.
     return (vect2-vect1)/norm(vect2-vect1)
 
-from math import degrees
+def Orthogonal_vect(v):
+    return np.array([-v[1], v[0]])
 
 def Angle(A, B, C):
     """
@@ -1087,31 +1088,31 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_
         Theta_k = Angle(Q[2*i], Q[2*k], Q[2*j])
 
         G_i, G_j, G_k = G[j, i, k], G[i, j, k], G[i, k, j] 
+        
 
         # print(Theta_ijk, Theta0[i, j, k], Theta_ijk - Theta0[i, j, k])
         # print(Theta_jik, Theta0[j, i, k], Theta_jik - Theta0[j, i, k])
         # print(Theta_ikj, Theta0[i, k, j], Theta_ikj - Theta0[i, k, j])
         # print("-------------------------------")
-        
-        # Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin( Theta_i) / l_ij
-        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i) / l_ik )
-
-        # Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j) / l_ij
-        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j) / l_kj ) 
-        
-        # Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k) / l_ik
-        #                         + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k) / l_kj )
 
         ### Force independant of traction's length
-        Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin(Theta_i)
-                                + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i)) 
+        # Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin(Theta_i)
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[i, j] * sin(Theta_i)) 
 
-        Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j)
-                                + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j))
-        
-        Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k)
-                                + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k))
+        # Y_[2*j+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[j, k] * sin(Theta_j)
+        #                         + G_k * (Theta_k - Theta0[i, k, j]) * u[j, i] * sin(Theta_j))
 
+        # Y_[2*k+1] += inv_m * (G_i * (Theta_i - Theta0[j, i, k]) * u[k, j] * sin(Theta_k)
+        #                         + G_j * (Theta_j - Theta0[i, j, k]) * u[k, i] * sin(Theta_k))
+
+        Y_[2*i+1] += inv_m * (- G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u[j, i]) * l_ij 
+                              - G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u[i, k]) * l_ik )
+
+        Y_[2*j+1] += inv_m * (- G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u[j, i]) * l_ij
+                               - G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u[k, j]) * l_kj)
+
+        Y_[2*k+1] += inv_m * (- G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u[i, k]) * l_ik
+                              - G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u[k, j]) * l_kj)
         
         ### Force depends on traction's length
         # Y_[2*i+1] += inv_m * (G_j * (Theta_j - Theta0[i, j, k]) * u[i, k] * sin(Theta_i) / l_ij
