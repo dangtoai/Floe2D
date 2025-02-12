@@ -9,11 +9,13 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 from scipy.spatial._qhull import Delaunay
+from scipy.spatial import Voronoi, voronoi_plot_2d
+
 from scipy import stats
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri/")
 from griffith.geometry import Polygon, Point
 
-np.random.seed(11212325)
+np.random.seed(1212)
 
 
 ### set of points is in the counter clock sens
@@ -38,7 +40,7 @@ xDelta = xMax - xMin
 yDelta = yMax - yMin
 # print(xMin, xMax, yMin, yMax)
 
-LAMBDA = 0.1 # intensity of random process
+LAMBDA = 0.025 # intensity of random process
 num_points = int(LAMBDA * (poly.area()  )) # number of random points inside of the polygon
 
 # x coordinates of Poisson points
@@ -47,10 +49,16 @@ xx = xDelta * stats.uniform.rvs(0, 1, ((num_points, 1))) + xMin
 yy = yDelta * stats.uniform.rvs(0, 1, ((num_points, 1))) + yMin
 
 Points = []
+OutPoints = []
 for i in range(num_points):
+    # select interior point 
     if poly.has_point(Point(xx[i][0], yy[i][0])):
         Points.append( np.array([xx[i][0], yy[i][0]]))
+    else: OutPoints.append(np.array([xx[i][0], yy[i][0]]))
+    
 Points = np.array(Points)
+OutPoints = np.array(OutPoints)
+
 tri = Delaunay(Points)  # triangulation step
 Springs = set()
 for triangle in tri.simplices:
@@ -64,8 +72,21 @@ with open('masses-springs.csv', mode = 'w', newline = '', encoding='utf-8') as c
     csv_writer.writerows(Points)
     # csv_writer.writerows(Springs)
 
+# poly.plot()
+# plt.figure()
 poly.plot()
-plt.plot(Points[:,0], Points[:,1],'x', color = 'r')
+plt.plot(Points[:,0], Points[:,1],'o', color = 'orange')
+plt.plot(OutPoints[:,0], OutPoints[:,1], 'o', color = 'green')
+
+# fig, ax = plt.subplots()
+V = Voronoi(Points)
+fig, ax = poly.plot()
+voronoi_plot_2d(V, ax = ax)
+ax.set_xlim(xMin-1, xMax+1)
+ax.set_ylim(yMin-1, yMax+1)
+
+# plt.figure()
+poly.plot()
 plt.triplot(Points[:,0], Points[:,1], tri.simplices, color = 'b')
 plt.show()
 

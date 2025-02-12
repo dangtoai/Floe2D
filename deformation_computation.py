@@ -15,7 +15,7 @@ from numpy.linalg import norm
 from matplotlib import animation
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
 from griffith.geometry import Point, Polygon, dist
-from Func import Node, Floe, Energy_studies
+from Func import Node, Floe, Energy_studies, N_T
 
 if __name__ == '__main__':
     Nodes = []
@@ -31,7 +31,7 @@ if __name__ == '__main__':
             Points.append(Point(row[0], row[1]))
 
     floe = Floe(nodes=Nodes, springs=None,
-                stiffness=1000, viscosity=200., id_number=1)
+                stiffness=1000, viscosity=20., id_number=1)
 
     Input_pos = input(
         "Enter a point separated by a space (e.g., 'a b') to run the simulation: ")
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     Nodes[index_contact] = Node(Nodes[index_contact].position(), V0, id_number = index_contact)
     
     floe = Floe(nodes=Nodes, springs=None,
-                stiffness=800, viscosity=200., id_number=1)
+                stiffness=100, viscosity=20., id_number=1)
     
     # Simulation of masses-springs network
     Traction_Mat = floe.traction_mat()
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     Angle_Mat = floe.angle_init()
 
     T_END = .1  # time end        
-    N_T = 20    #
-    dt = 1./20  # time's step
+    # N_T = 20    #
+    dt = 1./N_T  # time's step
 
     start_time = time.time()
     All_positions_velocities = floe.Move(
@@ -157,14 +157,14 @@ if __name__ == '__main__':
     plt.figure()
     ax = plt.axes(projection='3d')
     ax.plot_trisurf(X, Y, data_deformation[:, 0],
-                    cmap='RdYlBu', edgecolor='none')
+                    cmap='cool', edgecolor='none')
     plt.title("$u_1$")
 
     # plotting displacement field in the 2nd-direction
-
+#bwr
     plt.figure()
     ax = plt.axes(projection='3d')
-    ax.plot_trisurf(X, Y, data_deformation[:, 1], cmap='bwr', edgecolor='none')
+    ax.plot_trisurf(X, Y, data_deformation[:, 1], cmap='cool', edgecolor='none')
     plt.title("$u_2$")
 
     # Localisation of the deformation
