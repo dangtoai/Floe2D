@@ -15,7 +15,7 @@ from numpy.linalg import norm
 
 # G = 3219.  # stiffness of torsion's spring
 G = 10.
-N_T = 20  # time's discretization
+N_T = 200  # time's discretization
 
 
 class Node:
@@ -1207,8 +1207,12 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
     # to verify this part of calculation,
     # using 1 floe of 3 nodes
     # try different initial speed of each node
+    
 
+    
     for i, j, k in Triangle_list:
+        if orientation(Q[2*i], Q[2*j], Q[2*k]) != 1 : (j,k) = k,j
+        
         # unit vector
         u_ij = Unit_vect(Q[2*i], Q[2*j])
         u_ji = -u_ij
@@ -1233,23 +1237,11 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
 
     # #     # Force independant of traction's length
 
-        # force_i =  (G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij
-        #                       + G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
+        force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * ((Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
 
-        force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
-            (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
+        force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * ((Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
 
-        # force_j =  (G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij
-        #                         + G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
-
-        force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(
-            u_ij) / l_ij) + G_k * ((Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
-
-        # force_k =  (G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ki) / l_ik
-        #                         + G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk) / l_kj)
-
-        force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(
-            u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
+        force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
 
         Y_[2*i+1] += inv_m[i] * force_i  # Force on node i
         Y_[2*j+1] += inv_m[j] * force_j  # Force on node j
@@ -1330,6 +1322,20 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_
 
     return np.reshape(Y_, (nb_nodes*4))
 
+def orientation(A, B, C):
+    """
+    Returns the orientation of the triplet (A, B, C).
+    - +1: Counterclockwise (CCW)
+    - -1: Clockwise (CW)
+    -  0: Collinear
+    """
+    cross = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
+    if cross > 0:
+        return 1  # CCW
+    elif cross < 0:
+        return -1  # CW
+    else:
+        return 0  # Collinear
 
 def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
     """
