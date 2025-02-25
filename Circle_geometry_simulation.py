@@ -26,8 +26,8 @@ from scipy.spatial import Voronoi, voronoi_plot_2d
 
 # np.random.seed(1212)
 
-lambda_intensity= 15. 
-radius = 1.
+lambda_intensity= 0.003 
+radius = 100.
 
 area = np.pi * radius**2  # Area of the disk
 num_points = np.random.poisson(lambda_intensity * area)  # Poisson-distributed number of points
@@ -39,7 +39,7 @@ theta = np.random.uniform(0, 2 * np.pi, num_points)  # Angle uniformly distribut
 # Convert polar to Cartesian coordinates
 x = r * np.cos(theta)
 y = r * np.sin(theta)
-x = np.append(x, 1.)
+x = np.append(x, radius)
 y = np.append(y, 0.)
 
 Points = np.column_stack((x, y))

@@ -6,23 +6,19 @@ Created on Wed Jan 29 11:41:27 2025
 @author: phandangtoai
 """
 
-# exec(open("Circle_geometry_simulation.py").read())
-# exec(open("deformation_computation_circle.py").read())
-
-
 import csv
 import sys
 import numpy as np
 from numpy import pi, sin, cos
 import matplotlib.pyplot as plt
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
-import griffith.geometry as geo
+# import griffith.geometry as geo
 from griffith.mesh import Mesh
-from griffith.geometry import Point, dist
+# from griffith.geometry import Point, dist
 from scipy.spatial import Delaunay
 from scipy.interpolate import LinearNDInterpolator
 # from griffith import solver, log, problem_data, fracture_iterators
-from numpy.linalg import norm
+# from numpy.linalg import norm
 from shapely.geometry import Polygon, LineString
 from scipy.interpolate import Rbf
 
@@ -45,9 +41,6 @@ def test_line(t, A, B):
     """
     return A*t + B
 
-def point_to_edge(p, edge):
-    
-    return dist
 
 def intersection_line(A1, B1, A2, B2):
     """
@@ -384,10 +377,10 @@ plt.quiver(new_xdata, new_ydata, new_z1data, new_z2data, angles='xy', scale_unit
 #         file.write(f"{row[0]} {row[1]}\n")  # Write each element in row format
         
         
-with open("data_circle_RBF.txt", "a") as file:  # 'a' mode appends instead of overwriting
-    for row in approx_data:
+# with open("data_circle_RBF.txt", "a") as file:  # 'a' mode appends instead of overwriting
+#     for row in approx_data:
         
-        file.write(f"{row[0]} {row[1]}\n")  # Write each element in row format
+#         file.write(f"{row[0]} {row[1]}\n")  # Write each element in row format
 
 
 # grid_x, grid_y = np.meshgrid(np.linspace(-1., 1., num = 50),

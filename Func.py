@@ -13,10 +13,7 @@ from numpy.linalg import norm
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
-# G = 3219.  # stiffness of torsion's spring
-G = 10.
 N_T = 200  # time's discretization
-
 
 class Node:
     """A class representing one node of an ice floe"""
@@ -72,7 +69,7 @@ class Floe:
     A class representing an ice floe
     """
 
-    def __init__(self, nodes=None, springs=None, mass=40., stiffness=0, viscosity=0, tenacity=0,
+    def __init__(self, nodes=None, springs=None, mass=900., stiffness=0, torsion_stiff = 0. , viscosity=0, tenacity=0,
                  id_number=None, impact_node=None):
         if nodes:
             self.nodes = nodes
@@ -89,6 +86,7 @@ class Floe:
         self.m = mass   # mass network
         self.mass_node = self.m/self.n  # mass of each node
         self.k = stiffness
+        self.G = torsion_stiff
         self.mu = viscosity
         # self.L = tenacity
         self.id = id_number
@@ -102,12 +100,12 @@ class Floe:
                                 (min(index1, index2), max(index1, index2)))
             self.springs = set(possible)
 
-        self.impact_mass = 10.  # mass of collided object.
+        self.impact_mass = 1000.  # mass of collided object.
         # necessary when collision
         self.mass_nodes = np.full(self.n, self.mass_node)
 
         if impact_node == True:
-            self.mass_nodes[self.n - 1] += 10.
+            self.mass_nodes[self.n - 1] += self.impact_mass
             # print(self.mass_nodes)
 
     def generate_springs(self):
@@ -296,7 +294,7 @@ class Floe:
 
     def torsion_mat(self):
         """ stiffness constant of every torsion spring """
-
+        G = self.G
         mat = np.zeros((self.n, self.n, self.n))
         for i, j, k in self.simplices():
             mat[i, j, k] = G * self.length_mat()[i, j] * self.length_mat()[j,
@@ -1081,6 +1079,7 @@ def Angle(A, B, C):
 def Torsion_mat(floe: Floe):
     """ stiffness constant of every torsion spring """
     mat = np.zeros((floe.n, floe.n, floe.n))
+    G = floe.G
     for i, j, k in floe.simplices():
         mat[i, j, k] = G * floe.length_mat()[i, j] * floe.length_mat()[j,
                                                                        k] / sin(floe.angle_init()[i, j, k])
