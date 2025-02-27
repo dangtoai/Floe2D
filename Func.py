@@ -70,7 +70,7 @@ class Floe:
     """
 
     def __init__(self, nodes=None, springs=None, mass=900., stiffness=0, torsion_stiff = 0. , viscosity=0, tenacity=0,
-                 id_number=None, impact_node=None):
+                 id_number=None, impact_node=False):
         if nodes:
             self.nodes = nodes
             self.n = len(nodes)
@@ -107,7 +107,10 @@ class Floe:
         if impact_node == True:
             self.mass_nodes[self.n - 1] += self.impact_mass
             # print(self.mass_nodes)
-
+    def volume(self):
+        
+        return 0.
+    
     def generate_springs(self):
         """ generates springs if the set of springs is already constructed """
         l = []
@@ -1130,34 +1133,7 @@ and TORSION's spring ( formed by the triangle it belongs to)
 
 def mass_nodes(floe: Floe):
     mass_nodes = floe.mass_nodes
-
     return mass_nodes
-
-# def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
-#             Traction_mat, Torsion_mat, Angle_init, Triangle_list):
-#     Q = np.reshape(Y, (nb_nodes, 2, 2))  # Reshape for easier access
-#     print(Q)
-#     Y_ = np.zeros_like(Q)
-#     inv_m = 1.0 / Mass_mat  # Precompute inverse masses
-
-#     for i in range(nb_nodes):
-#         for j in range(i + 1, i + nb_nodes):
-#             j = j%nb_nodes
-#             u_ij = Unit_vect(Q[i,0], Q[j,0])
-
-#             # force_ij = Connex_mat[i, j] * (
-#             #     Traction_mat[i, j] * (norm(Q[j, 0] - Q[i, 0]) - Length_mat[i, j]) * u_ij
-#             #     + mu * (Q[j, 1] - Q[i, 1]) @ u_ij * u_ij
-
-#             # )
-
-#             force_ij = Connex_mat[i, j] * (Traction_mat[i, j] * (norm(Q[j,0] - Q[i,0]) - Length_mat[i, j]) * u_ij
-#                                            + mu * (Q[j,1] - Q[i,1]) @ u_ij * u_ij)
-#             Y_[i, 1] += inv_m[i] * force_ij
-#             Y_[j, 1] -= inv_m[j] * force_ij
-#     Y_ = np.reshape(Y_, (nb_nodes * 4))
-
-#     return Y_
 
 
 def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
