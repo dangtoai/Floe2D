@@ -13,7 +13,7 @@ from numpy.linalg import norm
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
-N_T = 200  # time's discretization
+N_T = 1500  # time's discretization
 
 class Node:
     """A class representing one node of an ice floe"""
@@ -100,15 +100,33 @@ class Floe:
                                 (min(index1, index2), max(index1, index2)))
             self.springs = set(possible)
 
-        self.impact_mass = 1000.  # mass of collided object.
+        self.impact_mass = 1e8  # mass of collided object.
         # necessary when collision
         self.mass_nodes = np.full(self.n, self.mass_node)
 
         if impact_node == True:
             self.mass_nodes[self.n - 1] += self.impact_mass
             # print(self.mass_nodes)
+
+    def degree(self, i):
+        count = 0
+        for s in self.springs:
+            if i in s: count += 1
+        return count
+    
+    def deg(self):
+        return [self.degree(i) for i in range(self.n)]
+    
+    def maxdegree(self):
+        L = [self.degree(i) for i in range(self.n)]
+        return max(L), L.index(max(L))
+    
+    def meandegree(self):
+        L = [self.degree(i) for i in range(self.n)]
+        return np.mean(L)
+    
     def volume(self):
-        
+        BV = self.border_nodes_index()
         return 0.
     
     def generate_springs(self):
@@ -733,7 +751,7 @@ class Percussion_Wall:
         return Pos, Vel
 
 
-def Energy_studies(All_positions_velocities, floe):
+def Energy_studies(All_positions_velocities, floe, T_end = 1.5):
     """
     Parameters
     ----------
@@ -785,9 +803,18 @@ def Energy_studies(All_positions_velocities, floe):
 
         Traction_energy[index] = Traction_en
         Torsion_energy[index] = Torsion_en
-
+    
+    
     # print(Torsion_energy)
     E_tot = Traction_energy + Torsion_energy
+    
+    
+    # plt.figure()
+    # t = np.linspace(0, T_end, N_T)
+    # plt.plot(t, Traction_energy, label='Traction energy')
+    # plt.plot(t, Torsion_energy, label='Torsion energy')
+    # plt.plot(t, E_tot, label='Total elastic energy')
+    # plt.tight_layout()
     return Traction_energy, Torsion_energy, E_tot
 
 
@@ -1363,3 +1390,9 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
                                                      + mu * (Q[2*j+1] - Q[2*i+1]) @ u_ij * u_ij)
 
     return np.reshape(Y_, (nb_nodes*4))
+
+T_LIMIT = 255 ### (s) limit time of simulation
+
+def timeout_handler(signum, frame):
+    raise TimeoutError("Simulation exceeded time limit and was stopped!")
+

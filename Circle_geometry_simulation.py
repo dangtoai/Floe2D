@@ -26,7 +26,7 @@ sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri/")
 
 # np.random.seed(1212)
 
-lambda_intensity= 0.0025 
+lambda_intensity= 0.003 
 radius = 100.
 
 area = np.pi * radius**2  # Area of the disk
@@ -76,7 +76,7 @@ rank = comm.Get_rank()  # Process ID
 size = comm.Get_size()  # Total number of processes
 
 # Unique output filename per MPI process
-filename = f"masses-springs_circle_{rank+1}.csv"
+filename = f"masses-springs_limit_circle_{rank+1}.csv"
 
 with open(filename, mode = 'w', newline = '', encoding='utf-8') as csv_file:
     csv_writer = csv.writer(csv_file, delimiter=',')

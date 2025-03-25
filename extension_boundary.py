@@ -10,6 +10,7 @@ from mpi4py import MPI
 
 import csv
 import sys
+import os 
 import numpy as np
 from numpy import pi, sin, cos
 import matplotlib.pyplot as plt
@@ -151,7 +152,9 @@ polygon = Polygon(poly_coord)
 
 data = []
 
-filename = f"boundary_data_circle_{rank+1}.csv"
+filename = f"boundary_data_limit_circle_{rank+1}.csv"
+# filename = f"boundary_data_limit_circle_6.csv"
+
 
 with open(filename, 'r', encoding='utf-8') as csv_file:
     lines = csv_file.readlines()
@@ -167,6 +170,7 @@ xdata, ydata = data[:, 0], data[:, 1]
 z1data = data[:,2] 
 z2data = data[:,3] 
 Points = np.array(list(zip(xdata, ydata)))
+
 
 # plt.figure()
 # plt.plot(xdata, ydata, 'o')
@@ -188,6 +192,7 @@ tri = Delaunay(np.column_stack((xdata, ydata)))
 
 interp_function_x = LinearNDInterpolator(tri, z1data)
 interp_function_y = LinearNDInterpolator(tri, z2data)
+
 
 
 def f_x(x_eval, y_eval):
@@ -367,7 +372,7 @@ new_ydata = [radius * sin(theta) for theta in np.linspace(-pi/2, pi/2, 41) ]
 new_z1data = approx_data[:,0] 
 new_z2data = approx_data[:,1] 
 
-tri = Delaunay(np.column_stack((new_xdata, new_ydata)))
+# tri = Delaunay(np.column_stack((new_xdata, new_ydata)))
 
 # fig = plt.figure(figsize=(8, 6))
 # ax = fig.add_subplot(111, projection="3d")
@@ -376,18 +381,24 @@ tri = Delaunay(np.column_stack((new_xdata, new_ydata)))
 
 
 # plt.figure()
-# plt.quiver(new_xdata, new_ydata, new_z1data, new_z2data, angles='xy', scale_units='xy', scale=0.1)
+# plt.quiver(new_xdata, new_ydata, new_z1data, new_z2data, angles='xy', scale_units='xy', scale=0.01)
 
 
 
-filename = f"data_circle_RBF_{rank+1}.txt"
+filename = f"data_circle_limit_RBF_{rank+1}.txt"
 with open(filename, "a") as file:  # 'a' mode appends instead of overwriting
     for row in approx_data:
         file.write(f"{row[0]} {row[1]}\n")  # Write each element in row format
 
 print(f"Process {rank} saved data to {filename}")
 
-        
+filename = f"boundary_data_limit_circle_{rank+1}.csv"
+if os.path.exists(filename):
+    os.remove(filename)
+    print(f"{filename} has been deleted.")
+else:
+    print(f"{filename} does not exist.")
+
 # with open("data_circle_RBF.txt", "a") as file:  # 'a' mode appends instead of overwriting
 #     for row in approx_data:
         
