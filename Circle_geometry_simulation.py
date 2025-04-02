@@ -30,7 +30,8 @@ lambda_intensity= 0.003
 radius = 100.
 
 area = np.pi * radius**2  # Area of the disk
-num_points = np.random.poisson(lambda_intensity * area)  # Poisson-distributed number of points
+# num_points = np.random.poisson(lambda_intensity * area)  # Poisson-distributed number of points
+num_points = 99
 
 print(num_points)
 # Generate uniform random points in polar coordinates

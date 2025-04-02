@@ -100,7 +100,7 @@ class Floe:
                                 (min(index1, index2), max(index1, index2)))
             self.springs = set(possible)
 
-        self.impact_mass = 1e8  # mass of collided object.
+        self.impact_mass = 1e5  # mass of collided object.
         # necessary when collision
         self.mass_nodes = np.full(self.n, self.mass_node)
 
@@ -1391,7 +1391,7 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
 
     return np.reshape(Y_, (nb_nodes*4))
 
-T_LIMIT = 255 ### (s) limit time of simulation
+T_LIMIT = 250 ### (s) limit time of simulation
 
 def timeout_handler(signum, frame):
     raise TimeoutError("Simulation exceeded time limit and was stopped!")

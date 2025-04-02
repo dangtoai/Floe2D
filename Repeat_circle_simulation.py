@@ -9,7 +9,7 @@ Created on Thu Jan 30 16:54:02 2025
 import subprocess
 # Runs file.py 100 times
 
-num_procs = 6
+num_procs = 5
 scripts = ["Circle_geometry_simulation.py", 
            "deformation_computation_circle.py", 
            "extension_boundary.py"]

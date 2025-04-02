@@ -55,7 +55,7 @@ if __name__ == '__main__':
     lamb, mu = E*nu/ ((1+nu)*(1-2*nu)), E/(2*(1+nu))
     
     ### K,G springs stiffness
-    traction_stiff, torsion_stiff = np.linalg.solve(matrix, np.array([lamb, mu]))
+    traction_stiff, torsion_stiff = np.linalg.solve(matrix, np.array([lamb, mu])) 
 
     
     
@@ -136,14 +136,6 @@ if __name__ == '__main__':
         
     except TimeoutError as e: print(e)
 
-    
-    # start_time = time.time()
-    # All_positions_velocities = floe.Move(
-    #     T_END, Traction_Mat, Length_Mat, Torsion_Mat, Angle_Mat).y
-    # end_time = time.time()
-
-    # print("time of simulation = ", end_time - start_time)
-
     Energy = Energy_studies(All_positions_velocities, floe)
     
     
@@ -151,7 +143,10 @@ if __name__ == '__main__':
     M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
     print("characteristic collision time = ", M*T_END/N_T)
     # M = N_T
-
+    if M == 1499: 
+        print("Stopping execution because M == 1500")
+        sys.exit()
+        
     t = np.linspace(0, T_END, N_T)
     
     # cutting the data after T*
@@ -265,7 +260,9 @@ if __name__ == '__main__':
 
     ### write csv file to save the displacement field
     ### only data on the boundary is needed
-    index_boundary = floe.border_nodes_index()[:-1]
+    # index_boundary = floe.border_nodes_index()[:-1]
+    
+    index_boundary = np.arange(floe.n)
     Xboundary, Yboundary = X[index_boundary], Y[index_boundary]
     data_x, data_y = data_deformation[index_boundary][:,0], data_deformation[index_boundary][:,1]
 
