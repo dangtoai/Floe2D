@@ -6,14 +6,6 @@ Created on Wed Jan 29 11:23:28 2025
 @author: phandangtoai
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 13 17:16:06 2023
-
-@author: phandangtoai
-"""
-
 from mpi4py import MPI
 import csv
 import signal
@@ -25,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
 from griffith.geometry import Point, Polygon, dist
+from Func import Angle_mat, Traction_mat, Length_mat, Torsion_mat
 from Func import Node, Floe, Energy_studies, N_T, timeout_handler, T_LIMIT
 # from Circle_geometry_simulation import radius
 
@@ -53,12 +46,12 @@ if __name__ == '__main__':
     
     ### Lame parameters
     lamb, mu = E*nu/ ((1+nu)*(1-2*nu)), E/(2*(1+nu))
-    
+        
     ### K,G springs stiffness
     traction_stiff, torsion_stiff = np.linalg.solve(matrix, np.array([lamb, mu])) 
+    # torsion_stiff = 0
+    
 
-    
-    
     filename = f"masses-springs_limit_circle_{rank+1}.csv"
     
     print(f" reading network from Process {rank} in {filename}")
@@ -107,12 +100,29 @@ if __name__ == '__main__':
     
     # floe.plot_init()
     # Simulation of masses-springs network
-    Traction_Mat = floe.traction_mat()
-    Length_Mat = floe.length_mat()
-    Torsion_Mat = floe.torsion_mat()
-    Angle_Mat = floe.angle_init()
+    
+    Angle_Mat = Angle_mat(floe)
+    Traction_Mat = Traction_mat(floe, Angle_Mat)
+    Length_Mat = Length_mat(floe)
+    Torsion_Mat = Torsion_mat(floe)
+    
+    
+    # Traction_Mat = floe.traction_mat()
+    # Length_Mat = floe.length_mat()
+    # Torsion_Mat = floe.torsion_mat()
+    # Angle_Mat = floe.angle_init()
+    
+    
+    
     # Mass_mat = floe.mass_nodes
-
+    
+    #### compute effective stiffness
+    Neighbors = floe.Neighbors()[floe.n-1]
+    K_neighbors = [Traction_Mat[floe.n-1, i] for i in Neighbors]
+    K_eff = sum(K_neighbors)
+    
+    print("max displacement of q_0:", -np.sqrt(floe.mass_nodes[-1]/K_eff))
+    
     T_END = 1.5  # time end
 
     dt = T_END/N_T  # time's step
@@ -138,15 +148,14 @@ if __name__ == '__main__':
 
     Energy = Energy_studies(All_positions_velocities, floe)
     
-    
     ##### finding time T* := argmax of the energy elastic
     M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
     print("characteristic collision time = ", M*T_END/N_T)
     # M = N_T
-    if M == 1499: 
-        print("Stopping execution because M == 1500")
+    if M == N_T: 
+        print(f"Stopping execution because M == {N_T}")
         sys.exit()
-        
+    
     t = np.linspace(0, T_END, N_T)
     
     # cutting the data after T*
@@ -156,8 +165,6 @@ if __name__ == '__main__':
     # fig = plt.figure()
     # ax = fig.add_subplot(111, autoscale_on=True,
     #                       xlim=(-radius-1., radius + 2.), ylim=(-radius-1.2,radius+ 1.1))
-    # ax = fig.add_subplot(111, autoscale_on=True,
-    #                       xlim=(-1-1., 1 + 2.), ylim=(-1-1.2,1+ 1.1))
     
     # ax.set_aspect('equal')
     # # ### ax.grid()
@@ -221,6 +228,7 @@ if __name__ == '__main__':
     U = [deformation_field[2*i][M-1] for i in range(len(Nodes))]  # List of x-components of deformation
     V = [deformation_field[2*i+1][M-1] for i in range(len(Nodes))]  # List of y-components of deformation
     
+    print("real displacement of q_0:",U[-1])
     ### plotting the displacement field
     # plt.figure()
     # plt.quiver(X,Y,U,V,angles='xy', scale_units='xy', scale=0.03)
@@ -229,8 +237,8 @@ if __name__ == '__main__':
     data_deformation = deformation_field[:, -1].reshape(floe.n, 2)
 
     ### plot displacement field in the 1st-direction
-    min_val = min(np.min(data_deformation[:, 0]), np.min(data_deformation[:, 1]))
-    max_val = max(np.max(data_deformation[:, 0]), np.max(data_deformation[:, 1]))
+    # min_val = min(np.min(data_deformation[:, 0]), np.min(data_deformation[:, 1]))
+    # max_val = max(np.max(data_deformation[:, 0]), np.max(data_deformation[:, 1]))
 
     # fig = plt.figure(figsize=(12, 6))
 

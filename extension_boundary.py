@@ -380,8 +380,8 @@ new_z2data = approx_data[:,1]
 # plt.title("$u_1$")
 
 
-# plt.figure()
-# plt.quiver(new_xdata, new_ydata, new_z1data, new_z2data, angles='xy', scale_units='xy', scale=0.01)
+plt.figure()
+plt.quiver(new_xdata, new_ydata, new_z1data, new_z2data, angles='xy', scale_units='xy', scale=0.01)
 
 
 

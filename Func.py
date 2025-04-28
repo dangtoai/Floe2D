@@ -2,7 +2,7 @@ from math import acos, sin
 from scipy.sparse import coo_matrix
 from scipy.integrate import solve_ivp
 from scipy.spatial import Delaunay
-
+# import time
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
@@ -13,7 +13,8 @@ from numpy.linalg import norm
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
-N_T = 1500  # time's discretization
+N_T = 3000  # time's discretization
+
 
 class Node:
     """A class representing one node of an ice floe"""
@@ -57,7 +58,7 @@ class Spring:
 
     def get_nodes(self):
         """ Positions of 2 nodes in this spring """
-        return [self.node1.position(), self.node2.position()]
+        return np.array([self.node1.position(), self.node2.position()])
 
     def get_details(self):
         """ information of the node: positions and length """
@@ -69,7 +70,7 @@ class Floe:
     A class representing an ice floe
     """
 
-    def __init__(self, nodes=None, springs=None, mass=900., stiffness=0, torsion_stiff = 0. , viscosity=0, tenacity=0,
+    def __init__(self, nodes=None, springs=None, mass=28274333.88230814, stiffness=372350.3982346764, torsion_stiff=32193.692227271033, viscosity=0, tenacity=0,
                  id_number=None, impact_node=False):
         if nodes:
             self.nodes = nodes
@@ -82,6 +83,13 @@ class Floe:
         else:
             print("Ice floe "+str(id_number) +
                   " created but contains no springs")
+
+        self.E = 8.95*10**9  # Young modulus
+        self.nu = 0.295  # Poisson ratio
+
+        # Lame parameters
+        self.lamb = self.E*self.nu / ((1+self.nu)*(1-2*self.nu))
+        self.g = self.E/(2*(1+self.nu))
 
         self.m = mass   # mass network
         self.mass_node = self.m/self.n  # mass of each node
@@ -100,7 +108,9 @@ class Floe:
                                 (min(index1, index2), max(index1, index2)))
             self.springs = set(possible)
 
-        self.impact_mass = 1e5  # mass of collided object.
+        # self.impact_mass = 200  # mass of collided object.
+
+        self.impact_mass = 1e3
         # necessary when collision
         self.mass_nodes = np.full(self.n, self.mass_node)
 
@@ -111,24 +121,25 @@ class Floe:
     def degree(self, i):
         count = 0
         for s in self.springs:
-            if i in s: count += 1
+            if i in s:
+                count += 1
         return count
-    
+
     def deg(self):
         return [self.degree(i) for i in range(self.n)]
-    
+
     def maxdegree(self):
         L = [self.degree(i) for i in range(self.n)]
         return max(L), L.index(max(L))
-    
+
     def meandegree(self):
         L = [self.degree(i) for i in range(self.n)]
         return np.mean(L)
-    
+
     def volume(self):
         BV = self.border_nodes_index()
         return 0.
-    
+
     def generate_springs(self):
         """ generates springs if the set of springs is already constructed """
         l = []
@@ -256,7 +267,7 @@ class Floe:
 
     def get_nodes(self):
         """return position of all nodes"""
-        return [node.position() for node in self.nodes]
+        return np.array([node.position() for node in self.nodes])
 
     def simplices(self):
         """
@@ -336,8 +347,11 @@ class Floe:
         """ stiffness constant of traction spring """
         mat = np.zeros((self.n, self.n))
         for i, j, k in self.simplices():
+            # start = time.time()
+
             mat[i, j] += self.k / sin(self.angle_init()[i, k, j])
             mat[j, i] = mat[i, j]
+            # end = time.time()
 
             mat[i, k] += self.k / sin(self.angle_init()[i, j, k])
             mat[k, i] = mat[i, k]
@@ -347,28 +361,66 @@ class Floe:
         mat = coo_matrix(mat)
         return mat.todok()
 
-    def Neighbor_contact(self, contact_node):
-        Neighbor_contact = [np.any(self.simplices()[i] == contact_node)
-                            for i in range(len(self.simplices()))]
-        Neighbor_contact = [i for i, val in enumerate(
-            Neighbor_contact) if val is True]
-        Neighbor_contact = self.simplices()[Neighbor_contact]
-        return Neighbor_contact
+    # def Neighbor_contact(self, contact_node):
+    #     Neighbor_contact = [np.any(self.simplices()[i] == contact_node)
+    #                         for i in range(len(self.simplices()))]
+    #     # print(Neighbor_contact)
+    #     Neighbor_contact = [i for i, val in enumerate(
+    #         Neighbor_contact) if val is True]
+    #     # print(Neighbor_contact)
+    #     Neighbor_contact = self.simplices()[Neighbor_contact]
+    #     return Neighbor_contact
+
+    def Neighbors(self):
+        edge_set = self.springs
+        edge_array = np.array(list(edge_set), dtype=int)
+        # print(edge_array)
+        reverse_edges = edge_array[:, [1, 0]]
+        all_edges = np.vstack((edge_array, reverse_edges))
+
+        # Number of nodes (infer from max index)
+        num_nodes = all_edges.max() + 1
+
+        # Sort edges by the source node
+        sorted_idx = np.argsort(all_edges[:, 0])
+        all_edges = all_edges[sorted_idx]
+
+        # Group neighbors by node
+        unique_nodes, start_idx = np.unique(all_edges[:, 0], return_index=True)
+        neighbors = []
+        for i in range(num_nodes):
+            if i in unique_nodes:
+                idx = np.where(unique_nodes == i)[0][0]
+                start = start_idx[idx]
+                end = start_idx[idx + 1] if idx + \
+                    1 < len(start_idx) else len(all_edges)
+                neighbors.append(np.unique(all_edges[start:end, 1]))
+            else:
+                neighbors.append(np.array([], dtype=int))
+
+        # print(neighbors)
+        return neighbors
+
+    def neighbors(self, i):
+        return self.Neighbors()[i]
 
     def Move(self, time_end: float, Traction_mat, Length_mat, Torsion_mat, Angle_mat):
         t = np.linspace(0, time_end, N_T)
+        mass_nodes = self.mass_nodes
+        simplices = self.simplices()
         CM = self.connexe_mat()
         All_pos = self.get_nodes()
         All_vel = self.get_velocity()
-        Y0_ = np.array([])
-        for i in range(self.n):
-            Y0_ = np.append(Y0_, All_pos[i])
-            Y0_ = np.append(Y0_, All_vel[i])
+
+        Y0_ = np.empty((2 * self.n, All_pos.shape[1]))
+        Y0_[0::2] = All_pos
+        Y0_[1::2] = All_vel
+        Y0_ = Y0_.flatten()
 
         # Sol = explicit_euler(System(t, Y0_, Y0_, self.n, CM, Length_mat, self.m, self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()), Y0_, 0, time_end, 1./N_T)
         Sol = solve_ivp(System, [0, time_end], Y0_, t_eval=t,
-                        args=(self.n, CM, Length_mat, self.mass_nodes,
-                              self.mu, Traction_mat, Torsion_mat, Angle_mat, self.simplices()), method='BDF')
+                        args=(self.n, CM, Length_mat, mass_nodes,
+                              self.mu, Traction_mat, Torsion_mat, Angle_mat, simplices), method='BDF')
 
         return Sol
 
@@ -751,7 +803,7 @@ class Percussion_Wall:
         return Pos, Vel
 
 
-def Energy_studies(All_positions_velocities, floe, T_end = 1.5):
+def Energy_studies(All_positions_velocities, floe, T_end=1.5):
     """
     Parameters
     ----------
@@ -767,18 +819,22 @@ def Energy_studies(All_positions_velocities, floe, T_end = 1.5):
     E_c: kinematic energy of network.
 
     """
-    Length_mat = floe.length_mat()
-    Torsion_mat = floe.torsion_mat()
-    Angle_mat = floe.angle_init()
-    K = floe.k
-    Connect = floe.connexe_mat()
-    Traction_energy = np.zeros(len(All_positions_velocities[0]))
-    Torsion_energy = np.zeros(len(All_positions_velocities[0]))
 
-    for index in range(len(All_positions_velocities[0])):
+    simplices = floe.simplices()
+    Torsion = Torsion_mat(floe)
+    Connect = Connexe_mat(floe)
+    Length_ = Length_mat(floe)
+    Angle_ = Angle_mat(floe)
+    K = floe.k
+    n = floe.n
+
+    Traction_energy = np.zeros(n)
+    Torsion_energy = np.zeros(n)
+
+    for index in range(n):
         Traction_en = 0.
         Torsion_en = 0.
-        for i, j, k in floe.simplices():
+        for i, j, k in simplices:
             Qi = np.array([All_positions_velocities[4*i][index],
                           All_positions_velocities[4*i+1][index]])
             Qj = np.array([All_positions_velocities[4*j][index],
@@ -789,26 +845,24 @@ def Energy_studies(All_positions_velocities, floe, T_end = 1.5):
             l_ik = norm(Qi-Qk)
             l_jk = norm(Qj-Qk)
 
-            Traction_en += 0.5 * (Connect[i, j] * (K/sin(Angle_mat[i, k, j])) * (l_ij - Length_mat[i, j])**2
-                                  + (Connect[i, k] * K/sin(Angle_mat[i, j, k])
-                                     ) * (l_ik - Length_mat[i, k])**2
-                                  + (Connect[j, k] * K/sin(Angle_mat[j, i, k])) * (l_jk - Length_mat[j, k])**2)
+            Traction_en += 0.5 * (Connect[i, j] * (K/sin(Angle_[i, k, j])) * (l_ij - Length_[i, j])**2
+                                  + (Connect[i, k] * K/sin(Angle_[i, j, k])
+                                     ) * (l_ik - Length_[i, k])**2
+                                  + (Connect[j, k] * K/sin(Angle_[j, i, k])) * (l_jk - Length_[j, k])**2)
 
-            Torsion_en += 0.5 * (Torsion_mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_mat[i, j, k])**2
-                                 + Torsion_mat[i, k, j] *
-                                 (Angle(Qi, Qk, Qj) - Angle_mat[i, k, j])**2
-                                 + Torsion_mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_mat[j, i, k])**2)
+            Torsion_en += 0.5 * (Torsion[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_[i, j, k])**2
+                                 + Torsion[i, k, j] *
+                                 (Angle(Qi, Qk, Qj) - Angle_[i, k, j])**2
+                                 + Torsion[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_[j, i, k])**2)
 
         # print(i)
 
         Traction_energy[index] = Traction_en
         Torsion_energy[index] = Torsion_en
-    
-    
+
     # print(Torsion_energy)
     E_tot = Traction_energy + Torsion_energy
-    
-    
+
     # plt.figure()
     # t = np.linspace(0, T_end, N_T)
     # plt.plot(t, Traction_energy, label='Traction energy')
@@ -1093,6 +1147,17 @@ def Orthogonal_vect(v):
     return np.array([-v[1], v[0]])
 
 
+def Connexe_mat(floe: Floe):
+    """ Connectivity matrix """
+
+    mat = np.zeros((floe.n, floe.n))
+    for (i, j) in floe.springs:
+        mat[i, j] = 1
+        mat[j, i] = mat[i, j]
+    mat = coo_matrix(mat)
+    return mat.todok()
+
+
 def Angle(A, B, C):
     """
     Input: coordinates of 3 nodes (A,B,C)
@@ -1110,19 +1175,38 @@ def Torsion_mat(floe: Floe):
     """ stiffness constant of every torsion spring """
     mat = np.zeros((floe.n, floe.n, floe.n))
     G = floe.G
-    for i, j, k in floe.simplices():
-        mat[i, j, k] = G * floe.length_mat()[i, j] * floe.length_mat()[j,
-                                                                       k] / sin(floe.angle_init()[i, j, k])
+    simplices = floe.simplices()
+    lengths = floe.length_mat()
+    angle_init = floe.angle_init()
+
+    for i, j, k in simplices:
+        mat[i, j, k] = G * lengths[i, j] * lengths[j,
+                                                   k] / sin(angle_init[i, j, k])
         mat[k, j, i] = mat[i, j, k]
 
-        mat[i, k, j] = G * floe.length_mat()[i, k] * floe.length_mat()[j,
-                                                                       k] / sin(floe.angle_init()[i, k, j])
+        mat[i, k, j] = G * lengths[i, k] * lengths[j,
+                                                   k] / sin(angle_init[i, k, j])
         mat[j, k, i] = mat[i, k, j]
 
-        mat[j, i, k] = G * floe.length_mat()[i, j] * floe.length_mat()[i,
-                                                                       k] / sin(floe.angle_init()[j, i, k])
+        mat[j, i, k] = G * lengths[i, j] * lengths[i,
+                                                   k] / sin(angle_init[j, i, k])
         mat[k, i, j] = mat[j, i, k]
     return mat
+
+
+def Traction_mat(floe: Floe, angle_mat):
+    mat = np.zeros((floe.n, floe.n))
+    for i, j, k in floe.simplices():
+        mat[i, j] += floe.k / sin(angle_mat[i, k, j])
+        mat[j, i] = mat[i, j]
+
+        mat[i, k] += floe.k / sin(angle_mat[i, j, k])
+        mat[k, i] = mat[i, k]
+
+        mat[j, k] += floe.k / sin(angle_mat[k, i, j])
+        mat[k, j] = mat[j, k]
+    mat = coo_matrix(mat)
+    return mat.todok()
 
 
 def Angle_mat(floe: Floe):
@@ -1148,7 +1232,8 @@ def Length_mat(floe: Floe):
     for (i, j) in floe.springs:
         mat[i, j] = Spring(floe.nodes[i], floe.nodes[j], None).L0
         mat[j, i] = mat[i, j]
-    return mat
+    mat = coo_matrix(mat)
+    return mat.todok()
 
 
 """
@@ -1198,8 +1283,6 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
     for i in range(0, nb_nodes):
         Y_[2*i] = Q[2*i+1]
         for j in range(i+1, nb_nodes):
-            # j = j % nb_nodes
-
             u_ij = Unit_vect(Q[2*i], Q[2*j])
             force = Connex_mat[i, j] * (K[i, j] * (norm(Q[2*j]-Q[2*i]) - Length_mat[i, j]) * u_ij
                                         + mu * (Q[2*j+1] - Q[2*i+1]) @ u_ij * u_ij)
@@ -1209,19 +1292,18 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
     # to verify this part of calculation,
     # using 1 floe of 3 nodes
     # try different initial speed of each node
-    
 
-    
     for i, j, k in Triangle_list:
-        if orientation(Q[2*i], Q[2*j], Q[2*k]) != 1 : (j,k) = k,j
-        
+        if orientation(Q[2*i], Q[2*j], Q[2*k]) != 1:
+            (j, k) = k, j
+
         # unit vector
         u_ij = Unit_vect(Q[2*i], Q[2*j])
-        u_ji = -u_ij
+        # u_ji = -u_ij
         u_ik = Unit_vect(Q[2*i], Q[2*k])
         u_ki = -u_ik
         u_jk = Unit_vect(Q[2*j], Q[2*k])
-        u_kj = -u_jk
+        # u_kj = -u_jk
 
         # print(u_ij, u_ik, u_jk)
 
@@ -1230,7 +1312,6 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
         l_ik = norm(Q[2*k]-Q[2*i])
         l_kj = norm(Q[2*j]-Q[2*k])
 
-        
         Theta_i = Angle(Q[2*j], Q[2*i], Q[2*k])
         Theta_j = Angle(Q[2*i], Q[2*j], Q[2*k])
         Theta_k = Angle(Q[2*i], Q[2*k], Q[2*j])
@@ -1239,11 +1320,14 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
 
     # #     # Force independant of traction's length
 
-        force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * ((Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
+        force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
+            (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
 
-        force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * ((Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
+        force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
+            (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
 
-        force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
+        force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(
+            u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
 
         Y_[2*i+1] += inv_m[i] * force_i  # Force on node i
         Y_[2*j+1] += inv_m[j] * force_j  # Force on node j
@@ -1324,6 +1408,7 @@ def System_stable_1(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_
 
     return np.reshape(Y_, (nb_nodes*4))
 
+
 def orientation(A, B, C):
     """
     Returns the orientation of the triplet (A, B, C).
@@ -1338,6 +1423,7 @@ def orientation(A, B, C):
         return -1  # CW
     else:
         return 0  # Collinear
+
 
 def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Traction_mat, Torsion_mat, Angle_init, Triangle_list, contact_node):
     """
@@ -1366,8 +1452,6 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
     Q = np.reshape(Y, (nb_nodes*2, 2))
     Y_ = np.zeros_like(Q)
     k = Traction_mat
-    # G = Torsion_mat
-    # Theta0 = Angle_init
     inv_m = 1./m
     # find the neigborhood of contact node
     Neighbor_contact = [np.any(Triangle_list[i] == contact_node)
@@ -1391,8 +1475,9 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
 
     return np.reshape(Y_, (nb_nodes*4))
 
-T_LIMIT = 250 ### (s) limit time of simulation
+
+T_LIMIT = 240  # (s) limit time of simulation
+
 
 def timeout_handler(signum, frame):
     raise TimeoutError("Simulation exceeded time limit and was stopped!")
-
