@@ -2,7 +2,7 @@ from math import acos, sin
 from scipy.sparse import coo_matrix
 from scipy.integrate import solve_ivp
 from scipy.spatial import Delaunay
-# import time
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
@@ -803,73 +803,141 @@ class Percussion_Wall:
         return Pos, Vel
 
 
-def Energy_studies(All_positions_velocities, floe, T_end=1.5):
+def Energy_studies(All_positions_velocities, floe, Length_mat, Angle_mat, Torsion_mat, T_end=1.5):
     """
-    Parameters
-    ----------
-    All_positions_velocities : Evolution of all nodes and velocities
-    floe : result of simulation, vector contains positions and velocity of all node.
-
-    Returns
-    -------
-    Traction_energy 
-    Torsion_energy 
-
-    E_tot : elastic energy of a floe. 
-    E_c: kinematic energy of network.
-
+    Optimized version of Energy_studies function.
     """
-
-    simplices = floe.simplices()
-    Torsion = Torsion_mat(floe)
-    Connect = Connexe_mat(floe)
-    Length_ = Length_mat(floe)
-    Angle_ = Angle_mat(floe)
+    start_time = time.time()
     K = floe.k
-    n = floe.n
-
-    Traction_energy = np.zeros(n)
-    Torsion_energy = np.zeros(n)
-
-    for index in range(n):
+    Connect = floe.connexe_mat()
+    N_T = len(All_positions_velocities[0])
+    
+    # Precompute indices for vectorization
+    simplices = floe.simplices()
+    # num_simplices = len(simplices)
+    
+    # Preallocate arrays
+    Traction_energy = np.zeros(N_T)
+    Torsion_energy = np.zeros(N_T)
+    
+    # Precompute all positions for all time steps
+    positions = np.zeros((N_T, len(All_positions_velocities)//4, 2))
+    for i in range(len(All_positions_velocities)//4):
+        positions[:, i, 0] = All_positions_velocities[4*i]
+        positions[:, i, 1] = All_positions_velocities[4*i+1]
+    
+    for index in range(N_T):
         Traction_en = 0.
         Torsion_en = 0.
+        
         for i, j, k in simplices:
-            Qi = np.array([All_positions_velocities[4*i][index],
-                          All_positions_velocities[4*i+1][index]])
-            Qj = np.array([All_positions_velocities[4*j][index],
-                          All_positions_velocities[4*j+1][index]])
-            Qk = np.array([All_positions_velocities[4*k][index],
-                          All_positions_velocities[4*k+1][index]])
-            l_ij = norm(Qi-Qj)
-            l_ik = norm(Qi-Qk)
-            l_jk = norm(Qj-Qk)
-
-            Traction_en += 0.5 * (Connect[i, j] * (K/sin(Angle_[i, k, j])) * (l_ij - Length_[i, j])**2
-                                  + (Connect[i, k] * K/sin(Angle_[i, j, k])
-                                     ) * (l_ik - Length_[i, k])**2
-                                  + (Connect[j, k] * K/sin(Angle_[j, i, k])) * (l_jk - Length_[j, k])**2)
-
-            Torsion_en += 0.5 * (Torsion[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_[i, j, k])**2
-                                 + Torsion[i, k, j] *
-                                 (Angle(Qi, Qk, Qj) - Angle_[i, k, j])**2
-                                 + Torsion[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_[j, i, k])**2)
-
-        # print(i)
-
+            Qi = positions[index, i]
+            Qj = positions[index, j]
+            Qk = positions[index, k]
+            
+            # Vector differences
+            dij = Qi - Qj
+            dik = Qi - Qk
+            djk = Qj - Qk
+            
+            # Lengths
+            l_ij = norm(dij)
+            l_ik = norm(dik)
+            l_jk = norm(djk)
+            
+            # Traction energy terms
+            if Connect[i, j]:
+                Traction_en += 0.5 * (K / np.sin(Angle_mat[i, k, j])) * (l_ij - Length_mat[i, j])**2
+            if Connect[i, k]:
+                Traction_en += 0.5 * (K / np.sin(Angle_mat[i, j, k])) * (l_ik - Length_mat[i, k])**2
+            if Connect[j, k]:
+                Traction_en += 0.5 * (K / np.sin(Angle_mat[j, i, k])) * (l_jk - Length_mat[j, k])**2
+            
+            # Angle calculations
+            angle_ijk = Angle(Qi, Qj, Qk)
+            angle_ikj = Angle(Qi, Qk, Qj)
+            angle_jik = Angle(Qj, Qi, Qk)
+            
+            # Torsion energy terms
+            Torsion_en += 0.5 * (Torsion_mat[i, j, k] * (angle_ijk - Angle_mat[i, j, k])**2 +
+                                 Torsion_mat[i, k, j] * (angle_ikj - Angle_mat[i, k, j])**2 +
+                                 Torsion_mat[j, i, k] * (angle_jik - Angle_mat[j, i, k])**2)
+        
         Traction_energy[index] = Traction_en
         Torsion_energy[index] = Torsion_en
-
-    # print(Torsion_energy)
+    
     E_tot = Traction_energy + Torsion_energy
-
-    # plt.figure()
-    # t = np.linspace(0, T_end, N_T)
-    # plt.plot(t, Traction_energy, label='Traction energy')
-    # plt.plot(t, Torsion_energy, label='Torsion energy')
-    # plt.plot(t, E_tot, label='Total elastic energy')
-    # plt.tight_layout()
+    end_time = time.time()
+    print("time of computation = ", start_time-end_time)
     return Traction_energy, Torsion_energy, E_tot
+
+
+# def Energy_studies(All_positions_velocities, floe, Length_mat, Angle_mat, Torsion_mat, T_end = 1.5):
+#     """
+#     Parameters
+#     ----------
+#     All_positions_velocities : Evolution of all nodes and velocities
+#     floe : result of simulation, vector contains positions and velocity of all node.
+
+#     Returns
+#     -------
+#     Traction_energy 
+#     Torsion_energy 
+
+#     E_tot : elastic energy of a floe. 
+#     E_c: kinematic energy of network.
+
+#     """
+#     start_time = time.time()
+#     # K = floe.k
+#     Connect = floe.connexe_mat()
+#     Traction_matrix = Traction_mat(floe, Angle_mat)
+#     simplices = floe.simplices()
+#     Traction_energy = np.zeros(N_T)
+#     Torsion_energy = np.zeros(N_T)
+
+#     for index in range(N_T):
+#         Traction_en = 0.
+#         Torsion_en = 0.
+#         for i, j, k in simplices:
+#             Qi = np.array([All_positions_velocities[4*i][index],
+#                           All_positions_velocities[4*i+1][index]])
+#             Qj = np.array([All_positions_velocities[4*j][index],
+#                           All_positions_velocities[4*j+1][index]])
+#             Qk = np.array([All_positions_velocities[4*k][index],
+#                           All_positions_velocities[4*k+1][index]])
+#             l_ij = norm(Qi-Qj)
+#             l_ik = norm(Qi-Qk)
+#             l_jk = norm(Qj-Qk)
+
+#             Traction_en += 0.5 * (Connect[i, j] * (Traction_matrix[i, j]) * (l_ij - Length_mat[i, j])**2
+#                                   + (Connect[i, k] * Traction_matrix[i, k]
+#                                      ) * (l_ik - Length_mat[i, k])**2
+#                                   + (Connect[j, k] * Traction_matrix[j, k]) * (l_jk - Length_mat[j, k])**2)
+
+#             Torsion_en += 0.5 * (Torsion_mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_mat[i, j, k])**2
+#                                  + Torsion_mat[i, k, j] *
+#                                  (Angle(Qi, Qk, Qj) - Angle_mat[i, k, j])**2
+#                                  + Torsion_mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_mat[j, i, k])**2)
+
+#         # print(i)
+
+#         Traction_energy[index] = Traction_en
+#         Torsion_energy[index] = Torsion_en
+    
+    
+#     # print(Torsion_energy)
+#     E_tot = Traction_energy + Torsion_energy
+#     end_time = time.time()
+#     print("time of computation = ", start_time-end_time)
+#     # plt.figure()
+#     # t = np.linspace(0, T_end, N_T)
+#     # plt.plot(t, Traction_energy, label='Traction energy')
+#     # plt.plot(t, Torsion_energy, label='Torsion energy')
+#     # plt.plot(t, E_tot, label='Total elastic energy')
+#     # plt.tight_layout()
+#     return Traction_energy, Torsion_energy, E_tot
+
 
 
 def Angular_speed_list(All_positions_velocities, floe, T_end=1.2, N_T=N_T):
