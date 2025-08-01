@@ -28,7 +28,7 @@ if __name__ == '__main__':
     rank = comm.Get_rank()  # Process ID
     size = comm.Get_size()  # Total number of processes
 
-    radius = 100.
+    radius = 250.
     Nodes = []
     Points = []
 
@@ -50,6 +50,7 @@ if __name__ == '__main__':
     ### K,G springs stiffness
     traction_stiff, torsion_stiff = np.linalg.solve(matrix, np.array([lamb, mu])) 
     # torsion_stiff = 0
+    # traction_stiff, torsion_stiff = 0.08, 0.
     
 
     filename = f"masses-springs_limit_circle_{rank+1}.csv"
@@ -69,7 +70,7 @@ if __name__ == '__main__':
 
     # # floe.plot_init()
     point_input = Point(radius, 0)
-    V0 = np.array([-1. , 0.])
+    V0 = np.array([-0.5 , 0.])
     # polygon = Polygon(Points)
     distances = [dist(point_input, Points[i])
                   for i in floe.border_nodes_index()]
@@ -81,7 +82,7 @@ if __name__ == '__main__':
                 stiffness= traction_stiff, torsion_stiff= torsion_stiff ,viscosity=1000, id_number=1, impact_node= True)
     
     
-    
+
     # V0 = np.array([10. , 0.])
 
     # Nodes = [Node(np.array([0,-1]), id_number = 0), 
@@ -107,21 +108,14 @@ if __name__ == '__main__':
     Torsion_Mat = Torsion_mat(floe)
     
     
-    # Traction_Mat = floe.traction_mat()
-    # Length_Mat = floe.length_mat()
-    # Torsion_Mat = floe.torsion_mat()
-    # Angle_Mat = floe.angle_init()
-    
-    
-    
     # Mass_mat = floe.mass_nodes
     
     #### compute effective stiffness
-    Neighbors = floe.Neighbors()[floe.n-1]
-    K_neighbors = [Traction_Mat[floe.n-1, i] for i in Neighbors]
-    K_eff = sum(K_neighbors)
+    # Neighbors = floe.Neighbors()[floe.n-1]
+    # K_neighbors = [Traction_Mat[floe.n-1, i] for i in Neighbors]
+    # K_eff = sum(K_neighbors)
     
-    print("max displacement of q_0:", -np.sqrt(floe.mass_nodes[-1]/K_eff))
+    # print("max displacement of q_0:", -np.sqrt(floe.mass_nodes[-1]/K_eff))
     
     T_END = 1.5  # time end
 
@@ -146,12 +140,12 @@ if __name__ == '__main__':
         
     except TimeoutError as e: print(e)
 
-    Energy = Energy_studies(All_positions_velocities, floe)
+    Energy = Energy_studies(All_positions_velocities, floe, Length_Mat, Angle_Mat, Torsion_Mat)
     
     ##### finding time T* := argmax of the energy elastic
     M = np.where(Energy[-1] == max(Energy[-1]))[0][0]
     print("characteristic collision time = ", M*T_END/N_T)
-    # M = N_T
+
     if M == N_T: 
         print(f"Stopping execution because M == {N_T}")
         sys.exit()
@@ -239,19 +233,21 @@ if __name__ == '__main__':
     ### plot displacement field in the 1st-direction
     # min_val = min(np.min(data_deformation[:, 0]), np.min(data_deformation[:, 1]))
     # max_val = max(np.max(data_deformation[:, 0]), np.max(data_deformation[:, 1]))
-
+    
+    # min_val= -0.16
+    # max_val = 0.16
     # fig = plt.figure(figsize=(12, 6))
 
-    # First subplot (for u1)
+    #####First subplot (for u1)
     # ax1 = fig.add_subplot(121, projection='3d')
     # trisurf1 = ax1.plot_trisurf(X, Y, data_deformation[:, 0], 
-    #                         cmap='Reds', edgecolor='none', vmin=min_val, vmax=max_val)
+    #                         cmap='bwr', edgecolor='none', vmin=min_val, vmax=max_val)
     # ax1.set_title("$u_1$")
 
-    # # Second subplot (for u2)
+    # #### Second subplot (for u2)
     # ax2 = fig.add_subplot(122, projection='3d')
     # trisurf2 = ax2.plot_trisurf(X, Y, data_deformation[:, 1], 
-    #                         cmap='Reds', edgecolor='none', vmin=min_val, vmax=max_val)
+    #                         cmap='bwr', edgecolor='none', vmin=min_val, vmax=max_val)
     # ax2.set_title("$u_2$")
 
     # # Add a colorbar that is shared by both plots

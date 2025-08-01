@@ -25,7 +25,7 @@ from scipy.interpolate import LinearNDInterpolator
 from shapely.geometry import Polygon, LineString
 from scipy.interpolate import Rbf
 
-radius = 100.
+radius = 250.
 
 
 comm = MPI.COMM_WORLD
@@ -195,158 +195,158 @@ interp_function_y = LinearNDInterpolator(tri, z2data)
 
 
 
-def f_x(x_eval, y_eval):
-    interpolated_value = interp_function_x(x_eval, y_eval)
-    Cones = cones_list(tri) 
-    if np.isnan(interpolated_value):
-        # print("problem at point ", x_eval, y_eval)
-        interpolated_value = 0.
-        l = 0                       # triangle count
-        L = []                      # stock the list of triangles 
-        for i,j,k in Cones:
-            if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                l += 1
-                L.append([i,j,k])
+# def f_x(x_eval, y_eval):
+#     interpolated_value = interp_function_x(x_eval, y_eval)
+#     Cones = cones_list(tri) 
+#     if np.isnan(interpolated_value):
+#         # print("problem at point ", x_eval, y_eval)
+#         interpolated_value = 0.
+#         l = 0                       # triangle count
+#         L = []                      # stock the list of triangles 
+#         for i,j,k in Cones:
+#             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
+#                 l += 1
+#                 L.append([i,j,k])
         
         
-        if l == 1:
-            i0, j0, k0 = L[0]
-            P_ = np.array([Points[i0], Points[j0], Points[k0]])
-            data_ = np.array([z1data[i0], z1data[j0], z1data[k0]])
-            A, B, C = P1_coefficient(P_, data_)
-            interpolated_value += A*x_eval + B*y_eval + C
-            # print('value = ', interpolated_value)
-            return interpolated_value
+#         if l == 1:
+#             i0, j0, k0 = L[0]
+#             P_ = np.array([Points[i0], Points[j0], Points[k0]])
+#             data_ = np.array([z1data[i0], z1data[j0], z1data[k0]])
+#             A, B, C = P1_coefficient(P_, data_)
+#             interpolated_value += A*x_eval + B*y_eval + C
+#             # print('value = ', interpolated_value)
+#             return interpolated_value
         
-        # print(l, L)
-        if l >= 2: 
-            i = 0
-            while i < len(L):
-                j = i+1
-                while j < len(L):
-                    intersection = np.intersect1d(L[i], L[j])
-                    if len(intersection) == 0:
-                        del L[j]
-                    else: j += 1
-                i += 1
+#         # print(l, L)
+#         if l >= 2: 
+#             i = 0
+#             while i < len(L):
+#                 j = i+1
+#                 while j < len(L):
+#                     intersection = np.intersect1d(L[i], L[j])
+#                     if len(intersection) == 0:
+#                         del L[j]
+#                     else: j += 1
+#                 i += 1
                 
-        #     # create new data from the interpolation with the mesh's boundary
-        #     # find the intersection between the cone and the mesh's boundary 
-            if len(L) >= 2:
-                Origine1 = Points[L[0][0]]
-                # print(Points[L[0][0]])
-                # print(L[0][0], Origine1)
-                direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
-                data_coord1 = LineString([Origine1, Origine1 + direction1])
-                data_coord1 = polygon.intersection(data_coord1)
-                data_coord1 = np.array(list(data_coord1.coords)[-1])
+#         #     # create new data from the interpolation with the mesh's boundary
+#         #     # find the intersection between the cone and the mesh's boundary 
+#             if len(L) >= 2:
+#                 Origine1 = Points[L[0][0]]
+#                 # print(Points[L[0][0]])
+#                 # print(L[0][0], Origine1)
+#                 direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
+#                 data_coord1 = LineString([Origine1, Origine1 + direction1])
+#                 data_coord1 = polygon.intersection(data_coord1)
+#                 data_coord1 = np.array(list(data_coord1.coords)[-1])
                 
-                #compute the P1 approximation on the old network
-                i1, j1, k1 = L[0]
-                P1 = np.array([Points[i1], Points[j1], Points[k1]])
-                data_ = np.array([z1data[i1], z1data[j1], z1data[k1]])
-                A, B, C = P1_coefficient(P1, data_)
-                new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
+#                 #compute the P1 approximation on the old network
+#                 i1, j1, k1 = L[0]
+#                 P1 = np.array([Points[i1], Points[j1], Points[k1]])
+#                 data_ = np.array([z1data[i1], z1data[j1], z1data[k1]])
+#                 A, B, C = P1_coefficient(P1, data_)
+#                 new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
 
-                Origine2 = Points[L[1][0]]
-                direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
-                data_coord2 = LineString([Origine2, Origine2 + direction2])
-                data_coord2 = polygon.intersection(data_coord2)
-                data_coord2 = np.array(list(data_coord2.coords)[-1])
+#                 Origine2 = Points[L[1][0]]
+#                 direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
+#                 data_coord2 = LineString([Origine2, Origine2 + direction2])
+#                 data_coord2 = polygon.intersection(data_coord2)
+#                 data_coord2 = np.array(list(data_coord2.coords)[-1])
                 
-                i_, j_, k_ = L[1]
-                P2 = np.array([Points[i_], Points[j_], Points[k_]])
-                data_ = np.array([z1data[i_], z1data[j_], z1data[k_]])
-                A, B, C = P1_coefficient(P2, data_)
-                new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
+#                 i_, j_, k_ = L[1]
+#                 P2 = np.array([Points[i_], Points[j_], Points[k_]])
+#                 data_ = np.array([z1data[i_], z1data[j_], z1data[k_]])
+#                 A, B, C = P1_coefficient(P2, data_)
+#                 new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
                 
-                common_el = np.intersect1d(L[0], L[1])[0]
-                P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
-                data_ = np.array([z1data[common_el], new_data1 , new_data2])
+#                 common_el = np.intersect1d(L[0], L[1])[0]
+#                 P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
+#                 data_ = np.array([z1data[common_el], new_data1 , new_data2])
                 
-                # print(P_)
-                # print(data_)
-                A, B, C = P1_coefficient(P_, data_)
-                # print(A,B,C)
-                interpolated_value = A*x_eval + B*y_eval + C
+#                 # print(P_)
+#                 # print(data_)
+#                 A, B, C = P1_coefficient(P_, data_)
+#                 # print(A,B,C)
+#                 interpolated_value = A*x_eval + B*y_eval + C
 
-    return interpolated_value
+#     return interpolated_value
 
-def f_y(x_eval, y_eval):
-    interpolated_value = interp_function_y(x_eval, y_eval)
-    Cones = cones_list(tri) 
-    if np.isnan(interpolated_value):
-        # print(x_eval, y_eval)
-        interpolated_value = 0.
-        l = 0                       # triangle count
-        L = []                      # stock the list of triangles 
-        for i,j,k in Cones:
-            if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
-                l += 1
-                L.append([i,j,k])
-        # print(L)
+# def f_y(x_eval, y_eval):
+#     interpolated_value = interp_function_y(x_eval, y_eval)
+#     Cones = cones_list(tri) 
+#     if np.isnan(interpolated_value):
+#         # print(x_eval, y_eval)
+#         interpolated_value = 0.
+#         l = 0                       # triangle count
+#         L = []                      # stock the list of triangles 
+#         for i,j,k in Cones:
+#             if inside_cone(Points[i], Points[j], Points[k], np.array([x_eval, y_eval])):
+#                 l += 1
+#                 L.append([i,j,k])
+#         # print(L)
         
-        if l == 1:
-            i0, j0, k0 = L[0]
-            P_ = np.array([Points[i0], Points[j0], Points[k0]])
-            data_ = np.array([z2data[i0], z2data[j0], z2data[k0]])
-            A, B, C = P1_coefficient(P_, data_)
-            interpolated_value += A*x_eval + B*y_eval + C
-            # print(interpolated_value)
-            return interpolated_value
+#         if l == 1:
+#             i0, j0, k0 = L[0]
+#             P_ = np.array([Points[i0], Points[j0], Points[k0]])
+#             data_ = np.array([z2data[i0], z2data[j0], z2data[k0]])
+#             A, B, C = P1_coefficient(P_, data_)
+#             interpolated_value += A*x_eval + B*y_eval + C
+#             # print(interpolated_value)
+#             return interpolated_value
         
-        if l>=2: 
-            i = 0
-            while i < len(L):
-                j = i+1
-                while j < len(L):
-                    intersection = np.intersect1d(L[i], L[j])
-                    if len(intersection) == 0:
-                        del L[j]
-                    else: j += 1
-                i += 1
+#         if l>=2: 
+#             i = 0
+#             while i < len(L):
+#                 j = i+1
+#                 while j < len(L):
+#                     intersection = np.intersect1d(L[i], L[j])
+#                     if len(intersection) == 0:
+#                         del L[j]
+#                     else: j += 1
+#                 i += 1
 
-            # create new data from the interpolation with the mesh's boundary
-            # find the intersection between the cone and the mesh's boundary 
-            if len(L) >= 2:
-                Origine1 = Points[L[0][0]]
-                # print(Points[L[0][0] )
-                # print(L[0][0], Origine1)
-                direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
-                data_coord1 = LineString([Origine1, Origine1 + direction1])
-                data_coord1 = polygon.intersection(data_coord1)
-                data_coord1 = np.array(list(data_coord1.coords)[-1])
+#             # create new data from the interpolation with the mesh's boundary
+#             # find the intersection between the cone and the mesh's boundary 
+#             if len(L) >= 2:
+#                 Origine1 = Points[L[0][0]]
+#                 # print(Points[L[0][0] )
+#                 # print(L[0][0], Origine1)
+#                 direction1 = (Points[L[0][-1]] - Points[L[0][0]]) * 1000
+#                 data_coord1 = LineString([Origine1, Origine1 + direction1])
+#                 data_coord1 = polygon.intersection(data_coord1)
+#                 data_coord1 = np.array(list(data_coord1.coords)[-1])
                 
-                #compute the P1 approximation on the old network
-                i1, j1, k1 = L[0]
-                P1 = np.array([Points[i1], Points[j1], Points[k1]])
-                data_ = np.array([z2data[i1], z2data[j1], z2data[k1]])
-                A, B, C = P1_coefficient(P1, data_)
-                new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
+#                 #compute the P1 approximation on the old network
+#                 i1, j1, k1 = L[0]
+#                 P1 = np.array([Points[i1], Points[j1], Points[k1]])
+#                 data_ = np.array([z2data[i1], z2data[j1], z2data[k1]])
+#                 A, B, C = P1_coefficient(P1, data_)
+#                 new_data1   = A*data_coord1[0] + B*data_coord1[1] + C
 
-                Origine2 = Points[L[1][0]]
-                direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
-                data_coord2 = LineString([Origine2, Origine2 + direction2])
-                data_coord2 = polygon.intersection(data_coord2)
-                data_coord2 = np.array(list(data_coord2.coords)[-1])
+#                 Origine2 = Points[L[1][0]]
+#                 direction2 = (Points[L[1][-2]] - Points[L[1][0]]) * 1000
+#                 data_coord2 = LineString([Origine2, Origine2 + direction2])
+#                 data_coord2 = polygon.intersection(data_coord2)
+#                 data_coord2 = np.array(list(data_coord2.coords)[-1])
                 
-                i_, j_, k_ = L[1]
-                P2 = np.array([Points[i_], Points[j_], Points[k_]])
-                data_ = np.array([z2data[i_], z2data[j_], z2data[k_]])
-                A, B, C = P1_coefficient(P2, data_)
-                new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
+#                 i_, j_, k_ = L[1]
+#                 P2 = np.array([Points[i_], Points[j_], Points[k_]])
+#                 data_ = np.array([z2data[i_], z2data[j_], z2data[k_]])
+#                 A, B, C = P1_coefficient(P2, data_)
+#                 new_data2   = A*data_coord2[0] + B*data_coord2[1] + C
                 
-                common_el = np.intersect1d(L[0], L[1])[0]
-                P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
-                data_ = np.array([z2data[common_el], new_data1 , new_data2])
+#                 common_el = np.intersect1d(L[0], L[1])[0]
+#                 P_ = np.array([Points[common_el], data_coord1, data_coord2 ])
+#                 data_ = np.array([z2data[common_el], new_data1 , new_data2])
                 
-                # print(P_)
-                # print(data_)
-                A, B, C = P1_coefficient(P_, data_)
-                # print(A,B,C)
-                interpolated_value = A*x_eval + B*y_eval + C
+#                 # print(P_)
+#                 # print(data_)
+#                 A, B, C = P1_coefficient(P_, data_)
+#                 # print(A,B,C)
+#                 interpolated_value = A*x_eval + B*y_eval + C
 
-    return interpolated_value
+#     return interpolated_value
 
 def Dirichlet(x, y):
     # rbfx = Rbf(xdata, ydata, z1data, function='multiquadric')

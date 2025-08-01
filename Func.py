@@ -110,7 +110,7 @@ class Floe:
 
         # self.impact_mass = 200  # mass of collided object.
 
-        self.impact_mass = 1e3
+        self.impact_mass = 1e5
         # necessary when collision
         self.mass_nodes = np.full(self.n, self.mass_node)
 
@@ -136,9 +136,9 @@ class Floe:
         L = [self.degree(i) for i in range(self.n)]
         return np.mean(L)
 
-    def volume(self):
-        BV = self.border_nodes_index()
-        return 0.
+    # def volume(self):
+    #     BV = self.border_nodes_index()
+    #     return 0.
 
     def generate_springs(self):
         """ generates springs if the set of springs is already constructed """
@@ -198,7 +198,77 @@ class Floe:
             return cycle
 
         return find_cycle(BV)
+    
+    def build_neighborhood(self, k, order):
+        """
+        springs: list of (i, j) pairs
+        k: initial node
+        order: neighborhood depth
 
+        returns: set of node IDs in N^order(k)
+        """
+        neighborhood = set([k])
+        frontier = set([k])
+        springs = self.springs
+        for _ in range(order):
+            new_frontier = set()
+            for i, j in springs:
+                if i in frontier and j not in neighborhood:
+                    new_frontier.add(j)
+                elif j in frontier and i not in neighborhood:
+                    new_frontier.add(i)
+            neighborhood.update(new_frontier)
+            frontier = new_frontier
+
+        return neighborhood
+    
+    def triangle_neighbor(self, i):
+        return [s for s in self.simplices() if i in s]
+    
+    def effective(self, traction_mat, torsion_mat, order):
+        """
+        Compute M_eff^(order) and K_eff^(order) around node k.
+
+        Parameters:
+        - springs: list or set of (i, j) node ID pairs
+        - k: contact node ID (int)
+        - order: neighborhood depth (int)
+        - mass_node: mass of each node (assumed constant)
+        - spring_k: stiffness of each spring (assumed constant)
+
+        Returns:
+        - M_eff: total effective mass
+        - K_eff: total effective stiffness
+        """
+        # Step 1: build the neighborhood
+        k = self.n-1
+        springs = self.springs
+        # traction_mat = self.traction_mat()
+        mass_node = self.mass_node
+        neighborhood = self.build_neighborhood(k, order)
+
+        # Step 2: count mass
+        M_eff = len(neighborhood) * mass_node + self.impact_mass
+        # print(M_eff)
+        # Step 3: sum stiffness of springs touching neighborhood
+        K_eff = 0.0
+        for i, j in springs:
+            if i in neighborhood or j in neighborhood:
+                # print(i,j)
+                K_eff += traction_mat[i,j]
+        
+        # triangle_contain_x0 = [s for s in self.simplices() if k in s]
+        # G_eff = 0.0
+        # for triangle in triangle_contain_x0:
+        #     i,j,k = triangle
+        #     G_eff += torsion_mat[i, j, k]   # angle at j
+        #     G_eff += torsion_mat[j, k, i]   # angle at k
+        #     G_eff += torsion_mat[k, i, j]   # angle at i
+                    
+                    
+        return M_eff, K_eff #+ G_eff
+    
+    
     # def fractures_admissible(self):
     #     G = nx.Graph()
     #     Border_edges = self.border_edges_index()
@@ -271,7 +341,7 @@ class Floe:
 
     def simplices(self):
         """
-        Returns all triangle (simplices) in the mass-spring system
+        Returns all triangles (simplices) in the mass-spring system
         -------
         TYPE
             DESCRIPTION.
@@ -361,15 +431,6 @@ class Floe:
         mat = coo_matrix(mat)
         return mat.todok()
 
-    # def Neighbor_contact(self, contact_node):
-    #     Neighbor_contact = [np.any(self.simplices()[i] == contact_node)
-    #                         for i in range(len(self.simplices()))]
-    #     # print(Neighbor_contact)
-    #     Neighbor_contact = [i for i, val in enumerate(
-    #         Neighbor_contact) if val is True]
-    #     # print(Neighbor_contact)
-    #     Neighbor_contact = self.simplices()[Neighbor_contact]
-    #     return Neighbor_contact
 
     def Neighbors(self):
         edge_set = self.springs
@@ -464,6 +525,10 @@ class Floe:
                      self.nodes[i].position()[1], self.nodes[i].id)
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
+        circle = plt.Circle((0., 0.) , 100. , color = 'black', fill=False)
+        plt.gca().add_patch(circle)
+        plt.tight_layout()
+        plt.gca().set_aspect('equal')
         plt.show()
 
     def plot_border(self):
@@ -1544,7 +1609,7 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
     return np.reshape(Y_, (nb_nodes*4))
 
 
-T_LIMIT = 240  # (s) limit time of simulation
+T_LIMIT = 210  # (s) limit time of simulation
 
 
 def timeout_handler(signum, frame):

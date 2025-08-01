@@ -17,21 +17,21 @@ Created on Thu Jan 16 15:51:18 2025
 from mpi4py import MPI
 import numpy as np
 import csv
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from scipy.spatial._qhull import Delaunay
 import sys
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri/")
-# from griffith.geometry import Polygon, Point
-# from scipy.spatial import Voronoi, voronoi_plot_2d
+from griffith.geometry import Polygon, Point
+from scipy.spatial import Voronoi, voronoi_plot_2d
 
 # np.random.seed(1212)
 
-lambda_intensity= 0.003 
-radius = 100.
+lambda_intensity= 0.0005 
+radius = 250.
 
 area = np.pi * radius**2  # Area of the disk
-# num_points = np.random.poisson(lambda_intensity * area)  # Poisson-distributed number of points
-num_points = 99
+num_points = np.random.poisson(lambda_intensity * area)  # Poisson-distributed number of points
+# num_points = 97
 
 print(num_points)
 # Generate uniform random points in polar coordinates
@@ -58,18 +58,24 @@ for triangle in tri.simplices:
 
 # poly.plot()
 # plt.figure()
-# circle = plt.Circle((0., 0.) , 1. , color = 'blue', fill=False)
+# circle = plt.Circle((0., 0.) , 100. , color = 'blue', fill=False)
 # plt.plot(Points[:,0], Points[:,1],'o', color = 'orange')
 # plt.gca().add_patch(circle)
 
-# # plt.figure()
+# plt.figure()
 # V = Voronoi(Points)
 # voronoi_plot_2d(V)
+# plt.gca().add_patch(circle)
+
 
 
 # plt.figure()
 # plt.plot(Points[:,0], Points[:,1],'o', color = 'orange')
 # plt.triplot(Points[:,0], Points[:,1], tri.simplices, color = 'b')
+# circle = plt.Circle((0., 0.) , 100. , color = 'black', fill=False)
+# plt.gca().add_patch(circle)
+# plt.tight_layout()
+# plt.gca().set_aspect('equal')
 # plt.show()
 
 comm = MPI.COMM_WORLD
