@@ -13,7 +13,7 @@ from numpy.linalg import norm
 
 # 4 classes Node-> Spring-> Floe-> Percussion/Percussion_wall to simulate the collision between a floe and a wall
 
-N_T = 3000  # time's discretization
+N_T = 1600  # time's discretization
 
 
 class Node:
@@ -251,6 +251,7 @@ class Floe:
         M_eff = len(neighborhood) * mass_node + self.impact_mass
         # print(M_eff)
         # Step 3: sum stiffness of springs touching neighborhood
+        neighborhood = self.build_neighborhood(k, order-1)
         K_eff = 0.0
         for i, j in springs:
             if i in neighborhood or j in neighborhood:
@@ -525,10 +526,10 @@ class Floe:
                      self.nodes[i].position()[1], self.nodes[i].id)
             plt.text(self.nodes[j].position()[0],
                      self.nodes[j].position()[1], self.nodes[j].id)
-        circle = plt.Circle((0., 0.) , 100. , color = 'black', fill=False)
-        plt.gca().add_patch(circle)
-        plt.tight_layout()
-        plt.gca().set_aspect('equal')
+        # circle = plt.Circle((0., 0.) , 100. , color = 'black', fill=False)
+        # plt.gca().add_patch(circle)
+        # plt.tight_layout()
+        # plt.gca().set_aspect('equal')
         plt.show()
 
     def plot_border(self):
@@ -936,75 +937,6 @@ def Energy_studies(All_positions_velocities, floe, Length_mat, Angle_mat, Torsio
     print("time of computation = ", start_time-end_time)
     return Traction_energy, Torsion_energy, E_tot
 
-
-# def Energy_studies(All_positions_velocities, floe, Length_mat, Angle_mat, Torsion_mat, T_end = 1.5):
-#     """
-#     Parameters
-#     ----------
-#     All_positions_velocities : Evolution of all nodes and velocities
-#     floe : result of simulation, vector contains positions and velocity of all node.
-
-#     Returns
-#     -------
-#     Traction_energy 
-#     Torsion_energy 
-
-#     E_tot : elastic energy of a floe. 
-#     E_c: kinematic energy of network.
-
-#     """
-#     start_time = time.time()
-#     # K = floe.k
-#     Connect = floe.connexe_mat()
-#     Traction_matrix = Traction_mat(floe, Angle_mat)
-#     simplices = floe.simplices()
-#     Traction_energy = np.zeros(N_T)
-#     Torsion_energy = np.zeros(N_T)
-
-#     for index in range(N_T):
-#         Traction_en = 0.
-#         Torsion_en = 0.
-#         for i, j, k in simplices:
-#             Qi = np.array([All_positions_velocities[4*i][index],
-#                           All_positions_velocities[4*i+1][index]])
-#             Qj = np.array([All_positions_velocities[4*j][index],
-#                           All_positions_velocities[4*j+1][index]])
-#             Qk = np.array([All_positions_velocities[4*k][index],
-#                           All_positions_velocities[4*k+1][index]])
-#             l_ij = norm(Qi-Qj)
-#             l_ik = norm(Qi-Qk)
-#             l_jk = norm(Qj-Qk)
-
-#             Traction_en += 0.5 * (Connect[i, j] * (Traction_matrix[i, j]) * (l_ij - Length_mat[i, j])**2
-#                                   + (Connect[i, k] * Traction_matrix[i, k]
-#                                      ) * (l_ik - Length_mat[i, k])**2
-#                                   + (Connect[j, k] * Traction_matrix[j, k]) * (l_jk - Length_mat[j, k])**2)
-
-#             Torsion_en += 0.5 * (Torsion_mat[i, j, k] * (Angle(Qi, Qj, Qk) - Angle_mat[i, j, k])**2
-#                                  + Torsion_mat[i, k, j] *
-#                                  (Angle(Qi, Qk, Qj) - Angle_mat[i, k, j])**2
-#                                  + Torsion_mat[j, i, k] * (Angle(Qj, Qi, Qk) - Angle_mat[j, i, k])**2)
-
-#         # print(i)
-
-#         Traction_energy[index] = Traction_en
-#         Torsion_energy[index] = Torsion_en
-    
-    
-#     # print(Torsion_energy)
-#     E_tot = Traction_energy + Torsion_energy
-#     end_time = time.time()
-#     print("time of computation = ", start_time-end_time)
-#     # plt.figure()
-#     # t = np.linspace(0, T_end, N_T)
-#     # plt.plot(t, Traction_energy, label='Traction energy')
-#     # plt.plot(t, Torsion_energy, label='Torsion energy')
-#     # plt.plot(t, E_tot, label='Total elastic energy')
-#     # plt.tight_layout()
-#     return Traction_energy, Torsion_energy, E_tot
-
-
-
 def Angular_speed_list(All_positions_velocities, floe, T_end=1.2, N_T=N_T):
     n = len(All_positions_velocities[0])
     # wi_list = []
@@ -1082,74 +1014,49 @@ def Angular_speed_list(All_positions_velocities, floe, T_end=1.2, N_T=N_T):
     plt.show()
     return theta, wj_list
 
-
-def Energy_elastic_analysis(All_positions_velocities, floe):
+def compute_kinetic_energy(All_positions_velocities, floe):
     """
-    Parameters
-    ----------
-    All_positions_velocities : Evolution of all nodes and velocities
-    floe : result of simulation, vector contains positions and velocity of all node.
-
-    Returns
-    -------
-    Traction_energy 
-    Torsion_energy 
-    E_tot : elastic energy of a floe. 
-
+    Compute kinetic energy for the mass-spring network.
+    
+    Kinetic energy: E_kin = 0.5 * sum_i m_i * ||v_i||^2
+    
+    Parameters:
+    - All_positions_velocities: Array of positions and velocities [x0, y0, vx0, vy0, x1, y1, ...]
+    - floe: Network object with node masses
+    
+    Returns:
+    - kinetic_energy: Array of kinetic energy values at each time step
     """
-    Traction_energy, Torsion_energy, E_el = Energy_studies(
-        All_positions_velocities, floe)
-    velocities_norm = Energy_kinematic_analysis(All_positions_velocities, floe)
-    # w = Angular_speed_list(All_positions_velocities, floe)
+    
+    # N_T = len(All_positions_velocities[0])  # Number of time steps
+    n_nodes = floe.n  # Number of nodes
+    
+    # Preallocate kinetic energy array
+    kinetic_energy = np.zeros(N_T)
+    
+    # Extract velocities for all time steps [time, node, velocity_component]
+    velocities = np.zeros((N_T, n_nodes, 2))
+    for i in range(n_nodes):
+        velocities[:, i, 0] = All_positions_velocities[4*i + 2]  # vx
+        velocities[:, i, 1] = All_positions_velocities[4*i + 3]  # vy
+    
+    # Compute kinetic energy at each time step
+    for time_index in range(N_T):
+        total_ke = 0.0
+        
+        for i in range(n_nodes):
+            # Get velocity vector for node i at this time
+            vx = velocities[time_index, i, 0]
+            vy = velocities[time_index, i, 1]
+            
+            # Kinetic energy for this node: 0.5 * m * v^2
+            node_ke = 0.5 * floe.mass_nodes[i] * (vx**2 + vy**2)
+            total_ke += node_ke
+        
+        kinetic_energy[time_index] = total_ke
+    
+    return kinetic_energy
 
-    total = Traction_energy + velocities_norm
-
-    t = np.arange(N_T)
-
-    plt.figure()
-    plt.plot(t, Traction_energy, label="traction")
-    # plt.plot(t, Torsion_energy, label = "torsion energy")
-    # plt.plot(t, w, label = "rotation speed")
-    # plt.plot(t, E_el, label = "elastic")
-    plt.plot(t, velocities_norm, label="kinematic")
-    plt.plot(t, total, label='total energy')
-    plt.legend()
-
-    return 0
-
-
-def Energy_kinematic_analysis(All_positions_velocities, floe):
-    """
-    Parameters
-    ----------
-    All_positions_velocities : Evolution of all nodes and velocities
-    floe : result of simulation, vector contains positions and velocity of all node.
-
-    Returns
-    -------
-    velocities_norm: kinematic energy at each time t_i
-    E_tot : elastic energy of a floe. 
-
-    """
-
-    m = floe.m
-    n = floe.n
-
-    velocities_norm = np.zeros(N_T)
-
-    for index in range(N_T):
-        print('at time', index)
-        for i in range(n):
-            velocities = np.array([All_positions_velocities[4*i+2, index],
-                                   All_positions_velocities[4*i+3, index]])
-            print('node', i, 'has velocity', )
-            print('v = ', velocities)
-            velocities = norm(velocities)**2
-            print('velocites norm = ', velocities)
-            velocities_norm[index] += 0.5 * m * velocities
-        print(velocities_norm)
-
-    return velocities_norm
 
 
 def Energy_studies_fr(All_positions_velocities, floe):
@@ -1290,19 +1197,15 @@ def Connexe_mat(floe: Floe):
     mat = coo_matrix(mat)
     return mat.todok()
 
-
-def Angle(A, B, C):
+def Angle(A,B,C):
     """
-    Input: coordinates of 3 nodes (A,B,C)
-    Returns
-    Angle ABC by al-kashi's formula 
+    find angle by dot product: 
+        theta = acos(u.v/(normu.normv))
     """
-    # X,Y,Z = A.position(), B.position(), C.position()
-    a = norm(C-A)
-    b = norm(B-A)
-    c = norm(C-B)
-    return acos((-a**2+c**2+b**2)/(2*b*c))
-
+    u = A - B
+    v = C - B
+    cos_theta = np.dot(u, v) / (norm(u) * norm(v))
+    return acos(cos_theta)
 
 def Torsion_mat(floe: Floe):
     """ stiffness constant of every torsion spring """
@@ -1380,6 +1283,67 @@ def mass_nodes(floe: Floe):
     mass_nodes = floe.mass_nodes
     return mass_nodes
 
+# def grad_theta_i_all(qi, qj, qk):
+#     """
+#     Compute the gradient of angle at qi with respect to qi, qj, qk
+#     Returns: (∇_qi θi, ∇_qj θi, ∇_qk θi)
+#     """
+#     u = qj - qi
+#     v = qk - qi
+#     ru = norm(u)
+#     rv = norm(v)
+
+#     # if ru < 1e-12 or rv < 1e-12:
+#     #     zero = np.zeros_like(qi)
+#     #     return zero, zero, zero
+    
+#     dot_uv = np.dot(u, v)
+#     costheta = dot_uv / (ru * rv)
+#     # costheta = np.clip(costheta, -1.0, 1.0)
+#     sintheta = np.sqrt(1.0 - costheta**2)
+
+
+#     # ∇_qj
+#     # grad_qj = (v * ru * rv - dot_uv * (rv / ru) * u) / (ru**2 * rv**2) / -sintheta
+#     grad_qj = (dot_uv*u/ru**3*rv - v/(ru*rv))/sintheta
+    
+#     # ∇_qk
+#     # grad_qk = (u * ru * rv - dot_uv * (ru / rv) * v) / (ru**2 * rv**2) / -sintheta
+#     grad_qk = (dot_uv*v/rv**3*ru - u/(ru*rv))/sintheta
+    
+#     # ∇_qi
+#     # term1 = -(u + v) * (ru * rv)
+#     # term2 = dot_uv * ((rv / ru) * u + (ru / rv) * v)
+#     grad_qi = - grad_qj - grad_qk
+#     return grad_qi, grad_qj, grad_qk
+
+def grad_theta_i_all(qi, qj, qk):
+    """
+    Gradient of angle θ_i = angle(qj - qi, qk - qi) using orthogonal unit vector
+    """
+    u = qj - qi
+    v = qk - qi
+
+    ru = norm(u)
+    rv = norm(v)
+
+    u_hat = u / ru
+    v_hat = v / rv
+
+    # cos_theta = np.dot(u_hat, v_hat)
+    # cos_theta = np.clip(cos_theta, -1.0, 1.0)
+    # sin_theta = np.sqrt(1 - cos_theta**2)
+
+    # Direction vector orthogonal to u_hat
+    u_perp = Orthogonal_vect(u_hat)
+    v_perp = Orthogonal_vect(v_hat)
+
+    # Use geometric form:
+    grad_qj = - (1 / ru) * u_perp  # Or more precisely: -1 / (ru * sinθ) * component in u^
+    grad_qk =  (1 / rv) * v_perp
+    grad_qi = - grad_qj - grad_qk
+
+    return grad_qi, grad_qj, grad_qk
 
 def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
            Traction_mat, Torsion_mat, Angle_init, Triangle_list):
@@ -1430,51 +1394,60 @@ def System(t, Y, nb_nodes, Connex_mat, Length_mat, Mass_mat, mu,
         if orientation(Q[2*i], Q[2*j], Q[2*k]) != 1:
             (j, k) = k, j
 
-        # unit vector
-        u_ij = Unit_vect(Q[2*i], Q[2*j])
-        # u_ji = -u_ij
-        u_ik = Unit_vect(Q[2*i], Q[2*k])
-        u_ki = -u_ik
-        u_jk = Unit_vect(Q[2*j], Q[2*k])
-        # u_kj = -u_jk
-
-        # print(u_ij, u_ik, u_jk)
-
-    # length
-        l_ij = norm(Q[2*j]-Q[2*i])
-        l_ik = norm(Q[2*k]-Q[2*i])
-        l_kj = norm(Q[2*j]-Q[2*k])
-
         Theta_i = Angle(Q[2*j], Q[2*i], Q[2*k])
         Theta_j = Angle(Q[2*i], Q[2*j], Q[2*k])
         Theta_k = Angle(Q[2*i], Q[2*k], Q[2*j])
 
         G_i, G_j, G_k = G[j, i, k], G[i, j, k], G[i, k, j]
+        
+        ### Torsional force by gradient of angle
+        # Gradients of angle_i
+        grad_i_i, grad_i_j, grad_i_k = grad_theta_i_all(Q[2*i], Q[2*j], Q[2*k])
+        F_i = - G_i * (Theta_i - Theta0[j, i, k])
+        
+        # Gradients of angle_j
+        grad_j_j, grad_j_k, grad_j_i = grad_theta_i_all(Q[2*j], Q[2*k], Q[2*i])
+        F_j = - G_j * (Theta_j - Theta0[i, j, k])
+        
+        # Gradients of angle_k
+        grad_k_k, grad_k_i, grad_k_j = grad_theta_i_all(Q[2*k], Q[2*i], Q[2*j])
+        F_k = - G_k * (Theta_k - Theta0[i, k, j])
+        
+        #update forces
+        Y_[2*i+1] += inv_m[i] * (F_i * grad_i_i + F_j * grad_j_i + F_k * grad_k_i)
+        Y_[2*j+1] += inv_m[j] * (F_i * grad_i_j + F_j * grad_j_j + F_k * grad_k_j)
+        Y_[2*k+1] += inv_m[k] * (F_i * grad_i_k + F_j * grad_j_k + F_k * grad_k_k)
+        
+        #### Force independant of traction's length
+        # unit vector
+        # u_ij = Unit_vect(Q[2*i], Q[2*j])
+        # u_ji = -u_ij
+        # u_ik = Unit_vect(Q[2*i], Q[2*k])
+        # u_ki = -u_ik
+        # u_jk = Unit_vect(Q[2*j], Q[2*k])
+        # u_kj = -u_jk
+        # # print(u_ij, u_ik, u_jk)
+        # # length
+        # l_ij = norm(Q[2*j]-Q[2*i])
+        # l_ik = norm(Q[2*k]-Q[2*i])
+        # l_kj = norm(Q[2*j]-Q[2*k])
 
-    # #     # Force independant of traction's length
+        # Theta_i = Angle(Q[2*j], Q[2*i], Q[2*k])
+        # Theta_j = Angle(Q[2*i], Q[2*j], Q[2*k])
+        # Theta_k = Angle(Q[2*i], Q[2*k], Q[2*j])
+        # force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
+        #     (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
 
-        force_i = G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
-            (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki) / l_ik)
+        # force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
+        #     (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
 
-        force_j = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij) / l_ij) + G_k * (
-            (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk) / l_kj)
+        # force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(
+        #     u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
 
-        force_k = G_i * ((Theta_i - Theta0[j, i, k]) * Orthogonal_vect(
-            u_ki) / l_ik) + G_j * ((Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk)/l_kj)
+        # Y_[2*i+1] += inv_m[i] * force_i  # Force on node i
+        # Y_[2*j+1] += inv_m[j] * force_j  # Force on node j
+        # Y_[2*k+1] += inv_m[k] * force_k  # Force on node k
 
-        Y_[2*i+1] += inv_m[i] * force_i  # Force on node i
-        Y_[2*j+1] += inv_m[j] * force_j  # Force on node j
-        Y_[2*k+1] += inv_m[k] * force_k  # Force on node k
-
-        # Y_[2*i+1] += inv_m[i] * (G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_ij)
-        #                       + G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_ki))
-
-        # Y_[2*j+1] += inv_m[j] * (G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ij)
-        #                         + G_k * (Theta_k - Theta0[i, k, j]) * Orthogonal_vect(u_jk))
-
-        # Y_[2*k+1] += inv_m[k] * (G_i * (Theta_i - Theta0[j, i, k]) * Orthogonal_vect(u_ki)
-        #                       + G_j * (Theta_j - Theta0[i, j, k]) * Orthogonal_vect(u_jk))
-    # print(Y_)
     return np.reshape(Y_, (nb_nodes * 4))
 
 
@@ -1609,8 +1582,43 @@ def System_stable_neighbor(t, Y, Y0, nb_nodes, Connex_mat, Length_mat, m, mu, Tr
     return np.reshape(Y_, (nb_nodes*4))
 
 
-T_LIMIT = 210  # (s) limit time of simulation
+T_LIMIT = 1850  # (s) limit time of simulation
 
-
+def compute_dissipated_energy(All_positions_velocities, floe, T_end, mu):
+    """
+    Compute dissipated energy over time from position data
+    """
+    n_timesteps = N_T
+    n_nodes = floe.n
+    dissipated_energy = np.zeros(n_timesteps)
+    C = floe.connexe_mat()
+    # Precompute all spring length derivatives
+    for t in range(1, n_timesteps):
+        current_Ed = 0
+        
+        # Loop over all edges in the network
+        for i in range(n_nodes):
+            for j in range(i+1, n_nodes):  # Avoid double counting
+                if C[i, j] == 1:  # If nodes are connected
+                    # Current spring length
+                    pos_i = All_positions_velocities[4*i:4*i+2, t]
+                    pos_j = All_positions_velocities[4*j:4*j+2, t]
+                    current_length = np.linalg.norm(pos_i - pos_j)
+                    
+                    # Previous spring length  
+                    pos_i_prev = All_positions_velocities[4*i:4*i+2, t-1]
+                    pos_j_prev = All_positions_velocities[4*j:4*j+2, t-1]
+                    prev_length = np.linalg.norm(pos_i_prev - pos_j_prev)
+                    
+                    # Time derivative (finite difference)
+                    dt = T_end/N_T
+                    length_derivative = (current_length - prev_length) / dt
+                    
+                    # Add to dissipated energy (trapezoidal rule integration)
+                    current_Ed += mu * (length_derivative ** 2) * dt
+        
+        dissipated_energy[t] = dissipated_energy[t-1] + current_Ed
+    
+    return dissipated_energy
 def timeout_handler(signum, frame):
     raise TimeoutError("Simulation exceeded time limit and was stopped!")
