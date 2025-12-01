@@ -13,12 +13,15 @@ import time
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-# from numpy.linalg import norm
-from matplotlib import animation
+from numpy.linalg import norm
+import matplotlib.tri as tri
+# from matplotlib import animation
 sys.path.append("/Users/phandangtoai/Documents/Floe2D/Griffith-master_Dimitri")
-from griffith.geometry import Point, Polygon, dist
+from griffith.geometry import Point, dist
 from Func import Angle_mat, Traction_mat, Length_mat, Torsion_mat
 from Func import Node, Floe, Energy_studies, N_T, timeout_handler, T_LIMIT
+from Func import compute_dissipated_energy, compute_kinetic_energy
+
 # from Circle_geometry_simulation import radius
 
 
@@ -28,7 +31,7 @@ if __name__ == '__main__':
     rank = comm.Get_rank()  # Process ID
     size = comm.Get_size()  # Total number of processes
 
-    radius = 250.
+    radius = 100.
     Nodes = []
     Points = []
 
@@ -49,12 +52,10 @@ if __name__ == '__main__':
         
     ### K,G springs stiffness
     traction_stiff, torsion_stiff = np.linalg.solve(matrix, np.array([lamb, mu])) 
-    # torsion_stiff = 0
-    # traction_stiff, torsion_stiff = 0.08, 0.
     
+    # filename = f"masses-springs_limit_circle_{rank+1}.csv"
+    filename = f"masses-springs_limit_circle_1.csv"
 
-    filename = f"masses-springs_limit_circle_{rank+1}.csv"
-    
     print(f" reading network from Process {rank} in {filename}")
     
     with open(filename, mode='r') as csv_file:
@@ -79,45 +80,15 @@ if __name__ == '__main__':
     #       # Points[index_contact], " of the floe")
     Nodes[index_contact] = Node(Nodes[index_contact].position(), V0, id_number = index_contact)
     floe = Floe(nodes=Nodes, springs=None, mass= Mass,
-                stiffness= traction_stiff, torsion_stiff= torsion_stiff ,viscosity=1000, id_number=1, impact_node= True)
+                stiffness= traction_stiff, torsion_stiff= 0*torsion_stiff ,viscosity=100, id_number=1, impact_node= True)
     
-    
-
-    # V0 = np.array([10. , 0.])
-
-    # Nodes = [Node(np.array([0,-1]), id_number = 0), 
-    #           Node(np.array([0,1]), id_number = 1),
-    #           Node(np.array([1,0]),velocity= V0, id_number = 2)]
-    # index_contact = 2
-
-    # Nodes = [Node(np.array([0,-1]), id_number = 0), 
-    #           Node(np.array([0,1]), id_number = 1),
-    #           Node(np.array([1, 0.]), V0, id_number = 2),
-    #           Node(np.array([-1, 0.]), id_number = 3)]
-    
-    # floe = Floe(nodes=Nodes, springs=None, mass= 1000,
-    #             stiffness= traction_stiff, torsion_stiff= torsion_stiff ,viscosity=1000, id_number=1, impact_node= True)
-
-    
-    # floe.plot_init()
-    # Simulation of masses-springs network
     
     Angle_Mat = Angle_mat(floe)
     Traction_Mat = Traction_mat(floe, Angle_Mat)
     Length_Mat = Length_mat(floe)
     Torsion_Mat = Torsion_mat(floe)
     
-    
-    # Mass_mat = floe.mass_nodes
-    
-    #### compute effective stiffness
-    # Neighbors = floe.Neighbors()[floe.n-1]
-    # K_neighbors = [Traction_Mat[floe.n-1, i] for i in Neighbors]
-    # K_eff = sum(K_neighbors)
-    
-    # print("max displacement of q_0:", -np.sqrt(floe.mass_nodes[-1]/K_eff))
-    
-    T_END = 1.5  # time end
+    T_END = 2.4  # time end
 
     dt = T_END/N_T  # time's step
     
@@ -282,8 +253,7 @@ if __name__ == '__main__':
         csv_writer.writerows(data)
         csv_writer.writerow("-----------------------------------------")
         
-        
-        
+
     # print(list(data))
     Xboundary, Yboundary, data_x, data_y = np.around((Xboundary, Yboundary, data_x, data_y), decimals= PRECISION)
     data = zip(Xboundary, Yboundary, data_x, data_y)
@@ -305,7 +275,96 @@ if __name__ == '__main__':
         csv_writer.writerows(data)
 
     print(f"Process {rank} saved data to {filename}")
+    times_to_plot = [0.25, 0.8, 1.5, 2.3]
+    steps = [int(t * N_T / T_END) for t in times_to_plot]
+
+    # Compute all displacements
+    displacements_u1 = []
+    displacements_u2 = []
+
+    for step in steps:
+        data_deformation = np.zeros((floe.n, 2))
+        for i in range(floe.n):
+            x0 = All_positions_velocities[4*i][0]
+            y0 = All_positions_velocities[4*i+1][0]
+            x_now = All_positions_velocities[4*i][step]
+            y_now = All_positions_velocities[4*i+1][step]
+            data_deformation[i, 0] = x_now - x0  # u1
+            data_deformation[i, 1] = y_now - y0  # u2
+
+        displacements_u1.append(data_deformation[:, 0])
+        displacements_u2.append(data_deformation[:, 1])
+
+    # Calculate separate color limits
+    u1_all = np.concatenate(displacements_u1)
+    u2_all = np.concatenate(displacements_u2)
+
+    max_abs_u1 = np.max(np.abs(u1_all))
+    max_abs_u2 = np.max(np.abs(u2_all))
+
+    vmin_u1, vmax_u1 = -max_abs_u1, max_abs_u1
+    vmin_u2, vmax_u2 = -max_abs_u2, max_abs_u2
+
+    # Create triangulation
+    triang = tri.Triangulation(X, Y)
+
+    # Create 4x2 figure (4 rows, 2 columns)
+    fig, axes = plt.subplots(4, 2, figsize=(12, 16))
+
+    for idx, (step, u1, u2) in enumerate(zip(steps, displacements_u1, displacements_u2)):
+        # Left column: u1
+        ax_left = axes[idx, 0]
+        tcf1 = ax_left.tricontourf(triang, u1, cmap='RdBu_r', levels=50, 
+                                  vmin=vmin_u1, vmax=vmax_u1)
+        ax_left.tricontour(triang, u1, colors='k', linewidths=0.3, levels=10, alpha=0.3)
+        ax_left.triplot(triang, 'k-', linewidth=0.2, alpha=0.2)
+        ax_left.plot(X[-1], Y[-1], 'ro', markersize=6, markeredgecolor='white', markeredgewidth=1)
+        ax_left.set_xlabel('X (m)')
+        ax_left.set_ylabel('Y (m)')
+        ax_left.set_title(f't = {times_to_plot[idx]:.2f} s')
+        ax_left.set_aspect('equal')
+
+        # Right column: u2
+        ax_right = axes[idx, 1]
+        tcf2 = ax_right.tricontourf(triang, u2, cmap='RdBu_r', levels=50, 
+                                   vmin=vmin_u2, vmax=vmax_u2)
+        ax_right.tricontour(triang, u2, colors='k', linewidths=0.3, levels=10, alpha=0.3)
+        ax_right.triplot(triang, 'k-', linewidth=0.2, alpha=0.2)
+        ax_right.plot(X[-1], Y[-1], 'ro', markersize=6, markeredgecolor='white', markeredgewidth=1)
+        ax_right.set_xlabel('X (m)')
+        ax_right.set_ylabel('Y (m)')
+        ax_right.set_title(f't = {times_to_plot[idx]:.2f} s')
+        ax_right.set_aspect('equal')
+
+    # Add column labels
+    axes[0, 0].text(0.5, 1.1, r'$u_1$ ', transform=axes[0, 0].transAxes, 
+                    fontsize=14, ha='center', va='bottom', fontweight='bold')
+    axes[0, 1].text(0.5, 1.1, r'$u_2$ ', transform=axes[0, 1].transAxes, 
+                    fontsize=14, ha='center', va='bottom', fontweight='bold')
+
+    # Add separate colorbars - LEFT for u1, RIGHT for u2
+    fig.subplots_adjust(left=0.08, right=0.9, wspace=0.3)
+
+    # Colorbar for u1 (LEFT side)
+    cbar_ax1 = fig.add_axes([0.05, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
+    cbar1 = fig.colorbar(tcf1, cax=cbar_ax1)
+    cbar1.set_label(r'$u_1$ (m)', fontsize=12)
+
+    # Colorbar for u2 (RIGHT side)  
+    cbar_ax2 = fig.add_axes([0.95, 0.15, 0.02, 0.7])
+    cbar2 = fig.colorbar(tcf2, cax=cbar_ax2)
+    cbar2.set_label(r'$u_2$ (m)', fontsize=12)
+
+    plt.tight_layout()
+    fig.savefig("displacement_comparison_4x2.png", dpi=300, bbox_inches='tight')
+    # plt.show()
     
-           
     
-    
+    D = compute_dissipated_energy(All_positions_velocities, floe, T_END, floe.mu)
+    K = compute_kinetic_energy(All_positions_velocities, floe)
+    plt.figure()
+    plt.plot(D)
+    plt.plot(K)
+    plt.plot(Energy[-1])
+    plt.plot(D+K+Energy[-1])
+
